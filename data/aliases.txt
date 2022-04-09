@@ -1,0 +1,8 @@
+alias buyall="buy BruteSSH.exe; buy FTPCrack.exe; buy relaySMTP.exe; buy HTTPWorm.exe; buy SQLInject.exe";
+alias l1="r CSEC b";
+alias l2="r avmnite-02h b";
+alias l3="r I.I.I.I b";
+alias l4="r run4theh111z b";
+alias r="run route.js";
+alias sl="run scanServers.js levels";
+alias st="run scanServers.js targets";
