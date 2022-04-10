@@ -9,7 +9,7 @@
 import UniquePathsinaGridII from '/contracts/UniquePathsinaGridII';
 
 const makeGrid = (rows, cols) => {
-  return Array(rows * cols).fill(0);
+  return Array(rows).fill(Array(cols).fill(0));
 };
 
 export default function UniquePathsinaGridI([rows, cols]) {

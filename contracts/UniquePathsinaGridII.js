@@ -19,21 +19,17 @@
     Determine how many unique paths there are from start to finish.
     NOTE: The data returned for this contract is an 2D array of numbers representing the grid.
 */
-export default function UniquePathsinaGridII(data, cols, pos = 0) {
-  if (data[pos] === 1) {
+export default function UniquePathsinaGridII(data, x = 0, y = 0) {
+  const rows = data.length;
+  const cols = data[0].length;
+
+  if (y === rows || x === cols || data[y][x] === 1) {
     return 0;
-  } else if (pos === data.length - 1) {
+  } else if (y === rows - 1 && x === cols - 1) {
     return 1;
   } else {
-    const waysRight =
-      (pos + 1) % cols !== 0 && pos + 1 < data.length
-        ? UniquePathsinaGridII(data, cols, pos + 1)
-        : 0;
-
-    const waysDown =
-      pos + cols < data.length
-        ? UniquePathsinaGridII(data, cols, pos + cols)
-        : 0;
+    const waysRight = UniquePathsinaGridII(data, x + 1, y);
+    const waysDown = UniquePathsinaGridII(data, x, y + 1);
 
     return waysRight + waysDown;
   }

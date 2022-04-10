@@ -6,3 +6,5 @@ alias l4="r run4theh111z b";
 alias r="run route.js";
 alias sl="run scanServers.js levels";
 alias st="run scanServers.js targets";
+alias bd="run /sf4/backdoors.js";
+alias crime="run /sf4/crime.js";

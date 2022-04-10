@@ -66,7 +66,7 @@ export async function main(_ns) {
 
     if (!ns.isBusy()) {
       // user must have cancelled crime – halt script!
-      ns.print('Oh, you seem to have lost intereset. Aborting auto-crime.');
+      ns.print('Oh, you seem to have lost interest. Aborting auto-crime.');
       ns.exit();
     }
 

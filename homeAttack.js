@@ -30,8 +30,15 @@ const getTargets = () => {
   return array;
 };
 
-const getAvailableRam = () => {
-  const otherScripts = ['backdoor.js', 'crime.js', 'study.js', 'work.js'];
+const getAvailableRam = (backgroundMode = false) => {
+  const otherScripts = [
+    'augmentations.js',
+    'backdoors.js',
+    'buyPrograms.js',
+    'crime.js',
+    'study.js',
+    'work.js',
+  ];
   const maxRam = ns.getServerMaxRam('home');
 
   let available = maxRam;
@@ -39,10 +46,11 @@ const getAvailableRam = () => {
   available -= ns.getScriptRam('homeAttack.js');
   available -= ns.getScriptRam('masterAttack.js');
   available -= ns.getScriptRam('findContracts.js');
-  available -= ns.getScriptRam('/contracts/SpiralizeMatrix.js');
 
   // allow for any script in sf4 to run on top
   available -= Math.max(...otherScripts.map(f => ns.getScriptRam('/sf4/' + f)));
+
+  available -= backgroundMode ? 32 : 0;
 
   ns.printf('Available Ram: %d/%d GB', available, maxRam);
   return Math.max(0, available);
@@ -56,6 +64,12 @@ export async function main(_ns) {
   ns.kill('miniweaken.js', 'home');
   ns.kill('minigrow.js', 'home');
   ns.kill('minihack.js', 'home');
+
+  const backgroundMode = ns.args[0] === 'bg';
+
+  if (backgroundMode) {
+    ns.tprintf('Running in background mode...');
+  }
 
   const targets = getTargets();
   ns.tprintf('targets: %s', targets);
@@ -83,7 +97,7 @@ export async function main(_ns) {
     securityMin = ns.getServerMinSecurityLevel(target) + 5;
     securityThresh = securityMin + 5;
     securityCurrent = ns.getServerSecurityLevel(target);
-    const availableRAM = getAvailableRam();
+    const availableRAM = getAvailableRam(backgroundMode);
 
     if (ns.getServerSecurityLevel(target) > securityThresh) {
       action = 'weaken';

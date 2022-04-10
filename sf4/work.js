@@ -18,7 +18,7 @@ const fields = [
   'part-time waiter  ',
 ];
 
-const findOrganisations = async (force = false) => {
+export const findOrganisations = async (force = false) => {
   if (!force && ns.fileExists('/data/organisations.txt')) {
     ns.printf('Loading Organisations...');
     return JSON.parse(ns.read('/data/organisations.txt'));
@@ -61,7 +61,7 @@ const findCompanies = async (force = false) => {
       }
     }
 
-    ns.printf('companies: %s', JSON.stringify(companies, null, 4));
+    // ns.printf('companies: %s', JSON.stringify(companies, null, 4));
     await ns.write('/data/companies.txt', JSON.stringify(companies), 'w');
     return companies;
   }
@@ -101,11 +101,11 @@ const findBestJob = async (force = false) => {
   if (jobs[0].workMoneyGainRate == null) {
     for (const job of jobs) {
       const { company, field } = job;
-      ns.printf(
-        'Working at %s as %s...',
-        company.toUpperCase(),
-        field.toUpperCase()
-      );
+      // ns.printf(
+      //   'Working at %s as %s...',
+      //   company.toUpperCase(),
+      //   field.toUpperCase()
+      // );
       ns.applyToCompany(company, field);
       ns.workForCompany(company);
       // await ns.sleep(100);
@@ -133,11 +133,13 @@ export async function main(_ns) {
   ns.disableLog('sleep');
   ns.disableLog('stopAction');
   ns.disableLog('workForCompany');
-  ns.clearLog();
+  // ns.clearLog(); // don't clear log to see previous best jobs
   ns.tail();
 
+  const forceReload = ns.args??[0] === 'reload';
+
   const { company, field, workMoneyGainRate, workRepGainRate } =
-    await findBestJob(false);
+    await findBestJob(forceReload);
   ns.printf(
     'Best job: %s at %s, $%.1f/min, %.0f Rep/min',
     field.toUpperCase(),
