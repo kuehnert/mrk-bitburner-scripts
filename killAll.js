@@ -11,7 +11,7 @@ export async function main(_ns) {
   ns.kill('miniweaken.js', 'home');
   ns.kill('masterAttack.js', 'home');
 
-  let attackerNames = JSON.parse(ns.read('AllServers.txt'))
+  let attackerNames = JSON.parse(ns.read('/data/servers.txt'))
     .filter(s => s.isRoot)
     .map(s => s.name);
   attackerNames = attackerNames.concat(ns.getPurchasedServers());

@@ -2,6 +2,7 @@
 let ns = null;
 
 const SECOND = 1000;
+const MIN_CHANCE_LIMIT = 0.6
 
 const crimesStr = [
   'shoplift',
@@ -30,7 +31,7 @@ const sortCrimes = crimes => {
   return (
     crimes
       .map(c => ({ ...c, profitPerTime: c.stats.money / c.stats.time }))
-      .filter(c => c.chance >= 0.4)
+      .filter(c => c.chance >= MIN_CHANCE_LIMIT)
       // .sort((a, b) => b.chance - a.chance)
       // .slice(0, 4)
       .sort((a, b) => b.profitPerTime - a.profitPerTime)
