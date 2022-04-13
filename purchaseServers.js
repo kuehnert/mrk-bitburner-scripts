@@ -2,6 +2,7 @@ import { formatMoney, formatTime } from 'helpers/formatters';
 
 /** @type import(".").NS */
 let ns = null;
+const scripts = ['minihack.js', 'minigrow.js', 'miniweaken.js'];
 
 export async function main(_ns) {
   ns = _ns;
@@ -49,12 +50,12 @@ export async function main(_ns) {
     ns.exit();
   }
 
-  const currentRAM =
-    ownedServers.length == 0 ? 0 : ns.getServerMaxRam(ownedServers[0]);
-  if (currentRAM >= ram / 2) {
-    ns.printf('Increase from %d GB to %d GB of RAM to small', currentRAM, ram);
-    ns.exit();
-  }
+  // const currentRAM =
+  //   ownedServers.length == 0 ? 0 : ns.getServerMaxRam(ownedServers[0]);
+  // if (currentRAM >= ram / 2) {
+  //   ns.printf('Increase from %d GB to %d GB of RAM to small', currentRAM, ram);
+  //   ns.exit();
+  // }
 
   // delete servers that have less ram
   for (const server of ownedServers) {
@@ -93,7 +94,8 @@ export async function main(_ns) {
 
   ns.print('(Re)starting master attack...');
   ns.kill('masterAttack.js', 'home');
-  await ns.sleep(500);
+  ns.exec('scanServers.js', 'home', 1, 'forceRefresh');
+  await ns.sleep(1000);
   ns.exec('masterAttack.js', 'home');
 
   ns.print('Purchased all possible servers. Exiting');
