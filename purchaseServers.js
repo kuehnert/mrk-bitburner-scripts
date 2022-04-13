@@ -3,13 +3,13 @@ import { formatMoney, formatTime } from 'helpers/formatters';
 /** @type import(".").NS */
 let ns = null;
 
-const scripts = ['minihack.js', 'miniweaken.js', 'minigrow.js'];
-
 export async function main(_ns) {
   ns = _ns;
   ns.disableLog('ALL');
   ns.clearLog();
+  ns.tail();
 
+  const noop = (ns.args[0] || '').toUpperCase() === 'NOOP';
   // How much RAM each purchased server will have. In this case, it'll
   // be 8GB.
   const myMoney = ns.getServerMoneyAvailable('home');
@@ -21,7 +21,7 @@ export async function main(_ns) {
 
   while (
     ram > 1 &&
-    myMoney < 2 * serverLimit * ns.getPurchasedServerCost(ram)
+    (noop || myMoney < 1.5 * serverLimit * ns.getPurchasedServerCost(ram))
   ) {
     ns.printf(
       'Cost for %d servers with %7d GB: %s',
@@ -32,7 +32,17 @@ export async function main(_ns) {
     ram /= 2;
   }
 
-  ns.printf('%s Desired affordable ram now: %d GB', formatTime(ns), ram);
+  if (noop) {
+    ns.exit();
+  }
+
+  ns.printf(
+    '%s Desired RAM now: %d x %d GB => %s',
+    formatTime(ns),
+    serverLimit,
+    ram,
+    formatMoney(serverLimit * ns.getPurchasedServerCost(ram))
+  );
 
   if (ram === 1) {
     ns.printf('Too little money. Exiiting');
@@ -80,6 +90,11 @@ export async function main(_ns) {
       }
     }
   }
+
+  ns.print('(Re)starting master attack...');
+  ns.kill('masterAttack.js', 'home');
+  await ns.sleep(500);
+  ns.exec('masterAttack.js', 'home');
 
   ns.print('Purchased all possible servers. Exiting');
 }

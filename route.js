@@ -14,7 +14,7 @@ export async function main(_ns) {
 
   const target = ns.args[0];
   let command = ns.args[1];
-  const servers = JSON.parse(ns.read('AllServers.txt'));
+  const servers = JSON.parse(ns.read('/data/servers.txt'));
 
   for (const server of servers) {
     if (server.name === target) {

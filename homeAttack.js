@@ -43,6 +43,7 @@ const getAvailableRam = (backgroundMode = false) => {
 
   let available = maxRam;
   // available -= ns.getServerUsedRam('home');
+  available -= ns.getScriptRam('doMilestones.js');
   available -= ns.getScriptRam('homeAttack.js');
   available -= ns.getScriptRam('masterAttack.js');
   available -= ns.getScriptRam('findContracts.js');

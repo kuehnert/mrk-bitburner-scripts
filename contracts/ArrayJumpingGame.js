@@ -21,10 +21,10 @@ export default function ArrayJumpingGame(data, pos = 0) {
   } else {
     for (let i = data[pos]; i > 0; i--) {
       if (ArrayJumpingGame(data, pos + i)) {
-        return true;
+        return 1;
       }
     }
 
-    return false;
+    return 0;
   }
 }

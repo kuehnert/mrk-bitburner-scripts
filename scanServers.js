@@ -1,21 +1,23 @@
+import getServers from '/helpers/getServers';
+import logServer from '/helpers/logServer';
+
 /** @type import(".").NS */
 let ns = null;
-let doneServers;
-let hackingLevel;
-let portLevel;
-let allServers;
 
-const programs = [
-  'BruteSSH.exe',
-  'FTPCrack.exe',
-  'relaySMTP.exe',
-  'HTTPWorm.exe',
-  'SQLInject.exe',
+const MINUTE = 60 * 1000;
+const programs = ns => [
+  { filename: 'BruteSSH.exe', command: ns.brutessh },
+  { filename: 'FTPCrack.exe', command: ns.ftpcrack },
+  { filename: 'RelaySMTP.exe', command: ns.relaysmtp },
+  { filename: 'HTTPWorm.exe', command: ns.httpworm },
+  { filename: 'SQLInject.exe', command: ns.sqlinject },
 ];
 
-function getPortLevel() {
+const files = ['minihack.js', 'minigrow.js', 'miniweaken.js'];
+
+function getMyPortLevel() {
   let pl = 0;
-  while (pl < programs.length > 0 && ns.fileExists(programs[pl], 'home')) {
+  while (pl < programs(ns).length && ns.fileExists(programs(ns)[pl].filename, 'home')) {
     pl++;
   }
 
@@ -23,178 +25,83 @@ function getPortLevel() {
 }
 
 function hackServer(server, portsNeeded) {
-  if (ns.fileExists('BruteSSH.exe', 'home')) {
-    ns.brutessh(server);
-  }
-
-  if (ns.fileExists('FTPCrack.exe', 'home')) {
-    ns.ftpcrack(server);
-  }
-
-  if (ns.fileExists('relaySMTP.exe', 'home')) {
-    ns.relaysmtp(server);
-  }
-
-  if (ns.fileExists('HTTPWorm.exe', 'home')) {
-    ns.httpworm(server);
-  }
-
-  if (ns.fileExists('SQLInject.exe', 'home')) {
-    ns.sqlinject(server);
+  const portLevel = getMyPortLevel();
+  for (let i = 0; i < portLevel; i++) {
+    programs(ns)[i].command(server);
   }
 
   if (portsNeeded <= portLevel) {
     ns.nuke(server);
   }
 
-  // refetch values
   return ns.hasRootAccess(server);
 }
 
 async function copyScripts(server) {
-  const files = ['minihack.js', 'minigrow.js', 'miniweaken.js'];
   await ns.scp(files, server);
 }
 
 async function stealFiles(server) {
-  const files = ns.ls(server, '.lit'); // .concat(ns.ls(server, '.cct'));
-  if (files.length > 0) {
-    // ns.tprintf('Stealing %s from server "%s"...', files, server);
-    await ns.scp(files, server, 'home');
-    // ns.tprintf('Copying Done.');
+  const litFiles = ns.ls(server, '.lit');
+
+  if (litFiles.length > 0) {
+    await ns.scp(litFiles, server, 'home');
   }
 }
 
-function log(index, server) {
-  const {
-    hasBackdoor,
-    depth,
-    hackMoneyPerTime,
-    hackChance,
-    hackTime,
-    isRoot,
-    maxMoney,
-    name,
-    ports,
-    ram,
-    requiredLevel,
-  } = server;
+const calcHackTime = name =>
+  (ns.getHackTime(name) + ns.getWeakenTime(name) + ns.getGrowTime(name)) /
+  MINUTE;
 
-  const isRootStr = isRoot ? 'ROOT' : '    ';
-  const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
+const analyseServer = server => {
+  const { name } = server;
+  const serverData = ns.getServer(name);
 
-  const isCandidate =
-    hackMoneyPerTime > 0 && portLevel >= ports && hackingLevel >= requiredLevel;
+  let newServer = { ...server };
+  newServer.ram = ns.getServerMaxRam(name);
+  newServer.maxMoney = ns.getServerMaxMoney(name);
+  newServer.money = ns.getServerMoneyAvailable(name) / 1000.0;
+  newServer.portsNeeded = ns.getServerNumPortsRequired(name);
+  newServer.hackTime = calcHackTime(name);
+  newServer.hackLevel = serverData.requiredHackingSkill;
+  newServer.hasBackdoor = serverData.backdoorInstalled;
+  newServer.hackPercentage = ns.hackAnalyze(name);
+  newServer.hackMoney = newServer.maxMoney * newServer.hackPercentage;
+  newServer.hackChance = ns.hackAnalyzeChance(name);
+  newServer.hackMoneyPerTime = newServer.hackMoney / newServer.hackTime;
+  newServer.isRoot =
+    ns.hasRootAccess(name) || hackServer(name, newServer.portsNeeded);
+  newServer.organizationName = serverData.organizationName;
 
-  const candidateStr = isCandidate ? '*' : ' ';
+  return newServer;
+};
 
-  // ns.tprintf(JSON.stringify(server, null, 4));
-
-  ns.tprintf(
-    "%s%2d %2d %-18s %d Ports, level %4d, %s %s, %4f GB, $%13.0f, %6.2f', $%9.2f, %3.0f%%",
-    candidateStr,
-    index,
-    depth,
-    name,
-    ports,
-    requiredLevel,
-    isRootStr,
-    hasBackdoorStr,
-    ram,
-    maxMoney,
-    hackTime,
-    hackMoneyPerTime / 1000.0,
-    hackChance * 100.0
-  );
-}
-
-async function scanServer(server, depth, path = []) {
-  if (server.match('pserv')) {
-    return;
-  }
-
-  const serverData = ns.getServer(server);
-  // ns.tprintf('server %s: %s', server, JSON.stringify(serverData, null, 4));
-
-  const ram = ns.getServerMaxRam(server);
-  const maxMoney = ns.getServerMaxMoney(server);
-  const money = ns.getServerMoneyAvailable(server) / 1000.0;
-  const portsNeeded = ns.getServerNumPortsRequired(server);
-  const hackTime =
-    (ns.getHackTime(server) +
-      ns.getWeakenTime(server) +
-      ns.getGrowTime(server)) /
-    1000 /
-    60.0;
-  // const mmoney = ns.getHa
-  const hackLevel = serverData.requiredHackingSkill;
-  const hasBackdoor = serverData.backdoorInstalled;
-  const hackPercentage = ns.hackAnalyze(server);
-  const hackMoney = maxMoney * hackPercentage;
-  const hackChance = ns.hackAnalyzeChance(server);
-  const hackMoneyPerTime = hackMoney / hackTime;
-  const isRoot = ns.hasRootAccess(server) || hackServer(server, portsNeeded);
-  const organizationName = serverData.organizationName;
-
-  await stealFiles(server);
-  await copyScripts(server);
-
-  allServers.push({
-    depth,
-    hackChance,
-    hackMoneyPerTime,
-    hackPercentage,
-    hackTime,
-    hasBackdoor,
-    isRoot,
-    maxMoney,
-    money,
-    name: server,
-    organizationName,
-    path,
-    ports: portsNeeded,
-    ram,
-    requiredLevel: hackLevel,
-  });
-
-  // scan for connected servers
-  let servers = ns.scan(server);
-  path.push(server);
-  for (const remote of servers) {
-    if (!doneServers.includes(remote)) {
-      doneServers.push(remote);
-      await scanServer(remote, depth + 1, JSON.parse(JSON.stringify(path)));
-    }
-  }
-  path.pop();
-}
+const getServersDetailed = async () => {
+  const servers = await getServers(ns);
+  return servers.slice(1).map(s => analyseServer(s));
+};
 
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
+  ns.disableLog('disableLog');
+  ns.disableLog('getServerMaxRam');
+  ns.disableLog('getServerMaxMoney');
+  ns.disableLog('getServerMoneyAvailable');
+  ns.disableLog('getServerNumPortsRequired');
+  ns.disableLog('getHackingLevel');
+  ns.disableLog('scp');
 
-  const servers = ns.scan('home');
-  doneServers = ['home'];
-  allServers = [];
+  let detailedServers = await getServersDetailed();
 
-  hackingLevel = ns.getHackingLevel();
-  portLevel = getPortLevel();
-
-  ns.tprintf('Current port level: %d', portLevel);
-  ns.tprintf('Current hacking level: %d', hackingLevel);
-
-  for (const remote of servers) {
-    if (!doneServers.includes(remote)) {
-      doneServers.push(remote);
-      await scanServer(remote, 0);
-    }
+  for (const { name } of detailedServers) {
+    await stealFiles(name);
+    await copyScripts(name);
   }
 
-  // Save all servers to text file
-  await ns.write('/data/servers.txt', JSON.stringify(allServers), 'w');
-
   // Pick three most lucrative targets and save them to file
-  const lucrativeServers = allServers
+  const hackingLevel = ns.getHackingLevel();
+  const lucrativeServers = detailedServers
     .filter(
       s =>
         s.isRoot &&
@@ -212,20 +119,26 @@ export async function main(_ns) {
   );
 
   if (ns.args[0] === 'levels') {
-    allServers = allServers.sort((a, b) => a.requiredLevel - b.requiredLevel);
+    detailedServers = detailedServers.sort(
+      (a, b) => a.requiredLevel - b.requiredLevel
+    );
   } else if (ns.args[0] === 'milestones') {
-    allServers = allServers.filter(s =>
+    detailedServers = detailedServers.filter(s =>
       s.name.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/)
     );
   } else if (ns.args[0] === 'targets') {
-    allServers = lucrativeServers;
+    detailedServers = lucrativeServers;
   } else if (ns.args[0] === 'quiet') {
     ns.exit();
   } else {
-    allServers = allServers.sort((a, b) => (b.name > a.name ? -1 : 1));
+    detailedServers = detailedServers.sort((a, b) =>
+      b.name > a.name ? -1 : 1
+    );
   }
 
-  for (let i = 0; i < allServers.length; i++) {
-    log(i, allServers[i]);
+  ns.printf('getMyPortLevel(): %s', JSON.stringify(getMyPortLevel(), null, 4));
+
+  for (let i = 0; i < detailedServers.length; i++) {
+    logServer(ns, getMyPortLevel(), i, detailedServers[i]);
   }
 }

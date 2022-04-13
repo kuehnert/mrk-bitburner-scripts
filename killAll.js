@@ -1,6 +1,6 @@
 /** @type import(".").NS */
 let ns = null;
-
+// hallo
 export async function main(_ns) {
   ns = _ns;
   // ns.disableLog('ALL');
