@@ -7,18 +7,21 @@ export async function main(_ns) {
   ns = _ns;
   ns.disableLog('disableLog');
   ns.disableLog('getHackingLevel');
+  ns.disableLog('getServerMaxMoney');
+  ns.disableLog('getServerMaxRam');
+  ns.disableLog('getServerMoneyAvailable');
+  ns.disableLog('getServerNumPortsRequired');
   ns.clearLog();
   ns.tail();
 
   const hackLevel = ns.getHackingLevel();
   let servers = await getServersDetailed(ns);
-  // ns.printf('servers: %s', JSON.stringify(servers, null, 4));
 
   servers = servers.filter(
     s => s.isRoot && !s.hasBackdoor && s.hackLevel <= hackLevel
   );
 
-  ns.printf('INFO Able to install backdoors on %d servers', servers.length);
+  ns.printf('INFO installing backdoors on %d servers: %s', servers.length, servers.map(s => s.name).join(", ").toUpperCase());
 
   for (const server of servers) {
     const { route } = server;

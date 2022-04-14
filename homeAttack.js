@@ -44,9 +44,10 @@ const getAvailableRam = (backgroundMode = false) => {
   let available = maxRam;
   // available -= ns.getServerUsedRam('home');
   available -= ns.getScriptRam('doMilestones.js');
+  available -= ns.getScriptRam('findContracts.js');
   available -= ns.getScriptRam('homeAttack.js');
   available -= ns.getScriptRam('masterAttack.js');
-  available -= ns.getScriptRam('findContracts.js');
+  available -= ns.getScriptRam('scanServers.js');
 
   // allow for any script in sf4 to run on top
   available -= Math.max(...otherScripts.map(f => ns.getScriptRam('/sf4/' + f)));

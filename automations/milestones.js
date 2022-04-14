@@ -92,7 +92,7 @@ export default [
       university: 'rothman university',
       course: 'leadership',
     },
-    // doneExpression: 'ns.getPlayer().charisma >= 50',
+    doneExpression: 'ns.getPlayer().charisma >= 50',
   },
   {
     action: 'installBackdoor',
