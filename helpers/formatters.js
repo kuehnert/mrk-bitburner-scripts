@@ -1,4 +1,4 @@
-export const formatTime = (ns) => {
+export const formatTime = ns => {
   const time = new Date();
 
   return ns.sprintf(
@@ -10,14 +10,18 @@ export const formatTime = (ns) => {
 };
 
 export const formatMoney = money => {
-  const prefixes = ['', 'k', 'm', 'b', 't', 'q'];
+  return '$' + formatNumber(money);
+};
 
+const prefixes = ['', 'k', 'm', 'b', 't', 'q'];
+
+export const formatNumber = number => {
   for (let i = 0; i < prefixes.length; i++) {
-    if (Math.abs(money) < 1000) {
-      return `\$${Math.floor(money * 1000) / 1000}${prefixes[i]}`;
+    if (Math.abs(number) < 1000) {
+      return `${Math.floor(number * 1000) / 1000}${prefixes[i]}`;
     } else {
-      money /= 1000;
+      number /= 1000;
     }
   }
-  return `\$${Math.floor(money * 1000) / 1000}${prefixes[prefixes.length - 1]}`;
+  return `${Math.floor(number * 1000) / 1000}${prefixes[prefixes.length - 1]}`;
 };
