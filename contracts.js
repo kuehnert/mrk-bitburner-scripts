@@ -6,12 +6,14 @@ import AlgorithmicStockTraderII from '/contracts/AlgorithmicStockTraderII';
 import AlgorithmicStockTraderIII from '/contracts/AlgorithmicStockTraderIII';
 import AlgorithmicStockTraderIV from '/contracts/AlgorithmicStockTraderIV';
 import ArrayJumpingGame from '/contracts/ArrayJumpingGame';
+import ArrayJumpingGameII from '/contracts/ArrayJumpingGameII';
 import FindAllValidMathExpressions from '/contracts/FindAllValidMathExpressions';
 import FindLargestPrimeFactor from '/contracts/FindLargestPrimeFactor';
 import GenerateIPAddresses from '/contracts/GenerateIPAddresses';
 import MergeOverlappingIntervals from '/contracts/MergeOverlappingIntervals';
 import MinimumPathSuminaTriangle from '/contracts/MinimumPathSuminaTriangle';
 import SanitizeParenthesesinExpression from '/contracts/SanitizeParenthesesinExpression';
+import ShortestPathinaGrid from '/contracts/ShortestPathinaGrid';
 import SpiralizeMatrix from '/contracts/SpiralizeMatrix';
 import SubarraywithMaximumSum from '/contracts/SubarraywithMaximumSum';
 import TotalWaystoSum from '/contracts/TotalWaystoSum';
@@ -22,6 +24,7 @@ const ONE_MINUTE = 60000;
 const SLEEP_TIME = 10 * ONE_MINUTE;
 let doneServers;
 let contracts;
+const impossible = [];
 
 async function scanContractServers(server, path = []) {
   if (server.match('pserv')) {
@@ -54,24 +57,16 @@ async function scanContractServers(server, path = []) {
   }
 }
 
-const logContract = ({ file, server, path }) => {
-  ns.print(
-    JSON.stringify(ns.codingcontract.getContractType(file, server), null, 4)
-  );
-  ns.print(ns.codingcontract.getData(file, server));
-  ns.print(path);
-};
-
 const solveContract = async contract => {
   const { file, server } = contract;
   const type = ns.codingcontract.getContractType(file, server);
   contract.input = ns.codingcontract.getData(file, server);
   const scriptName = '/contracts/' + type.replaceAll(' ', '') + '.js';
 
-  ns.print(scriptName);
-
-  if (ns.fileExists(scriptName)) {
-    ns.print('\nI know how to handle this: ' + type);
+  if (impossible.find(c => c.type === type)) {
+    ns.print('.');
+  } else if (ns.fileExists(scriptName)) {
+    ns.print('INFO Solving contract of type ' + type);
     const call = ns.sprintf(
       '%s(%s)',
       type.replaceAll(' ', ''),
@@ -84,20 +79,30 @@ const solveContract = async contract => {
     const result = ns.codingcontract.attempt(solution, file, server, {
       returnReward: true,
     });
-    ns.tprintf('Coding Contract: %s', result);
+    ns.printf('Coding Contract: %s', JSON.stringify(result, null, 4));
+    ns.tprintf('Coding Contract: %s', JSON.stringify(result, null, 4));
   } else {
-    ns.print("No idea, chum. You're on your own.");
-    logContract(contract);
-  }
+    ns.printf(
+      "WARN Don't know how to solve %s yet. Saving it in /data/unknown_contracts.txt.",
+      type.toUpperCase()
+    );
+    // contract.description = ns.codingcontract.getDescription(file, server);
+    contract.type = type;
 
-  await ns.sleep(5000);
+    ns.printf('contract: %s', JSON.stringify(contract, null, 4));
+    impossible.push(contract);
+    await ns.write(
+      '/data/unknown_contracts.txt',
+      JSON.stringify(impossible),
+      'w'
+    );
+  }
 };
 
 export async function main(_ns) {
   ns = _ns;
   ns.disableLog('scan');
   ns.disableLog('sleep');
-  ns.disableLog('asleep');
   ns.disableLog('exec');
   ns.clearLog();
 
@@ -112,15 +117,22 @@ export async function main(_ns) {
       await scanContractServers(remote, []);
     }
 
-    if (contracts.length === 0) {
+    // remove known unsolvable contracts
+    contracts = contracts.filter(c => impossible.find(e => e.file === c.file));
+
+    if (ns.args[0] === 'noop') {
+      ns.tprintf(
+        'Found %d contracts:\n%s',
+        contracts.length,
+        JSON.stringify(contracts, null, 4)
+      );
+      ns.exit();
+    } else if (contracts.length === 0) {
       ns.printf(
         'No contracts, sleeping %d minutes...',
         SLEEP_TIME / ONE_MINUTE
       );
       await ns.sleep(SLEEP_TIME);
-    } else if (ns.args[0] === 'noop') {
-      ns.tprint(JSON.stringify(contracts, null, 4));
-      ns.exit();
     } else {
       ns.printf('Found ' + contracts.length + ' contracts: ');
       for (let i = 0; i < contracts.length; i++) {
