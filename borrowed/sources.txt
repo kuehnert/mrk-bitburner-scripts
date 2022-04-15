@@ -1,0 +1,5 @@
+Flags API
+https://www.reddit.com/r/Bitburner/comments/u3s4o0/flags_sharing_info_and_tips/
+
+Singularity Functions
+https://www.reddit.com/r/Bitburner/comments/sfrnz3/an_example_bitburner_script_that_uses_the/

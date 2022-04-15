@@ -1,3 +1,7 @@
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+
 export const formatTime = ns => {
   const time = new Date();
 
@@ -6,6 +10,21 @@ export const formatTime = ns => {
     time.getHours(),
     time.getMinutes(),
     time.getSeconds()
+  );
+};
+
+export const formatDuration = (ns, durationMs) => {
+  const hours = Math.floor(durationMs / HOUR);
+  durationMs %= HOUR;
+  const minutes = Math.floor(durationMs / MINUTE);
+  durationMs %= MINUTE;
+  let seconds = Math.floor(durationMs / SECOND);
+
+  return ns.sprintf(
+    '%d:%02d:%02d',
+    hours,
+    minutes,
+    seconds
   );
 };
 

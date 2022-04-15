@@ -1,4 +1,4 @@
-import getServers, { getServersDetailed } from '/helpers/getServers';
+import { getServersDetailed } from '/helpers/getServers';
 import logServer from '/helpers/logServer';
 
 /** @type import(".").NS */
@@ -12,7 +12,15 @@ const programs = ns => [
   { filename: 'SQLInject.exe', command: ns.sqlinject },
 ];
 
-const files = ['minihack.js', 'minigrow.js', 'miniweaken.js'];
+const files = [
+  'minihack.js',
+  'minigrow.js',
+  'miniweaken.js',
+  '/newserver/OP.js',
+  '/newserver/grow.js',
+  '/newserver/hack.js',
+  '/newserver/weaken.js',
+];
 
 function getMyPortLevel() {
   let pl = 0;
@@ -85,11 +93,11 @@ export async function main(_ns) {
         s.hackTime < 15 // less than fifteen minutes
     )
     .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime)
-    .slice(0, 3);
+    .slice(0, 5);
 
   await ns.write(
     '/data/targets.txt',
-    JSON.stringify(lucrativeServers.map(s => s.name)),
+    JSON.stringify(lucrativeServers.slice(0, 2).map(s => s.name)),
     'w'
   );
 
