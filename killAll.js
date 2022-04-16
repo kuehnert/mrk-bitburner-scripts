@@ -10,6 +10,10 @@ export async function main(_ns) {
   ns.kill('minihack.js', 'home');
   ns.kill('miniweaken.js', 'home');
   ns.kill('masterAttack.js', 'home');
+  ns.kill('primeServer.js', 'home');
+  ns.kill('/newserver/hack.js', 'home');
+  ns.kill('/newserver/grow.js', 'home');
+  ns.kill('/newserver/weaken.js', 'home');
 
   let attackerNames = JSON.parse(ns.read('/data/servers.txt'))
     .filter(s => s.isRoot)

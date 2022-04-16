@@ -2,7 +2,7 @@
 let ns = null;
 let _servers = null;
 const MINUTE = 60 * 1000;
-const filename = "/data/routes.txt";
+const filename = '/data/routes.txt';
 
 const findServers = (node, done = [node], route = []) => {
   const connected = ns.scan(node).filter(s => !done.includes(s));
@@ -52,8 +52,7 @@ const analyseServer = server => {
   newServer.hackMoney = newServer.maxMoney * newServer.hackPercentage;
   newServer.hackChance = ns.hackAnalyzeChance(name);
   newServer.hackMoneyPerTime = newServer.hackMoney / newServer.hackTime;
-  newServer.isRoot =
-    ns.hasRootAccess(name) || hackServer(name, newServer.portsNeeded);
+  newServer.isRoot = ns.hasRootAccess(name);
   newServer.organizationName = serverData.organizationName;
 
   return newServer;

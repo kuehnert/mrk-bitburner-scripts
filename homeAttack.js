@@ -1,20 +1,24 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { formatMoney, SECOND } from '/helpers/formatters';
+
 const log = (
+  targetName,
   action,
   moneyCurrent,
-  moneyThresh,
+  moneyMax,
   securityCurrent,
   securityThresh,
   sleep,
   threads
 ) => {
   ns.printf(
-    '%-6s: $%sk/$%sk, security: %.0f/%.0f, %s, %d t',
+    '%-6s: %12s money %s/%s, security: %2.1f/%2.1f, %s, %d t',
+    targetName,
     action.toUpperCase(),
-    ns.nFormat(moneyCurrent / 1000.0, '0,0'),
-    ns.nFormat(moneyThresh / 1000.0, '0,0'),
+    formatMoney(moneyCurrent),
+    formatMoney(moneyMax),
     // ns.nFormat(moneyMax / 1000.0, '0,0'),
     securityCurrent,
     securityThresh,
@@ -54,7 +58,7 @@ const getAvailableRam = (backgroundMode = false) => {
 
   available -= backgroundMode ? 32 : 0;
 
-  ns.printf('Available Ram: %d/%d GB', available, maxRam);
+  // ns.printf('Available Ram: %d/%d GB', available, maxRam);
   return Math.max(0, available);
 };
 
@@ -68,12 +72,16 @@ export async function main(_ns) {
   ns.kill('minihack.js', 'home');
 
   const backgroundMode = ns.args[0] === 'bg';
+  let targets;
 
   if (backgroundMode) {
     ns.tprintf('Running in background mode...');
+  } else if (ns.args) {
+    targets = ns.args;
+  } else {
+    targets = getTargets();
   }
 
-  const targets = getTargets();
   ns.tprintf('targets: %s', targets);
 
   let action;
@@ -88,24 +96,40 @@ export async function main(_ns) {
   let target;
   let threads;
 
+  for (const targetName of targets) {
+    ns.printf('INFO PRIMING server %s...', targetName);
+    const pid = ns.run('primeServer.js', 1, targetName);
+    while (ns.isRunning(pid)) {
+      await ns.sleep(SECOND);
+    }
+  }
+
   // Infinite loop that continously hacks/grows/weakens the target server
   while (true) {
     counter = (counter + 1) % targets.length;
     target = targets[counter];
 
     moneyMax = ns.getServerMaxMoney(target);
-    moneyThresh = moneyMax * 0.8;
+    moneyThresh = moneyMax * 0.9;
     moneyCurrent = ns.getServerMoneyAvailable(target);
-    securityMin = ns.getServerMinSecurityLevel(target) + 5;
-    securityThresh = securityMin + 5;
+
+    securityMin = ns.getServerMinSecurityLevel(target);
+    securityThresh = securityMin + 1.0;
     securityCurrent = ns.getServerSecurityLevel(target);
+
     const availableRAM = getAvailableRam(backgroundMode);
 
     if (ns.getServerSecurityLevel(target) > securityThresh) {
       action = 'weaken';
       sleepTime = ns.getWeakenTime(target);
       const cost = ns.getScriptRam('miniweaken.js');
-      threads = Math.floor(availableRAM / cost);
+      const maxThreads = Math.floor(availableRAM / cost);
+
+      // const weakenThreads = Math.round((growThreads / 0.05) * 0.002); // 1 grow increases security by 0.05, 1 weaken reduces 0.02
+      const weakenDifference = securityCurrent - securityMin;
+      const weakenThreads = Math.round(weakenDifference / 0.02);
+      threads = Math.min(maxThreads, weakenThreads);
+
       if (threads > 0) {
         ns.exec('miniweaken.js', 'home', threads, target);
       }
@@ -113,7 +137,11 @@ export async function main(_ns) {
       action = 'grow';
       sleepTime = ns.getGrowTime(target);
       const cost = ns.getScriptRam('minigrow.js');
-      threads = Math.floor(availableRAM / cost);
+      const maxThreads = Math.floor(availableRAM / cost);
+
+      const growPercent = ns.formulas.hacking.growPercent(ns.getServer(target), 1, ns.getPlayer());
+      threads = Math.min(maxThreads, Math.round(Math.log(2) / Math.log(growPercent)));
+
       if (threads > 0) {
         ns.exec('minigrow.js', 'home', threads, target);
       }
@@ -121,23 +149,17 @@ export async function main(_ns) {
       action = 'hack';
       sleepTime = ns.getHackTime(target);
       const cost = ns.getScriptRam('minihack.js');
-      threads = Math.floor(availableRAM / cost);
+      const maxThreads = Math.floor(availableRAM / cost);
+      const hackPercent = ns.formulas.hacking.hackPercent(ns.getServer(target), ns.getPlayer());
+      threads = Math.min(maxThreads, Math.round(0.5 / hackPercent));
 
       if (threads > 0) {
         ns.exec('minihack.js', 'home', threads, target);
       }
     }
 
-    log(
-      action,
-      moneyCurrent,
-      moneyThresh,
-      securityCurrent,
-      securityThresh,
-      sleepTime,
-      threads
-    );
+    log(target, action, moneyCurrent, moneyMax, securityCurrent, securityMin, sleepTime, threads);
 
-    await ns.sleep(sleepTime + 50);
+    await ns.sleep(sleepTime + 100);
   }
 }

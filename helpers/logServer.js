@@ -1,6 +1,6 @@
 /** @type import(".").NS */
 let ns = null;
-
+import {formatMoney} from '/helpers/formatters'
 export default function logServer(ns, myPortLevel, index, server) {
   const {
     hackChance,
@@ -24,7 +24,7 @@ export default function logServer(ns, myPortLevel, index, server) {
   const candidateStr = isCandidate ? '*' : ' ';
 
   ns.tprintf(
-    "%s%2d %-18s %d Ports, level %4d, %s %s, %4f GB, $%13.0f, %6.2f', $%9.2f, %3.0f%%",
+    "%s%2d %-18s %d Ports, level %4d, %s %s, %4f GB, %s, %6.2f', $%9.2f, %3.0f%%",
     candidateStr,
     index,
     name,
@@ -33,7 +33,7 @@ export default function logServer(ns, myPortLevel, index, server) {
     isRootStr,
     hasBackdoorStr,
     ram,
-    maxMoney,
+    formatMoney(maxMoney),
     hackTime,
     hackMoneyPerTime / 1000.0,
     hackChance * 100.0

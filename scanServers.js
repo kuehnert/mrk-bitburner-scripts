@@ -59,6 +59,10 @@ async function stealFiles(server) {
   }
 }
 
+export function autocomplete() {
+  return ['levels', 'money', 'milestones', 'quiet', 'targets']; // This script autocompletes the list of servers.
+}
+
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
@@ -77,6 +81,7 @@ export async function main(_ns) {
   for (const { name } of detailedServers) {
     await stealFiles(name);
     await copyScripts(name);
+    hackServer(name);
   }
 
   // ns.printf('detailedServers: %s', JSON.stringify(detailedServers, null, 4));
@@ -107,6 +112,13 @@ export async function main(_ns) {
     detailedServers = detailedServers.filter(s =>
       s.name.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/)
     );
+  } else if (ns.args[0] === 'money') {
+    detailedServers = detailedServers
+      .filter(
+        s =>
+          s.maxMoney > 0 && s.hackLevel <= hackingLevel && s.hackChance >= 0.8
+      )
+      .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
   } else if (ns.args[0] === 'targets') {
     detailedServers = lucrativeServers;
   } else if (ns.args[0] === 'quiet') {
