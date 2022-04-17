@@ -1,7 +1,10 @@
-/** @type import(".").NS */
+/** @type import("..").NS */
 let ns = null;
-import {formatMoney} from '/helpers/formatters'
-export default function logServer(ns, myPortLevel, index, server) {
+
+import { formatMoney } from '/helpers/formatters';
+
+export default function logServer(_ns, myPortLevel, index, server) {
+  ns = _ns;
   const {
     hackChance,
     hackLevel,
@@ -18,13 +21,18 @@ export default function logServer(ns, myPortLevel, index, server) {
   const isRootStr = isRoot ? 'ROOT' : '    ';
   const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
   const isCandidate =
-    hackMoneyPerTime > 0 &&
-    myPortLevel >= portsNeeded &&
-    ns.getHackingLevel() >= hackLevel;
-  const candidateStr = isCandidate ? '*' : ' ';
+    hackMoneyPerTime > 0 && myPortLevel >= portsNeeded && ns.getHackingLevel() >= hackLevel;
+  let candidateStr = ' ';
+  const isAttacked = ns.getPurchasedServers().includes('Attack' + name.toUpperCase());
+
+  if (isAttacked) {
+    candidateStr = 'A';
+  } else if (isCandidate) {
+    candidateStr = '*';
+  }
 
   ns.tprintf(
-    "%s%2d %-18s %d Ports, level %4d, %s %s, %4f GB, %s, %6.2f', $%9.2f, %3.0f%%",
+    "%s%2d %-18s %d Ports, level %4d, %s %s, %4f GB, %9s, %6.2f', %9s, %3.0f%%",
     candidateStr,
     index,
     name,
@@ -33,9 +41,9 @@ export default function logServer(ns, myPortLevel, index, server) {
     isRootStr,
     hasBackdoorStr,
     ram,
-    formatMoney(maxMoney),
+    formatMoney(ns, maxMoney),
     hackTime,
-    hackMoneyPerTime / 1000.0,
+    formatMoney(ns, hackMoneyPerTime),
     hackChance * 100.0
   );
 }

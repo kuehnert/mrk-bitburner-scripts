@@ -84,8 +84,8 @@ export async function main(_ns) {
       if (prereq.money > money) {
         ns.printf(
           'WARNING Too little money (%s / %s). Exiting.',
-          formatMoney(prereq.money),
-          formatMoney(money)
+          formatMoney(ns, prereq.money),
+          formatMoney(ns, money)
         );
         ns.exit();
       }

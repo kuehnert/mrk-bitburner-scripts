@@ -1,7 +1,6 @@
 /** @type import(".").NS */
 let ns = null;
 
-// import { formatMoney, formatNumber, formatDuration } from '/helpers/formatters';
 import { calcTotalRamCost } from '/helpers/ramCalculations';
 export const autocomplete = data => [...data.servers];
 

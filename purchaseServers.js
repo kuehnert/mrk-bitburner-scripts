@@ -22,7 +22,7 @@ const buyServers = async () => {
       'Cost for %d servers with %7d GB: %s',
       serverLimit,
       ram,
-      formatMoney(serverLimit * ns.getPurchasedServerCost(ram))
+      formatMoney(ns, serverLimit * ns.getPurchasedServerCost(ram))
     );
 
     ram /= 2;
@@ -37,7 +37,7 @@ const buyServers = async () => {
     formatTime(ns),
     serverLimit,
     ram,
-    formatMoney(serverLimit * ns.getPurchasedServerCost(ram))
+    formatMoney(ns, serverLimit * ns.getPurchasedServerCost(ram))
   );
 
   if (ram === 1) {
@@ -121,7 +121,7 @@ const getServerCost = () => {
 
   while (ram > 1) {
     const cost = ns.getPurchasedServerCost(ram);
-    const costStr = formatMoney(cost);
+    const costStr = formatMoney(ns, cost);
     const affordable = Math.floor(myMoney / cost);
     ns.tprintf('Cost for 1 server with %7d GB: %9s (%5d affordable)', ram, costStr, affordable);
     ram /= 2;

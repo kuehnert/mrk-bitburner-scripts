@@ -1,7 +1,7 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { formatMoney, formatNumber, formatDuration } from '/helpers/formatters';
+import { formatNumber } from '/helpers/formatters';
 
 // source: https://www.reddit.com/r/Bitburner/comments/rm48o1/the_best_hacking_approach_ive_seen_so_far/
 // https://pastebin.com/nRv0VtQm
@@ -70,9 +70,7 @@ export async function main(_ns) {
   weakenThreads = Math.round(weakenThreads - growThreads * 0.004); //Getting required threads to fully weaken the server
 
   var totalRamForRun =
-    hackscriptRam * hackThreads +
-    growscriptRam * growThreads +
-    weakenscriptRam * weakenThreads; //Calculating how much RAM is used for a single run
+    hackscriptRam * hackThreads + growscriptRam * growThreads + weakenscriptRam * weakenThreads; //Calculating how much RAM is used for a single run
   var sleepTime = WeakenTime / (maxRam / totalRamForRun); //finding how many runs this server can handle and setting the time between run execution
 
   //if (sleepTime<500) // Testing forcing a min sleep time of 500 ms
@@ -86,7 +84,11 @@ export async function main(_ns) {
 
   ns.printf('shiftCount: %s', JSON.stringify(shiftCount, null, 4));
   if (shiftCount < 1) {
-    ns.printf('Too little RAM (%s/%s). Exiting.', formatNumber(totalRamForRun), formatNumber(maxRam));
+    ns.printf(
+      'Too little RAM (%s/%s). Exiting.',
+      formatNumber(ns, totalRamForRun),
+      formatNumber(ns, maxRam)
+    );
     ns.exit();
   }
 
@@ -98,14 +100,7 @@ export async function main(_ns) {
 
     if (totalRamForRun >= maxRam - UsedRam == false) {
       //making sure I have enough RAM to do a full run
-      ns.exec(
-        '/newserver/weaken.js',
-        server2,
-        weakenThreads,
-        server,
-        wsleep,
-        i
-      );
+      ns.exec('/newserver/weaken.js', server2, weakenThreads, server, wsleep, i);
       ns.exec('/newserver/grow.js', server2, growThreads, server, gsleep, i);
       ns.exec('/newserver/hack.js', server2, hackThreads, server, hsleep, i);
 

@@ -12,7 +12,7 @@ const formatAugmentation = (
   return ns.sprintf(
     '%s, %s, %d/%d',
     name,
-    formatMoney(price),
+    formatMoney(ns, price),
     reputationRequired,
     factionRep
   );
@@ -125,7 +125,7 @@ export default async function purchaseAugmentations(_ns, faction) {
       'INFO Purchasing %s from faction %s for %s...',
       augName,
       faction,
-      formatMoney(purchasable[0].price)
+      formatMoney(ns, purchasable[0].price)
     );
     const result = ns.purchaseAugmentation(faction, augName);
 

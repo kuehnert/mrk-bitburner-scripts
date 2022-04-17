@@ -1,7 +1,7 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { formatMoney, formatNumber, formatDuration } from 'helpers/formatters';
+import { formatMoney } from 'helpers/formatters';
 import { calcTotalRamCost } from 'helpers/ramCalculations';
 
 export const autocomplete = data => [...data.servers];
@@ -32,7 +32,7 @@ const purchaseServer = (sourceName, targetName) => {
   ns.tprintf('Determining hacking memory requirements...');
   const { serverSizeRequired } = calcTotalRamCost(ns, targetName);
   const cost = ns.getPurchasedServerCost(serverSizeRequired);
-  ns.tprintf('We need a server with %d GB. Cost %s.', serverSizeRequired, formatMoney(cost));
+  ns.tprintf('We need a server with %d GB. Cost %s.', serverSizeRequired, formatMoney(ns, cost));
 
   const myMoney = ns.getServerMoneyAvailable('home');
   if (cost > myMoney) {

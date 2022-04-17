@@ -1,7 +1,8 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { formatMoney } from '/helpers/formatters';
+// import { formatMoney } from '/helpers/formatters';
+/*
 import purchaseTor from '/automations/purchaseTor';
 import gymWorkout from '/automations/gymWorkout';
 import universityCourse from '/automations/universityCourse';
@@ -9,6 +10,7 @@ import purchaseProgram from '/automations/purchaseProgram';
 import installBackdoor from '/automations/installBackdoor';
 import purchaseAugmentations from '/automations/purchaseAugmentations';
 import runScript from '/automations/runScript';
+*/
 
 export const MILLION = 1000000;
 
@@ -25,8 +27,6 @@ export default [
   },
   { action: 'runScript', params: { script: 'scanServers.js', args: 'quiet' } },
   { action: 'runScript', params: { script: 'contracts.js' } },
-  // { action: 'runScript', params: { script: 'homeAttack.js', args: 'bg' } },
-  // { action: 'runScript', params: { script: 'masterAttack.js' } },
   {
     action: 'purchaseTor',
     prereq: { money: 200000 },
@@ -110,7 +110,7 @@ export default [
     prereq: { faction: 'BitRunners' },
   },
 
-  // // augmentations from ??
+  // // augmentations from Daedalus
 
   { action: 'installBackdoor', params: 'The-Cave', prereq: { hacking: 925 } },
 ];

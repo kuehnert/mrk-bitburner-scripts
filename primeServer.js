@@ -1,8 +1,6 @@
 /** @type import(".").NS */
 let ns = null;
 
-// import { formatMoney, SECOND } from 'helpers/formatters';
-// import { getGrowPercent, getHackPercent } from 'helpers/fakeFormulas';
 import logServerInfo, { isServerPrimed } from 'helpers/logServerInfo';
 
 const runWeaken = (sourceName, targetName, weakenThreads) => {

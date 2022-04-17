@@ -1,34 +1,13 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { formatMoney, formatTime } from 'helpers/formatters';
+
 const BUY_FORECAST_LIMIT = 0.6;
 const SELL_FORECAST_LIMIT = 0.4;
 const SELL_PROFIT_PERCENTAGE = 0.05; // sell at 20% profit
 const COMMISSION = 100000;
 const SLEEPTIME = 6 * 1000;
-
-const formatTime = () => {
-  const time = new Date();
-
-  return ns.sprintf(
-    '%d:%02d:%02d',
-    time.getHours(),
-    time.getMinutes(),
-    time.getSeconds()
-  );
-};
-
-function formatMoney(money) {
-  const prefixes = ['', 'k', 'm', 'b', 't', 'q'];
-  for (let i = 0; i < prefixes.length; i++) {
-    if (Math.abs(money) < 1000) {
-      return `\$${Math.floor(money * 10) / 10}${prefixes[i]}`;
-    } else {
-      money /= 1000;
-    }
-  }
-  return `\$${Math.floor(money * 10) / 10}${prefixes[prefixes.length - 1]}`;
-}
 
 const prerequisites = () => {
   let result = ns.stock.purchaseWseAccount();
@@ -73,8 +52,8 @@ const printStock = ({
     warningStage,
     symbol,
     shares,
-    formatMoney(avgPrice),
-    formatMoney(value),
+    formatMoney(ns, avgPrice),
+    formatMoney(ns, value),
     forecast * 100.0,
     profitPerc * 100.0
   );
@@ -94,9 +73,9 @@ export async function main(_ns) {
   let PORTFOLIO_MAX = Math.floor(myMoney / 4.0);
   let ORDER_SIZE = PORTFOLIO_MAX / 100;
 
-  ns.printf('My money: %s', formatMoney(myMoney));
-  ns.printf('Max. portfolio size: %s', formatMoney(PORTFOLIO_MAX));
-  ns.printf('Max. order size: %s', formatMoney(ORDER_SIZE));
+  ns.printf('My money: %s', formatMoney(ns, myMoney));
+  ns.printf('Max. portfolio size: %s', formatMoney(ns, PORTFOLIO_MAX));
+  ns.printf('Max. order size: %s', formatMoney(ns, ORDER_SIZE));
 
   const symbols = ns.stock.getSymbols();
   let totalProfit = 0;
@@ -130,10 +109,10 @@ export async function main(_ns) {
             formatTime(),
             symbol,
             shares,
-            formatMoney(realPrice),
-            formatMoney(realPrice * shares),
-            formatMoney(realProfit),
-            formatMoney(totalProfit)
+            formatMoney(ns, realPrice),
+            formatMoney(ns, realPrice * shares),
+            formatMoney(ns, realProfit),
+            formatMoney(ns, totalProfit)
           );
         }
       }
@@ -151,8 +130,8 @@ export async function main(_ns) {
       ns.printf(
         '%s Portfolio size (%s/%s). Buying more shares.',
         formatTime(),
-        formatMoney(totalStockValue),
-        formatMoney(PORTFOLIO_MAX)
+        formatMoney(ns, totalStockValue),
+        formatMoney(ns, PORTFOLIO_MAX)
       );
 
       const profitable = symbols.filter(
@@ -169,8 +148,8 @@ export async function main(_ns) {
             formatTime(),
             p,
             shares,
-            formatMoney(realPrice),
-            formatMoney(realPrice * shares)
+            formatMoney(ns, realPrice),
+            formatMoney(ns, realPrice * shares)
           );
         }
       }

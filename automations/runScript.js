@@ -18,7 +18,7 @@ export default async function runScript(_ns, params) {
   const scriptRam = ns.getScriptRam(script, host);
   const serverRam = ns.getServerMaxRam(host) - ns.getServerUsedRam(host);
   if (scriptRam > serverRam) {
-    ns.printf("Too little RAM on server %s to run script %s (%s > %s GB).", host, script, formatNumber(scriptRam), formatNumber(serverRam));
+    ns.printf("Too little RAM on server %s to run script %s (%s > %s GB).", host, script, formatNumber(ns, scriptRam), formatNumber(ns, serverRam));
     return false;
   }
 

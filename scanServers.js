@@ -58,7 +58,7 @@ async function stealFiles(server) {
 }
 
 export function autocomplete() {
-  return ['forceRefresh', 'levels', 'money', 'milestones', 'quiet', 'targets']; // This script autocompletes the list of servers.
+  return ['forceRefresh', 'owned', 'levels', 'milestones', 'quiet', 'targets'];
 }
 
 export async function main(_ns) {
@@ -88,42 +88,28 @@ export async function main(_ns) {
   // ns.printf('detailedServers: %s', JSON.stringify(detailedServers, null, 4));
   await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
 
-  // Pick three most lucrative targets and save them to file
   const hackingLevel = ns.getHackingLevel();
-  const lucrativeServers = detailedServers
-    .filter(
-      s =>
-        s.isRoot &&
-        s.maxMoney > 0 &&
-        s.hackLevel <= hackingLevel &&
-        s.hackChance >= 0.8 &&
-        s.hackTime < 15 // less than fifteen minutes
-    )
-    .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime)
-    .slice(0, 5);
 
-  await ns.write(
-    '/data/targets.txt',
-    JSON.stringify(lucrativeServers.slice(0, 2).map(s => s.name)),
-    'w'
-  );
-
-  if (ns.args[0] === 'levels') {
-    detailedServers = detailedServers.sort((a, b) => a.hackLevel - b.hackLevel);
-  } else if (ns.args[0] === 'milestones') {
-    detailedServers = detailedServers.filter(s =>
-      s.name.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/)
-    );
-  } else if (ns.args[0] === 'money') {
-    detailedServers = detailedServers
-      .filter(s => s.maxMoney > 0 && s.hackLevel <= hackingLevel && s.hackChance >= 0.8)
-      .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
-  } else if (ns.args[0] === 'targets') {
-    detailedServers = lucrativeServers;
-  } else if (ns.args[0] === 'quiet') {
-    ns.exit();
+  if (ns.args[0] === 'owned') {
+    detailedServers = detailedServers.filter(s => s.purchasedByPlayer).sort(a => a.hostname);
   } else {
-    detailedServers = detailedServers.sort((a, b) => (b.name > a.name ? -1 : 1));
+    detailedServers = detailedServers.filter(s => !s.purchasedByPlayer).sort(a => a.hostname);
+
+    if (ns.args[0] === 'levels') {
+      detailedServers = detailedServers.sort((a, b) => a.hackLevel - b.hackLevel);
+    } else if (ns.args[0] === 'milestones') {
+      detailedServers = detailedServers.filter(s =>
+        s.name.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/)
+      );
+    } else if (ns.args[0] === 'targets') {
+      detailedServers = detailedServers
+        .filter(s => s.maxMoney > 0 && s.hackLevel <= hackingLevel && s.hackChance >= 0.7)
+        .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
+    } else if (ns.args[0] === 'quiet') {
+      ns.exit();
+    } else {
+      detailedServers = detailedServers.sort(s => s.name);
+    }
   }
 
   ns.printf('getMyPortLevel(): %s', JSON.stringify(getMyPortLevel(), null, 4));

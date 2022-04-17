@@ -49,11 +49,11 @@ const analyseServer = server => {
   newServer.hackLevel = serverData.requiredHackingSkill;
   newServer.hasBackdoor = serverData.backdoorInstalled;
   newServer.hackPercentage = ns.hackAnalyze(name);
-  // newServer.hackMoney = newServer.maxMoney * newServer.hackPercentage;
   newServer.hackChance = ns.hackAnalyzeChance(name);
-  newServer.hackMoneyPerTime = newServer.maxMoney / newServer.hackTime;
+  newServer.hackMoneyPerTime = newServer.maxMoney / newServer.hackTime / 100.0;
   newServer.isRoot = ns.hasRootAccess(name);
   newServer.organizationName = serverData.organizationName;
+  newServer.purchasedByPlayer = serverData.purchasedByPlayer;
 
   return newServer;
 };

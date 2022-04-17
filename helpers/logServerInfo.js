@@ -1,4 +1,4 @@
-import { formatMoney, formatNumber, formatDuration } from '/helpers/formatters';
+import { formatMoney, formatDuration } from '/helpers/formatters';
 
 export const hasMaxMoney = server =>
   server.moneyAvailable >= 0.98 * server.moneyMax;
@@ -9,15 +9,18 @@ export const hasMinSecurity = (ns, server) =>
 export const isServerPrimed = (ns, server) =>
   hasMaxMoney(server) && hasMinSecurity(ns, server);
 
-export default (ns, serverName) => {
+/** @type import("..").NS */
+let ns = null;
+export default (_ns, serverName) => {
+  ns = _ns;
   const server = ns.getServer(serverName);
   const weakenTime = ns.getWeakenTime(serverName);
   const growTime = ns.getGrowTime(serverName);
 
   ns.printf(
     'Money: %s/%s (%s) %s; Security: %.1f/%.1f (%s) %s',
-    formatMoney(server.moneyAvailable),
-    formatMoney(server.moneyMax),
+    formatMoney(ns, server.moneyAvailable),
+    formatMoney(ns, server.moneyMax),
     formatDuration(ns, growTime),
     hasMaxMoney(server) ? '✓' : '❌',
     server.hackDifficulty,
