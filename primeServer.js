@@ -1,13 +1,13 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { formatMoney, formatNumber, formatDuration } from '/helpers/formatters';
+// import { formatMoney, SECOND } from 'helpers/formatters';
+// import { getGrowPercent, getHackPercent } from 'helpers/fakeFormulas';
+import logServerInfo, { isServerPrimed } from 'helpers/logServerInfo';
 
-import logServerInfo, { isServerPrimed } from '/helpers/logServerInfo';
-
-const runWeaken = (targetName, weakenThreads) => {
+const runWeaken = (sourceName, targetName, weakenThreads) => {
   if (weakenThreads > 0) {
-    const result = ns.exec('miniweaken.js', 'home', weakenThreads, targetName);
+    const result = ns.exec('miniweaken.js', sourceName, weakenThreads, targetName);
 
     if (result === 0) {
       ns.print('Error running weaken script. Aborting.');
@@ -16,9 +16,9 @@ const runWeaken = (targetName, weakenThreads) => {
   }
 };
 
-const runGrow = (targetName, growThreads) => {
+const runGrow = (sourceName, targetName, growThreads) => {
   if (growThreads > 0) {
-    const result = ns.exec('minigrow.js', 'home', growThreads, targetName);
+    const result = ns.exec('minigrow.js', sourceName, growThreads, targetName);
 
     if (result === 0) {
       ns.print('Error running grow script. Aborting.');
@@ -27,15 +27,15 @@ const runGrow = (targetName, growThreads) => {
   }
 };
 
-const primeServer = async targetName => {
-  const serverMaxRam = ns.getServerMaxRam('home');
-  const weakenCost = ns.getScriptRam('miniweaken.js', 'home');
-  const growCost = ns.getScriptRam('minigrow.js', 'home');
+const primeServer = async (sourceName, targetName) => {
+  const serverMaxRam = ns.getServerMaxRam(sourceName);
+  const weakenCost = ns.getScriptRam('miniweaken.js', sourceName);
+  const growCost = ns.getScriptRam('minigrow.js', sourceName);
   let target = ns.getServer(targetName);
 
   while (!isServerPrimed(ns, target)) {
     logServerInfo(ns, targetName);
-    // let availableRam = serverMaxRam - ns.getServerUsedRam('home');
+    // let availableRam = serverMaxRam - ns.getServerUsedRam(sourceName);
     let availableRam = serverMaxRam / 3;
     const currentSecurity = ns.getServerSecurityLevel(targetName);
     const minSecurity = ns.getServerMinSecurityLevel(targetName);
@@ -51,8 +51,8 @@ const primeServer = async targetName => {
     const waitTime = Math.max(weakenTime, growTime) + 100;
     ns.printf('running %d grow threads and %d weaken threads...', growThreads, weakenThreads);
 
-    runWeaken(targetName, weakenThreads);
-    runGrow(targetName, growThreads);
+    runWeaken(sourceName, targetName, weakenThreads);
+    runGrow(sourceName, targetName, growThreads);
     await ns.sleep(waitTime);
     target = ns.getServer(targetName);
   }
@@ -76,7 +76,9 @@ export async function main(_ns) {
   ns.disableLog('sleep');
   // ns.tail();
 
+  const sourceName = ns.getServer().hostname;
   const targetName = ns.args[0];
+
   ns.print('INFO PRIMING server');
-  await primeServer(targetName);
+  await primeServer(sourceName, targetName);
 }

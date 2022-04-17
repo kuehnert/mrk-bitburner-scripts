@@ -3,9 +3,9 @@ let ns = null;
 
 const loadServers = async () => {
   // Update file to check for newly installed backdoors
-  ns.exec('/scanServers.js', 'home', 1, 'quiet');
-  await ns.asleep(800);
-  return JSON.parse(ns.read('/data/servers.txt'));
+  // ns.exec('/scanServers.js', 'home', 1, 'quiet');
+  // await ns.asleep(800);
+  return JSON.parse(ns.read('/data/routes.txt'));
 };
 
 const installBackdoorsOnAll = async () => {
@@ -19,9 +19,9 @@ const installBackdoorsOnAll = async () => {
   ns.printf('Will install backdoors on %d servers', servers.length);
 
   for (const server of servers) {
-    const { path } = server;
+    const { route } = server;
     ns.connect('home');
-    for (const node of path) {
+    for (const node of route) {
       ns.connect(node);
     }
     ns.connect(server.name);
@@ -33,14 +33,13 @@ const installBackdoorsOnAll = async () => {
 
 const installBackdoorOnServer = async targetName => {
   let servers = await loadServers();
-  const { name, path } = servers.find(s => s.name === targetName);
+  const { name, route } = servers.find(s => s.name === targetName);
 
   if (ns.getServer(name).backdoorInstalled) {
     return true;
   }
 
-  ns.connect('home');
-  for (const node of path) {
+  for (const node of route) {
     ns.connect(node);
   }
 

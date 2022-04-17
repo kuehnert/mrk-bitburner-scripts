@@ -43,15 +43,15 @@ const analyseServer = server => {
   let newServer = { ...server };
   newServer.ram = ns.getServerMaxRam(name);
   newServer.maxMoney = ns.getServerMaxMoney(name);
-  newServer.money = ns.getServerMoneyAvailable(name) / 1000.0;
+  newServer.money = ns.getServerMoneyAvailable(name);
   newServer.portsNeeded = ns.getServerNumPortsRequired(name);
   newServer.hackTime = calcHackTime(name);
   newServer.hackLevel = serverData.requiredHackingSkill;
   newServer.hasBackdoor = serverData.backdoorInstalled;
   newServer.hackPercentage = ns.hackAnalyze(name);
-  newServer.hackMoney = newServer.maxMoney * newServer.hackPercentage;
+  // newServer.hackMoney = newServer.maxMoney * newServer.hackPercentage;
   newServer.hackChance = ns.hackAnalyzeChance(name);
-  newServer.hackMoneyPerTime = newServer.hackMoney / newServer.hackTime;
+  newServer.hackMoneyPerTime = newServer.maxMoney / newServer.hackTime;
   newServer.isRoot = ns.hasRootAccess(name);
   newServer.organizationName = serverData.organizationName;
 

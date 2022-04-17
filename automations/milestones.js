@@ -25,8 +25,8 @@ export default [
   },
   { action: 'runScript', params: { script: 'scanServers.js', args: 'quiet' } },
   { action: 'runScript', params: { script: 'contracts.js' } },
-  { action: 'runScript', params: { script: 'homeAttack.js', args: 'bg' } },
-  { action: 'runScript', params: { script: 'masterAttack.js' } },
+  // { action: 'runScript', params: { script: 'homeAttack.js', args: 'bg' } },
+  // { action: 'runScript', params: { script: 'masterAttack.js' } },
   {
     action: 'purchaseTor',
     prereq: { money: 200000 },

@@ -24,10 +24,7 @@ const files = [
 
 function getMyPortLevel() {
   let pl = 0;
-  while (
-    pl < programs(ns).length &&
-    ns.fileExists(programs(ns)[pl].filename, 'home')
-  ) {
+  while (pl < programs(ns).length && ns.fileExists(programs(ns)[pl].filename, 'home')) {
     pl++;
   }
 
@@ -44,6 +41,7 @@ function hackServer(server, portsNeeded) {
     ns.nuke(server);
   }
 
+  // ns.printf('%s ports: %d/%d', server, portLevel, portsNeeded);
   return ns.hasRootAccess(server);
 }
 
@@ -60,7 +58,7 @@ async function stealFiles(server) {
 }
 
 export function autocomplete() {
-  return ['levels', 'money', 'milestones', 'quiet', 'targets']; // This script autocompletes the list of servers.
+  return ['forceRefresh', 'levels', 'money', 'milestones', 'quiet', 'targets']; // This script autocompletes the list of servers.
 }
 
 export async function main(_ns) {
@@ -78,13 +76,17 @@ export async function main(_ns) {
 
   let detailedServers = await getServersDetailed(ns, forceRefresh);
 
-  for (const { name } of detailedServers) {
+  for (const server of detailedServers) {
+    const { name, portsNeeded, isRoot } = server;
     await stealFiles(name);
     await copyScripts(name);
-    hackServer(name);
+    if (!isRoot) {
+      server.isRoot = hackServer(name, portsNeeded);
+    }
   }
 
   // ns.printf('detailedServers: %s', JSON.stringify(detailedServers, null, 4));
+  await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
 
   // Pick three most lucrative targets and save them to file
   const hackingLevel = ns.getHackingLevel();
@@ -114,19 +116,14 @@ export async function main(_ns) {
     );
   } else if (ns.args[0] === 'money') {
     detailedServers = detailedServers
-      .filter(
-        s =>
-          s.maxMoney > 0 && s.hackLevel <= hackingLevel && s.hackChance >= 0.8
-      )
+      .filter(s => s.maxMoney > 0 && s.hackLevel <= hackingLevel && s.hackChance >= 0.8)
       .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
   } else if (ns.args[0] === 'targets') {
     detailedServers = lucrativeServers;
   } else if (ns.args[0] === 'quiet') {
     ns.exit();
   } else {
-    detailedServers = detailedServers.sort((a, b) =>
-      b.name > a.name ? -1 : 1
-    );
+    detailedServers = detailedServers.sort((a, b) => (b.name > a.name ? -1 : 1));
   }
 
   ns.printf('getMyPortLevel(): %s', JSON.stringify(getMyPortLevel(), null, 4));
