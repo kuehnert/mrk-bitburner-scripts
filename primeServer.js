@@ -33,8 +33,14 @@ const primeServer = async (sourceName, targetName) => {
 
   while (!isServerPrimed(ns, target)) {
     logServerInfo(ns, targetName);
-    // let availableRam = serverMaxRam - ns.getServerUsedRam(sourceName);
-    let availableRam = serverMaxRam / 3;
+    let availableRam;
+
+    if (ns.getServer().hostname === 'home') {
+      availableRam = Math.min(8192, serverMaxRam / 3);
+    } else {
+      availableRam = serverMaxRam - ns.getServerUsedRam(sourceName);
+    }
+
     const currentSecurity = ns.getServerSecurityLevel(targetName);
     const minSecurity = ns.getServerMinSecurityLevel(targetName);
     const maxWeakenThreads = Math.floor(availableRam / weakenCost);
@@ -72,7 +78,7 @@ export async function main(_ns) {
   ns.disableLog('getServerSecurityLevel');
   ns.disableLog('getServerUsedRam');
   ns.disableLog('sleep');
-  // ns.tail();
+  ns.tail();
 
   const sourceName = ns.getServer().hostname;
   const targetName = ns.args[0];

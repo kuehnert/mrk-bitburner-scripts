@@ -3,8 +3,13 @@ let ns = null;
 
 import { formatMoney } from 'helpers/formatters';
 
-const printIncome = ({ target, income }) =>
-  ns.tprintf('%-17s: %s/s', target, formatMoney(ns, income));
+const formatMoneySMH = (ns, amount) => {
+  return [1, 60, 60 * 60].map(mult => formatMoney(ns, amount * mult));
+};
+
+const printIncome = ({ target, income }) => {
+  ns.tprintf('%-25s\t%s/sec\t%s/min\t%s/hour', target, ...formatMoneySMH(ns, income));
+};
 
 export async function main(_ns) {
   ns = _ns;
@@ -24,12 +29,15 @@ export async function main(_ns) {
 
   portfolio = portfolio.sort((a, b) => b.income - a.income);
 
-  ns.tprintf('INFO Total Current Income per Second: %s/s', formatMoney(ns, totalIncome));
+  ns.tprintf(
+    'INFO Total Current Income:\t%s/sec\t%s/min\t%s/hour',
+    ...formatMoneySMH(ns, totalIncome)
+  );
   let total = 0;
   for (const item of portfolio) {
     total += item.income;
     printIncome(item);
   }
 
-  ns.tprintf('Total Income from SingleAttack: %s/s', formatMoney(ns, total));
+  ns.tprintf('Total Income SingleAttack:\t%s/sec\t%s/min\t%s/hour', ...formatMoneySMH(ns, total));
 }

@@ -27,10 +27,11 @@ let contracts;
 const impossible = [];
 
 async function scanContractServers(server, path = []) {
-  if (server.match('pserv')) {
+  if (server.match('Attack')) {
     return;
   }
 
+  // ns.printf('looking at server %s', server);
   const files = ns.ls(server, '.cct');
 
   for (const file of files) {
@@ -67,11 +68,7 @@ const solveContract = async contract => {
     ns.print('.');
   } else if (ns.fileExists(scriptName)) {
     ns.print('INFO Solving contract of type ' + type);
-    const call = ns.sprintf(
-      '%s(%s)',
-      type.replaceAll(' ', ''),
-      JSON.stringify(contract.input)
-    );
+    const call = ns.sprintf('%s(%s)', type.replaceAll(' ', ''), JSON.stringify(contract.input));
 
     ns.printf('Executing: %s', call);
     const solution = eval(call);
@@ -91,11 +88,7 @@ const solveContract = async contract => {
 
     ns.printf('contract: %s', JSON.stringify(contract, null, 4));
     impossible.push(contract);
-    await ns.write(
-      '/data/unknown_contracts.txt',
-      JSON.stringify(impossible),
-      'w'
-    );
+    await ns.write('/data/unknown_contracts.txt', JSON.stringify(impossible), 'w');
   }
 };
 
@@ -121,17 +114,10 @@ export async function main(_ns) {
     contracts = contracts.filter(c => impossible.find(e => e.file === c.file));
 
     if (ns.args[0] === 'noop') {
-      ns.tprintf(
-        'Found %d contracts:\n%s',
-        contracts.length,
-        JSON.stringify(contracts, null, 4)
-      );
+      ns.tprintf('Found %d contracts:\n%s', contracts.length, JSON.stringify(contracts, null, 4));
       ns.exit();
     } else if (contracts.length === 0) {
-      ns.printf(
-        'No contracts, sleeping %d minutes...',
-        SLEEP_TIME / ONE_MINUTE
-      );
+      ns.printf('No contracts, sleeping %d minutes...', SLEEP_TIME / ONE_MINUTE);
       await ns.sleep(SLEEP_TIME);
     } else {
       ns.printf('Found ' + contracts.length + ' contracts: ');

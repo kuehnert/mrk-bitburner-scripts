@@ -3,6 +3,12 @@ let ns = null;
 
 import { formatMoney } from '/helpers/formatters';
 
+export const isHackCandidate = (_ns, { hackMoneyPerTime, portsNeeded, hackChance, hackLevel }, portLevel) =>
+  hackMoneyPerTime > 0 &&
+  portLevel >= portsNeeded &&
+  _ns.getHackingLevel() >= hackLevel &&
+  hackChance >= 0.6;
+
 export default function logServer(_ns, myPortLevel, index, server) {
   ns = _ns;
   const {
@@ -20,15 +26,14 @@ export default function logServer(_ns, myPortLevel, index, server) {
 
   const isRootStr = isRoot ? 'ROOT' : '    ';
   const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
-  const isCandidate =
-    hackMoneyPerTime > 0 && myPortLevel >= portsNeeded && ns.getHackingLevel() >= hackLevel;
-  let candidateStr = ' ';
+  const isCandidate = isHackCandidate(_ns, server, myPortLevel);
+  let candidateStr = '  ';
   const isAttacked = ns.getPurchasedServers().includes('Attack' + name.toUpperCase());
 
   if (isAttacked) {
-    candidateStr = 'A';
+    candidateStr = ' ✓';
   } else if (isCandidate) {
-    candidateStr = '*';
+    candidateStr = '🎯';
   }
 
   ns.tprintf(

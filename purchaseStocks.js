@@ -5,7 +5,7 @@ import { formatMoney, formatTime } from 'helpers/formatters';
 
 const BUY_FORECAST_LIMIT = 0.6;
 const SELL_FORECAST_LIMIT = 0.4;
-const SELL_PROFIT_PERCENTAGE = 0.05; // sell at 20% profit
+const SELL_PROFIT_PERCENTAGE = 0.2; // sell at 20% profit
 const COMMISSION = 100000;
 const SLEEPTIME = 6 * 1000;
 
@@ -32,14 +32,7 @@ const prerequisites = () => {
   }
 };
 
-const printStock = ({
-  forecast,
-  symbol,
-  shares,
-  profitPerc,
-  avgPrice,
-  value,
-}) => {
+const printStock = ({ forecast, symbol, shares, profitPerc, avgPrice, value }) => {
   let warningStage = '    ';
   if (forecast <= SELL_FORECAST_LIMIT) {
     warningStage = 'WARN';
@@ -97,7 +90,7 @@ export async function main(_ns) {
 
       if (
         profitPerc > SELL_PROFIT_PERCENTAGE ||
-        forecast <= SELL_FORECAST_LIMIT && bidPrice > avgPrice
+        (forecast <= SELL_FORECAST_LIMIT && bidPrice > avgPrice)
       ) {
         const realPrice = ns.stock.sell(symbol, shares);
         const realProfit = shares * (realPrice - avgPrice) - 2 * COMMISSION;
@@ -106,7 +99,7 @@ export async function main(_ns) {
         if (realPrice > 0) {
           ns.printf(
             'INFO %s SOLD   %-5s %d shares for %s, netting %s, profitting %s, totalling %s',
-            formatTime(),
+            formatTime(ns),
             symbol,
             shares,
             formatMoney(ns, realPrice),
@@ -127,37 +120,39 @@ export async function main(_ns) {
       //   formatMoney(PORTFOLIO_MAX)
       // );
     } else {
-      ns.printf(
-        '%s Portfolio size (%s/%s). Buying more shares.',
-        formatTime(),
-        formatMoney(ns, totalStockValue),
-        formatMoney(ns, PORTFOLIO_MAX)
-      );
-
-      const profitable = symbols.filter(
-        s => ns.stock.getForecast(s) > BUY_FORECAST_LIMIT
-      );
+      const profitable = symbols.filter(s => ns.stock.getForecast(s) > BUY_FORECAST_LIMIT);
+      const purchased = [];
 
       for (const p of profitable) {
         const pps = ns.stock.getBidPrice(p);
         const shares = Math.floor(ORDER_SIZE / pps);
         const realPrice = ns.stock.buy(p, shares);
-        if (shares > 0) {
-          ns.printf(
-            '     %s BOUGHT %-5s %6d shares @ %s for %s',
-            formatTime(),
-            p,
-            shares,
-            formatMoney(ns, realPrice),
-            formatMoney(ns, realPrice * shares)
-          );
+
+        if (realPrice > 0) {
+          purchased.push(p);
+          // ns.printf(
+          //   '     %s BOUGHT %-5s %6d shares @ %s for %s',
+          //   formatTime(),
+          //   p,
+          //   shares,
+          //   formatMoney(ns, realPrice),
+          //   formatMoney(ns, realPrice * shares)
+          // );
         }
       }
+
+      ns.printf(
+        '%s Portfolio size (%s/%s). Bought %s.',
+        formatTime(ns),
+        formatMoney(ns, totalStockValue),
+        formatMoney(ns, PORTFOLIO_MAX),
+        purchased.join(', ')
+      );
     }
 
     await ns.sleep(SLEEPTIME);
     myMoney = ns.getServerMoneyAvailable('home');
     PORTFOLIO_MAX = Math.floor(myMoney / 4.0);
     ORDER_SIZE = PORTFOLIO_MAX / 100;
-    }
+  }
 }

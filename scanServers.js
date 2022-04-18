@@ -1,5 +1,5 @@
 import { getServersDetailed } from '/helpers/getServers';
-import logServer from '/helpers/logServer';
+import logServer, { isHackCandidate } from '/helpers/logServer';
 
 /** @type import(".").NS */
 let ns = null;
@@ -88,8 +88,6 @@ export async function main(_ns) {
   // ns.printf('detailedServers: %s', JSON.stringify(detailedServers, null, 4));
   await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
 
-  const hackingLevel = ns.getHackingLevel();
-
   if (ns.args[0] === 'owned') {
     detailedServers = detailedServers.filter(s => s.purchasedByPlayer).sort(a => a.hostname);
   } else {
@@ -103,7 +101,7 @@ export async function main(_ns) {
       );
     } else if (ns.args[0] === 'targets') {
       detailedServers = detailedServers
-        .filter(s => s.maxMoney > 0 && s.hackLevel <= hackingLevel && s.hackChance >= 0.7)
+        .filter(s => isHackCandidate(ns, s, getMyPortLevel()))
         .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
     } else if (ns.args[0] === 'quiet') {
       ns.exit();
@@ -111,8 +109,6 @@ export async function main(_ns) {
       detailedServers = detailedServers.sort(s => s.name);
     }
   }
-
-  ns.printf('getMyPortLevel(): %s', JSON.stringify(getMyPortLevel(), null, 4));
 
   for (let i = 0; i < detailedServers.length; i++) {
     logServer(ns, getMyPortLevel(), i, detailedServers[i]);

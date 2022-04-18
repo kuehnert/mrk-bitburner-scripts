@@ -62,9 +62,11 @@ export const calcTotalRamCost = (ns, serverName) => {
   const weakenRam = calcScriptRamCost(ns, 'miniweaken.js', weakenThreads);
   const maxRam = Math.max(growRam, hackRam, weakenRam);
 
-  const mainScriptRam = ns.getScriptRam('singleAttack.js')
+  const mainScriptRam = ns.getScriptRam('singleAttack.js');
   const ramRequired = mainScriptRam + maxRam;
   const serverSizeRequired = calcServerRamSize(ramRequired);
+  const parallelRamRequired = mainScriptRam + growRam + hackRam + weakenRam;
+  const parallelServerSizeRequired = calcServerRamSize(parallelRamRequired);
 
   return {
     growThreads,
@@ -75,5 +77,7 @@ export const calcTotalRamCost = (ns, serverName) => {
     weakenRam,
     ramRequired,
     serverSizeRequired,
+    parallelRamRequired,
+    parallelServerSizeRequired,
   };
 };

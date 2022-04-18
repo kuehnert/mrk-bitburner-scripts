@@ -1,4 +1,4 @@
-/** @type import("..").NS */
+/** @type import(".").NS */
 let ns = null;
 let _augmentations = null;
 
@@ -58,6 +58,8 @@ export async function main(_ns) {
 
   // const augmentations = getAugmentations();
   // ns.printf('augmentations: %s', JSON.stringify(augmentations, null, 4));
+
+
 
   ns.printf('affordable: %s', JSON.stringify(affordable(), null, 4));
 }

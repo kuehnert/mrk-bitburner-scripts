@@ -94,13 +94,13 @@ const workoutSkillToLevel = async (
   );
 
   while (stats[skill] < level) {
-    const success = ns.gymWorkout(gym.name, skill);
+    const success = ns.gymWorkout(gym.name, skill, false);
     if (!success) {
       ns.printf('Unknown error occured when trying workout. Exiting');
       return false;
     }
 
-    await ns.sleep(10 * 1000);
+    await ns.sleep(5 * 1000);
     stats = ns.getPlayer();
   }
 
@@ -119,7 +119,7 @@ const workoutAllToLevel = async (level = 10, preferSpeed = false) => {
   return true;
 };
 
-export default async function gymWorkout(_ns) {
+export async function main(_ns) {
   ns = _ns;
   const skill = ns.args[0] ?? 'ALL';
   const level = ns.args[1] ?? 10;
@@ -131,3 +131,5 @@ export default async function gymWorkout(_ns) {
     return workoutSkillToLevel(level, skill, preferSpeed);
   }
 }
+
+export default main;

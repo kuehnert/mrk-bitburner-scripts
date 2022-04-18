@@ -1,34 +1,57 @@
 /** @type import(".").NS */
 let ns = null;
 
-const formatPath = path => path.map(el => 'connect ' + el).join('; ');
+import getServers from '/helpers/getServers';
 
-export async function main(_ns) {
-  ns = _ns;
-  ns.clearLog();
+const findServer = async target => {
+  const servers = await getServers(ns);
+  const server = servers.find(s => s.name === target);
 
-  if (ns.args.length === 0) {
-    ns.tprintf('No target server given. Exiting');
+  if (!server) {
+    ns.tprintf('ERROR routing to %s: server unknown. Exiting.', target);
     ns.exit();
   }
 
-  const target = ns.args[0];
-  let command = ns.args[1];
-  const servers = JSON.parse(ns.read('/data/servers.txt'));
+  return server;
+};
 
-  for (const server of servers) {
-    if (server.name === target) {
-      let path = formatPath(server.path.concat(server.name));
-      if (command) {
-        if (command === 'b') {
-          command = 'backdoor';
-        }
-        path += '; ' + command;
-      }
-      ns.tprint(path);
+const printRoute = ({ name, route }) => {
+  ns.tprintf('INFO Route to %s: %s', name, route.join(', '));
+};
+
+const followRoute = route => {
+  while (route.length > 0) {
+    const node = route.shift();
+    const success = ns.connect(node);
+
+    if (!success) {
+      ns.tprintf('ERROR connecting to %s. Exiting', node);
       ns.exit();
     }
   }
+};
 
-  ns.tprintf('server %s or path to it unknown.', target);
+export function autocomplete(data) {
+  return [...data.servers]; // This script autocompletes the list of servers.
+}
+
+export async function main(_ns) {
+  ns = _ns;
+
+  const flags = ns.flags([['print', false]]);
+
+  const targetName = ns.args[0];
+  if (targetName === '') {
+    ns.tprintf('ERROR No target server given. Exiting');
+    ns.exit();
+  }
+
+  const server = await findServer(targetName);
+
+  if (flags.print) {
+    printRoute(server);
+    ns.exit();
+  }
+
+  followRoute(server.route);
 }

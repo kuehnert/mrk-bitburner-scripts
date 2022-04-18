@@ -38,7 +38,7 @@ export async function main(_ns) {
 
   // ns.disableLog('ALL');
   ns.disableLog('disableLog');
-  // ns.disableLog('exec');
+  ns.disableLog('exec');
   ns.disableLog('kill');
   ns.disableLog('sleep');
   ns.disableLog('getServerMaxMoney');
