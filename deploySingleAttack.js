@@ -47,19 +47,7 @@ const copyDependencies = async sourceName => {
   await ns.scp(DEPENDENCIES, sourceName);
 };
 
-export async function main(_ns) {
-  ns = _ns;
-  ns.clearLog();
-  ns.disableLog('disableLog');
-  ns.disableLog('scp');
-
-  if (!ns.args[0]) {
-    ns.tprint('ERROR No target server given. Exiting.');
-    ns.exit();
-  }
-
-  const targetName = ns.args[0];
-  const sourceName = ns.sprintf('Attack%s', targetName.toUpperCase());
+const deployServer = async (sourceName, targetName) => {
   ns.tprintf(
     'INFO Purchasing and configuring server %s to attack target %s',
     sourceName,
@@ -92,4 +80,47 @@ export async function main(_ns) {
   } else {
     ns.tprintf('SUCCESS Everything seems to be working. Happy leaning back and earning money');
   }
+};
+
+const deleteServer = sourceName => {
+  if (!ns.getPurchasedServers().includes(sourceName)) {
+    ns.tprintf("ERROR You don't own a server called %s. Exiting.", sourceName);
+    ns.exit();
+  }
+
+  // kill all running scripts
+  ns.killall(sourceName);
+
+  // delete server
+  const result = ns.deleteServer(sourceName)
+  ns.printf('result: %s', JSON.stringify(result, null, 4));
+  if (result) {
+    ns.tprintf("INFO Successfully deleted server %s", sourceName);
+  } else {
+    ns.tprintf("ERROR Unknown problem deleting server %s", sourceName);
+  }
+};
+
+export async function main(_ns) {
+  ns = _ns;
+  ns.clearLog();
+  ns.disableLog('disableLog');
+  ns.disableLog('scp');
+
+  const flags = ns.flags([['delete', false]]);
+
+  if (!ns.args[0]) {
+    ns.tprint('ERROR No target server given. Exiting.');
+    ns.exit();
+  }
+
+  const targetName = ns.args[0];
+  const sourceName = ns.sprintf('Attack%s', targetName.toUpperCase());
+
+  if (flags.delete) {
+    deleteServer(sourceName);
+    ns.exit();
+  }
+
+  await deployServer(sourceName, targetName);
 }

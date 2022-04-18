@@ -1,6 +1,6 @@
 import { getGrowPercent, getHackPercent } from '/helpers/fakeFormulas';
 
-const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
+export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
   const serverData = ns.getServer(serverName);
   serverData.moneyAvailable = percentage * serverData.moneyMax;
   serverData.hackDifficulty = ns.getServerMinSecurityLevel(serverName);
@@ -79,5 +79,16 @@ export const calcTotalRamCost = (ns, serverName) => {
     serverSizeRequired,
     parallelRamRequired,
     parallelServerSizeRequired,
+  };
+};
+
+export const calcAttackTimes = (ns, serverName) => {
+  const serverData = simulatePrimedServer(ns, serverName);
+  const player = ns.getPlayer();
+
+  return {
+    growTime:   Math.round(ns.formulas.hacking.growTime(serverData, player)),
+    hackTime:   Math.round(ns.formulas.hacking.hackTime(serverData, player)),
+    weakenTime: Math.round(ns.formulas.hacking.weakenTime(serverData, player)),
   };
 };

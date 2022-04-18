@@ -1,7 +1,9 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { calcTotalRamCost } from '/helpers/ramCalculations';
+import { calcTotalRamCost, calcAttackTimes } from './helpers/ramCalculations';
+import { formatDuration } from './helpers/formatters';
+
 export const autocomplete = data => [...data.servers];
 
 export async function main(_ns) {
@@ -11,6 +13,7 @@ export async function main(_ns) {
   ns.disableLog('getServerMinSecurityLevel');
 
   const serverName = ns.args[0];
+
   const {
     growRam,
     growThreads,
@@ -24,10 +27,35 @@ export async function main(_ns) {
     weakenThreads,
   } = calcTotalRamCost(ns, serverName);
 
+  const { growTime, hackTime, weakenTime } = calcAttackTimes(ns, serverName);
+
   ns.tprintf('INFO analysing server %s', serverName);
-  ns.tprintf('necessary grow   threads: %3d, RAM required: %3d GB', growThreads, growRam);
-  ns.tprintf('necessary hack   threads: %3d, RAM required: %3d GB', hackThreads, hackRam);
-  ns.tprintf('necessary weaken threads: %3d, RAM required: %3d GB', weakenThreads, weakenRam);
-  ns.tprintf('single-thread       server ram required: %4d GB => %4d GB server', ramRequired, serverSizeRequired);
-  ns.tprintf('parallel processing server ram required: %4d GB => %4d GB server', parallelRamRequired, parallelServerSizeRequired);
+  ns.tprintf(
+    'GROW   threads: %3d\tRAM required: %3d GB\ttime: %s',
+    growThreads,
+    growRam,
+    formatDuration(ns, growTime)
+  );
+  ns.tprintf(
+    'HACK   threads: %3d\tRAM required: %3d GB\ttime: %s',
+    hackThreads,
+    hackRam,
+    formatDuration(ns, hackTime)
+  );
+  ns.tprintf(
+    'WEAKEN threads: %3d\tRAM required: %3d GB\ttime: %s',
+    weakenThreads,
+    weakenRam,
+    formatDuration(ns, weakenTime)
+  );
+  ns.tprintf(
+    'single-thread       server ram required: %4d GB => %4d GB server',
+    ramRequired,
+    serverSizeRequired
+  );
+  ns.tprintf(
+    'parallel processing server ram required: %4d GB => %4d GB server',
+    parallelRamRequired,
+    parallelServerSizeRequired
+  );
 }

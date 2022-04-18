@@ -1,4 +1,4 @@
-/** @type import(".").NS */
+/** @type import("..").NS */
 let ns = null;
 
 export async function main(_ns) {

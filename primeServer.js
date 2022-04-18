@@ -78,7 +78,7 @@ export async function main(_ns) {
   ns.disableLog('getServerSecurityLevel');
   ns.disableLog('getServerUsedRam');
   ns.disableLog('sleep');
-  ns.tail();
+  // ns.tail();
 
   const sourceName = ns.getServer().hostname;
   const targetName = ns.args[0];
