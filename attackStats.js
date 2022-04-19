@@ -2,6 +2,7 @@
 let ns = null;
 
 import { formatMoney } from 'helpers/formatters';
+import { source2TargetName } from 'deploySingleAttack';
 
 const formatMoneySMH = (ns, amount) => {
   return [1, 60, 60 * 60].map(mult => formatMoney(ns, amount * mult));
@@ -20,7 +21,7 @@ export async function main(_ns) {
   let portfolio = [];
 
   for (const server of farm) {
-    const target = server.substring(6).toLowerCase();
+    const target = source2TargetName(server);
     const income = ns.getScriptIncome('singleAttack.js', server, target);
     if (income > -1) {
       portfolio.push({ target, income });

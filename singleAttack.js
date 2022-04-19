@@ -36,26 +36,30 @@ export function autocomplete(data) {
 export async function main(_ns) {
   ns = _ns;
 
-  // ns.disableLog('ALL');
-  ns.disableLog('disableLog');
-  ns.disableLog('exec');
-  ns.disableLog('kill');
-  ns.disableLog('sleep');
-  ns.disableLog('getServerMaxMoney');
-  ns.disableLog('getServerMoneyAvailable');
-  ns.disableLog('getServerMinSecurityLevel');
-  ns.disableLog('getServerSecurityLevel');
-  ns.disableLog('getServerMaxRam');
-  ns.disableLog('getServerUsedRam');
-  ns.disableLog('getServerSecurityLevel');
-  ns.disableLog('getServerMoneyAvailable');
-  ns.clearLog();
+  const flags = ns.flags([['debug', false]]);
+
+  if (!flags.debug) {
+    // ns.disableLog('ALL');
+    ns.disableLog('disableLog');
+    ns.disableLog('exec');
+    ns.disableLog('kill');
+    ns.disableLog('sleep');
+    ns.disableLog('getServerMaxMoney');
+    ns.disableLog('getServerMoneyAvailable');
+    ns.disableLog('getServerMinSecurityLevel');
+    ns.disableLog('getServerSecurityLevel');
+    ns.disableLog('getServerMaxRam');
+    ns.disableLog('getServerUsedRam');
+    ns.disableLog('getServerSecurityLevel');
+    ns.disableLog('getServerMoneyAvailable');
+    ns.clearLog();
+  }
 
   const sourceName = ns.getServer().hostname;
 
-  ns.kill('miniweaken.js', sourceName);
-  ns.kill('minigrow.js', sourceName);
-  ns.kill('minihack.js', sourceName);
+  ns.kill('workers/miniweaken.js', sourceName);
+  ns.kill('workers/minigrow.js', sourceName);
+  ns.kill('workers/minihack.js', sourceName);
 
   if (!ns.args[0]) {
     ns.print('ERROR No target server give. Exiting.');
@@ -75,7 +79,8 @@ export async function main(_ns) {
   let threads;
 
   ns.printf('INFO PRIMING target server %s...', targetName);
-  const pid = ns.exec('primeServer.js', sourceName, 1, targetName);
+  const pid = ns.exec('workers/primeServer.js', sourceName, 1, targetName);
+  // const pid = ns.exec('workers/primeServer.js', 'home', 1, targetName); // home has more power but cannot handle too many
   while (ns.isRunning(pid, sourceName)) {
     await ns.sleep(SECOND);
   }
@@ -95,7 +100,7 @@ export async function main(_ns) {
     if (ns.getServerSecurityLevel(targetName) > securityThresh) {
       action = 'weaken';
       sleepTime = ns.getWeakenTime(targetName);
-      const cost = ns.getScriptRam('miniweaken.js');
+      const cost = ns.getScriptRam('workers/miniweaken.js');
       const maxThreads = Math.floor(availableRAM / cost);
 
       const weakenDifference = securityCurrent - securityMin;
@@ -103,31 +108,31 @@ export async function main(_ns) {
       threads = Math.min(maxThreads, weakenThreads);
 
       if (threads > 0) {
-        ns.exec('miniweaken.js', sourceName, threads, targetName);
+        ns.exec('workers/miniweaken.js', sourceName, threads, targetName);
       }
     } else if (ns.getServerMoneyAvailable(targetName) < moneyThresh) {
       action = 'grow';
       sleepTime = ns.getGrowTime(targetName);
-      const cost = ns.getScriptRam('minigrow.js');
+      const cost = ns.getScriptRam('workers/minigrow.js');
       const maxThreads = Math.floor(availableRAM / cost);
       const growPercent = getGrowPercent(ns, ns.getServer(targetName));
       const growThreads = Math.round(Math.log(2) / Math.log(growPercent));
       threads = Math.min(maxThreads, growThreads);
 
       if (threads > 0) {
-        ns.exec('minigrow.js', sourceName, threads, targetName);
+        ns.exec('workers/minigrow.js', sourceName, threads, targetName);
       }
     } else {
       action = 'hack';
       sleepTime = ns.getHackTime(targetName);
-      const cost = ns.getScriptRam('minihack.js');
+      const cost = ns.getScriptRam('workers/minihack.js');
       const maxThreads = Math.floor(availableRAM / cost);
       const hackPercent = getHackPercent(ns, ns.getServer(targetName));
       const hackThreads = Math.round(0.5 / hackPercent);
       threads = Math.min(maxThreads, hackThreads);
 
       if (threads > 0) {
-        ns.exec('minihack.js', sourceName, threads, targetName);
+        ns.exec('workers/minihack.js', sourceName, threads, targetName);
       }
     }
 

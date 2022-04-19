@@ -9,13 +9,13 @@ export function autocomplete(data) {
   return [...data.servers]; // This script autocompletes the list of servers.
 }
 
-const BUFFER = 1000; // one second between each finished command
+const BUFFER = 500; // one second between each finished command
 
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
-  // ns.disableLog('disableLog');
-  // ns.disableLog('sleep');
+  ns.disableLog('disableLog');
+  ns.disableLog('sleep');
   ns.disableLog('getServerMinSecurityLevel');
   // ns.disableLog('getServerSecurityLevel');
   // ns.disableLog('getServerMaxRam');
@@ -40,20 +40,25 @@ export async function main(_ns) {
   const weakenDelay = 0; // assume weaken always takes longest
   const sleepTime = weakenTime + BUFFER;
 
-  ns.printf('times: grow %f\thack %f\tweaken %f', growTime, hackTime, weakenTime);
-  ns.printf('delays: grow %s\thack %s\tweaken %s', growDelay, hackDelay, weakenDelay);
-  // ns.printf(
-  //   'times: grow %s\thack %s\tweaken %s',
-  //   formatDuration(ns, growTime),
-  //   formatDuration(ns, hackTime),
-  //   formatDuration(ns, weakenTime)
-  // );
-  // ns.printf(
-  //   'delays: grow %s\thack %s\tweaken %s',
-  //   formatDuration(ns, growDelay),
-  //   formatDuration(ns, hackDelay),
-  //   formatDuration(ns, weakenDelay)
-  // );
+  ns.printf(
+    'INFO times:  grow %s\thack %s\tweaken %s',
+    formatDuration(ns, growTime, true),
+    formatDuration(ns, hackTime, true),
+    formatDuration(ns, weakenTime, true)
+  );
+  ns.printf(
+    'INFO delays: grow %s\thack %s\tweaken %s',
+    formatDuration(ns, growDelay, true),
+    formatDuration(ns, hackDelay, true),
+    formatDuration(ns, weakenDelay, true)
+  );
+  ns.printf(
+    'INFO sums:   grow %s\thack %s\tweaken %s',
+    formatDuration(ns, growTime + growDelay, true),
+    formatDuration(ns, hackTime + hackDelay, true),
+    formatDuration(ns, weakenTime + weakenDelay, true)
+  );
+  ns.printf('Attack waves every %s', formatDuration(ns, sleepTime, true));
 
   // ns.exit();
 

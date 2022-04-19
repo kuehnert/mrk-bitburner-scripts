@@ -1,4 +1,5 @@
-import { getGrowPercent, getHackPercent } from '/helpers/fakeFormulas';
+import { getGrowPercent, getHackPercent } from 'helpers/fakeFormulas';
+import { hasFormulas } from 'helpers/fakeFormulas';
 
 export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
   const serverData = ns.getServer(serverName);
@@ -57,9 +58,9 @@ export const calcTotalRamCost = (ns, serverName) => {
   const hackThreads = calcHackThreads(ns, serverName);
   const weakenThreads = calcWeakenThreads(ns, serverName);
 
-  const growRam = calcScriptRamCost(ns, 'minigrow.js', growThreads);
-  const hackRam = calcScriptRamCost(ns, 'minihack.js', hackThreads);
-  const weakenRam = calcScriptRamCost(ns, 'miniweaken.js', weakenThreads);
+  const growRam = calcScriptRamCost(ns, '/workers/minigrow.js', growThreads);
+  const hackRam = calcScriptRamCost(ns, '/workers/minihack.js', hackThreads);
+  const weakenRam = calcScriptRamCost(ns, '/workers/miniweaken.js', weakenThreads);
   const maxRam = Math.max(growRam, hackRam, weakenRam);
 
   const mainScriptRam = ns.getScriptRam('singleAttack.js');
@@ -86,9 +87,17 @@ export const calcAttackTimes = (ns, serverName) => {
   const serverData = simulatePrimedServer(ns, serverName);
   const player = ns.getPlayer();
 
-  return {
-    growTime:   Math.round(ns.formulas.hacking.growTime(serverData, player)),
-    hackTime:   Math.round(ns.formulas.hacking.hackTime(serverData, player)),
-    weakenTime: Math.round(ns.formulas.hacking.weakenTime(serverData, player)),
-  };
+  if (hasFormulas(ns)) {
+    return {
+      growTime: Math.round(ns.formulas.hacking.growTime(serverData, player)),
+      hackTime: Math.round(ns.formulas.hacking.hackTime(serverData, player)),
+      weakenTime: Math.round(ns.formulas.hacking.weakenTime(serverData, player)),
+    };
+  } else {
+    return {
+      growTime: Math.round(ns.getGrowTime(serverName)),
+      hackTime: Math.round(ns.getHackTime(serverName)),
+      weakenTime: Math.round(ns.getWeakenTime(serverName)),
+    };
+  }
 };

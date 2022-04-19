@@ -2,8 +2,13 @@
 let ns = null;
 
 import { formatMoney } from '/helpers/formatters';
+import { target2SourceName } from 'deploySingleAttack';
 
-export const isHackCandidate = (_ns, { hackMoneyPerTime, portsNeeded, hackChance, hackLevel }, portLevel) =>
+export const isHackCandidate = (
+  _ns,
+  { hackMoneyPerTime, portsNeeded, hackChance, hackLevel },
+  portLevel
+) =>
   hackMoneyPerTime > 0 &&
   portLevel >= portsNeeded &&
   _ns.getHackingLevel() >= hackLevel &&
@@ -28,7 +33,7 @@ export default function logServer(_ns, myPortLevel, index, server) {
   const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
   const isCandidate = isHackCandidate(_ns, server, myPortLevel);
   let candidateStr = '  ';
-  const isAttacked = ns.getPurchasedServers().includes('Attack' + name.toUpperCase());
+  const isAttacked = ns.getPurchasedServers().includes(target2SourceName(name));
 
   if (isAttacked) {
     candidateStr = ' ✓';

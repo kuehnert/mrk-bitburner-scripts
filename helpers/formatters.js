@@ -2,20 +2,29 @@ export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
 export const HOUR = 60 * MINUTE;
 
+/**
+ * Formats the current time of the system in the format 21:35:00
+ * @param {*} ns
+ * @returns system time as string
+ */
 export const formatTime = ns => {
   const time = new Date();
 
   return ns.sprintf('%d:%02d:%02d', time.getHours(), time.getMinutes(), time.getSeconds());
 };
 
-export const formatDuration = (ns, durationMs) => {
+export const formatDuration = (ns, durationMs, showMS = false) => {
   const hours = Math.floor(durationMs / HOUR);
   durationMs %= HOUR;
   const minutes = Math.floor(durationMs / MINUTE);
   durationMs %= MINUTE;
   let seconds = Math.floor(durationMs / SECOND);
 
-  return ns.sprintf('%d:%02d:%02d', hours, minutes, seconds);
+  if (showMS) {
+    return ns.sprintf('%d:%02d:%02d.%03d', hours, minutes, seconds, durationMs % 1000);
+  } else {
+    return ns.sprintf('%d:%02d:%02d', hours, minutes, seconds);
+  }
 };
 
 export const formatMoney = (ns, money) => {

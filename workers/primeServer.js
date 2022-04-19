@@ -1,11 +1,11 @@
-/** @type import(".").NS */
+/** @type import("..").NS */
 let ns = null;
 
 import logServerInfo, { isServerPrimed } from 'helpers/logServerInfo';
 
 const runWeaken = (sourceName, targetName, weakenThreads) => {
   if (weakenThreads > 0) {
-    const result = ns.exec('miniweaken.js', sourceName, weakenThreads, targetName);
+    const result = ns.exec('workers/miniweaken.js', sourceName, weakenThreads, targetName);
 
     if (result === 0) {
       ns.print('Error running weaken script. Aborting.');
@@ -16,7 +16,7 @@ const runWeaken = (sourceName, targetName, weakenThreads) => {
 
 const runGrow = (sourceName, targetName, growThreads) => {
   if (growThreads > 0) {
-    const result = ns.exec('minigrow.js', sourceName, growThreads, targetName);
+    const result = ns.exec('workers/minigrow.js', sourceName, growThreads, targetName);
 
     if (result === 0) {
       ns.print('Error running grow script. Aborting.');
@@ -27,8 +27,8 @@ const runGrow = (sourceName, targetName, growThreads) => {
 
 const primeServer = async (sourceName, targetName) => {
   const serverMaxRam = ns.getServerMaxRam(sourceName);
-  const weakenCost = ns.getScriptRam('miniweaken.js', sourceName);
-  const growCost = ns.getScriptRam('minigrow.js', sourceName);
+  const weakenCost = ns.getScriptRam('/workers/miniweaken.js', sourceName);
+  const growCost = ns.getScriptRam('/workers/minigrow.js', sourceName);
   let target = ns.getServer(targetName);
 
   while (!isServerPrimed(ns, target)) {
@@ -36,7 +36,7 @@ const primeServer = async (sourceName, targetName) => {
     let availableRam;
 
     if (ns.getServer().hostname === 'home') {
-      availableRam = Math.min(8192, serverMaxRam / 3);
+      availableRam = Math.min(8192, Math.floor(serverMaxRam / 3.0));
     } else {
       availableRam = serverMaxRam - ns.getServerUsedRam(sourceName);
     }
@@ -48,6 +48,10 @@ const primeServer = async (sourceName, targetName) => {
     const weakenThreads = Math.min(maxWeakenThreads, optWeakenThreads);
 
     // use all available memory for threads to grow server
+    // ns.printf('availableRam: %s', JSON.stringify(availableRam, null, 4));
+    // ns.printf('weakenCost: %s', JSON.stringify(weakenCost, null, 4));
+    // ns.printf('weakenThreads: %s', JSON.stringify(weakenThreads, null, 4));
+    // ns.printf('growCost: %s', JSON.stringify(growCost, null, 4));
     const growThreads = Math.floor((availableRam - weakenCost * weakenThreads) / growCost);
 
     const weakenTime = ns.getWeakenTime(targetName);
