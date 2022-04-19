@@ -33,11 +33,7 @@ export const findOrganisations = async (force = false) => {
       .filter(o => o !== '');
     // ns.printf('organisations: %s', JSON.stringify(organisations, null, 4));
 
-    await ns.write(
-      '/data/organisations.txt',
-      JSON.stringify(organisations),
-      'w'
-    );
+    await ns.write('/data/organisations.txt', JSON.stringify(organisations), 'w');
 
     return organisations;
   }
@@ -72,7 +68,7 @@ const findJobs = async (force = false) => {
     ns.printf('Loading Jobs...');
     return JSON.parse(ns.read('/data/jobs.txt'));
   } else {
-    const companies = await findCompanies(force);
+    const companies = await findCompanies();
     let jobs = [];
 
     for (const company of companies) {
@@ -101,14 +97,8 @@ const findBestJob = async (force = false) => {
   if (jobs[0].workMoneyGainRate == null) {
     for (const job of jobs) {
       const { company, field } = job;
-      // ns.printf(
-      //   'Working at %s as %s...',
-      //   company.toUpperCase(),
-      //   field.toUpperCase()
-      // );
       ns.applyToCompany(company, field);
       ns.workForCompany(company);
-      // await ns.sleep(100);
       const player = ns.getPlayer();
 
       ns.stopAction();
@@ -128,18 +118,17 @@ const findBestJob = async (force = false) => {
 
 export async function main(_ns) {
   ns = _ns;
+  ns.disableLog('disableLog');
   ns.disableLog('applyToCompany');
   ns.disableLog('getServerMoneyAvailable');
-  ns.disableLog('sleep');
   ns.disableLog('stopAction');
   ns.disableLog('workForCompany');
   // ns.clearLog(); // don't clear log to see previous best jobs
   ns.tail();
 
-  const forceReload = ns.args??[0] === 'reload';
+  // const flags = ns.flags([['reload', false]]);
+  const { company, field, workMoneyGainRate, workRepGainRate } = await findBestJob(true);
 
-  const { company, field, workMoneyGainRate, workRepGainRate } =
-    await findBestJob(forceReload);
   ns.printf(
     'Best job: %s at %s, $%.1f/min, %.0f Rep/min',
     field.toUpperCase(),
@@ -147,6 +136,7 @@ export async function main(_ns) {
     workMoneyGainRate * 60,
     workRepGainRate * 60
   );
+
   ns.applyToCompany(company, field);
   ns.workForCompany(company);
 }

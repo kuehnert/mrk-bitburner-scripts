@@ -12,7 +12,6 @@ export const getPrograms = ns => [
 export function getMyPortLevel(_ns) {
   ns = _ns;
   const programs = getPrograms(ns);
-  ns.printf('programs: %s', JSON.stringify(programs, null, 4));
 
   let pl = 0;
   while (pl < programs.length && ns.fileExists(programs[pl].filename, 'home')) {

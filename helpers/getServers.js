@@ -1,21 +1,13 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { getMyPortLevel } from 'helpers/getMyPortLevel'
+import { getMyPortLevel } from 'helpers/getMyPortLevel';
+import isHackCandidate from 'helpers/isHackCandidate';
+import { target2SourceName } from 'helpers/names';
 
 let _servers = null;
 const MINUTE = 60 * 1000;
 const filename = '/data/routes.txt';
-
-export const isHackCandidate = (
-  _ns,
-  { hackMoneyPerTime, portsNeeded, hackChance, hackLevel },
-  portLevel
-) =>
-  hackMoneyPerTime > 0 &&
-  portLevel >= portsNeeded &&
-  _ns.getHackingLevel() >= hackLevel &&
-  hackChance >= 0.6;
 
 const findServers = (node, done = [node], route = []) => {
   const nodeData = ns.getServer(node);
@@ -57,12 +49,16 @@ export const getServers = async (_ns, forceReload = false) => {
 
 export const getHackedServers = async (_ns, forceReload = false) => {
   ns = _ns;
-  return (await getServers(_ns, forceReload)).filter(s => !s.purchasedByPlayer);
+  const hacked = await getServersDetailed(ns, forceReload);
+  return hacked.filter(s => !s.purchasedByPlayer);
 };
 
 export const getViableTargets = async _ns => {
   ns = _ns;
-  return getHackedServers(ns).filter(s => isHackCandidate(ns, s, getMyPortLevel(ns)));
+  const viable = await getHackedServers(ns);
+  return viable
+    .filter(s => !s.isAttacked && isHackCandidate(ns, s, getMyPortLevel(ns)))
+    .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
 };
 
 const calcHackTime = hostname =>
@@ -71,16 +67,20 @@ const calcHackTime = hostname =>
 const analyseServer = server => {
   const { hostname } = server;
 
-  let newServer = { ...server };
-  newServer.ram = ns.getServerMaxRam(hostname);
-  newServer.maxMoney = ns.getServerMaxMoney(hostname);
-  newServer.money = ns.getServerMoneyAvailable(hostname);
-  newServer.portsNeeded = ns.getServerNumPortsRequired(hostname);
-  newServer.hackTime = calcHackTime(hostname);
-  newServer.hackPercentage = ns.hackAnalyze(hostname);
-  newServer.hackChance = ns.hackAnalyzeChance(hostname);
+  let newServer = {
+    ...server,
+    ram: ns.getServerMaxRam(hostname),
+    maxMoney: ns.getServerMaxMoney(hostname),
+    money: ns.getServerMoneyAvailable(hostname),
+    portsNeeded: ns.getServerNumPortsRequired(hostname),
+    hackTime: calcHackTime(hostname),
+    hackPercentage: ns.hackAnalyze(hostname),
+    hackChance: ns.hackAnalyzeChance(hostname),
+    isRoot: ns.hasRootAccess(hostname),
+    isAttacked: ns.getPurchasedServers().includes(target2SourceName(hostname)),
+  };
+
   newServer.hackMoneyPerTime = newServer.maxMoney / newServer.hackTime / 100.0;
-  newServer.isRoot = ns.hasRootAccess(hostname);
 
   return newServer;
 };

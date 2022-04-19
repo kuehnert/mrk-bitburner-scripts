@@ -1,9 +1,8 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { formatMoney } from '/helpers/formatters';
-import { target2SourceName } from 'deployAttack';
-import { isHackCandidate } from 'helpers/isHackCandidate'
+import { formatMoney } from 'helpers/formatters';
+import { isHackCandidate } from 'helpers/isHackCandidate';
 
 export default function logServer(_ns, myPortLevel, index, server) {
   ns = _ns;
@@ -13,6 +12,7 @@ export default function logServer(_ns, myPortLevel, index, server) {
     hackMoneyPerTime,
     hackTime,
     hasBackdoor,
+    isAttacked,
     isRoot,
     maxMoney,
     hostname,
@@ -24,7 +24,6 @@ export default function logServer(_ns, myPortLevel, index, server) {
   const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
   const isCandidate = isHackCandidate(_ns, server, myPortLevel);
   let candidateStr = '  ';
-  const isAttacked = ns.getPurchasedServers().includes(target2SourceName(hostname));
 
   if (isAttacked) {
     candidateStr = ' ✓';

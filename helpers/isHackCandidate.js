@@ -7,6 +7,7 @@ export const isHackCandidate = (
   portLevel
 ) => {
   ns = _ns;
+  ns.disableLog('getHackingLevel');
 
   return (
     hackMoneyPerTime > 0 &&

@@ -4,6 +4,7 @@ let ns = null;
 import { getViableTargets } from '/helpers/getServers';
 import { formatMoney } from '/helpers/formatters';
 import { calcTotalRamCost } from '/helpers/ramCalculations';
+import { source2TargetName, target2SourceName } from '/helpers/names';
 
 export const autocomplete = data => ['all', 'delete-all', 'redeploy', ...data.servers];
 
@@ -25,9 +26,6 @@ const DEPENDENCIES = [
   '/workers/miniweaken.js',
   '/workers/primeServer.js',
 ];
-
-export const target2SourceName = targetName => 'HACK' + targetName;
-export const source2TargetName = sourceName => sourceName.substring(4);
 
 const purchaseServer = (sourceName, targetName, parallel) => {
   const ownedCount = ns.getPurchasedServers().length;
@@ -60,7 +58,9 @@ const copyDependencies = async sourceName => {
   await ns.scp(DEPENDENCIES, sourceName);
 };
 
-const deployServer = async (sourceName, targetName, parallel) => {
+const deployServer = async (targetName, parallel) => {
+  const sourceName = target2SourceName(targetName);
+
   ns.tprintf(
     'INFO Purchasing and configuring server %s to attack target %s',
     sourceName,
@@ -115,6 +115,44 @@ const deleteServer = sourceName => {
   }
 };
 
+const redeployAll = async () => {
+  const servers = ns.getPurchasedServers();
+
+  for (const sourceName of servers) {
+    const targetName = source2TargetName(sourceName);
+    ns.killall(sourceName);
+    await copyDependencies(sourceName);
+    ns.exec('singleAttack.js', sourceName, 1, targetName);
+  }
+
+  ns.tprintf('Finished redeploying scripts to your %d servers', servers.length);
+};
+
+const deleteAll = async () => {
+  ns.tprint('WARN Deleting all your purchased servers...');
+
+  const servers = ns.getPurchasedServers();
+  for (const sourceName of servers) {
+    ns.killall(sourceName);
+    ns.deleteServer(sourceName);
+  }
+
+  ns.tprint('Done.');
+};
+
+const deployAll = async () => {
+  // try to attack as many servers as possible
+  const serverLimit = ns.getPurchasedServerLimit();
+  const currentServerCount = ns.getPurchasedServers().length;
+  const remainingSeverCount = serverLimit - currentServerCount;
+  const viableServers = await getViableTargets(ns);
+  const targets = viableServers.slice(0, remainingSeverCount);
+
+  for (const target of targets) {
+    await deployServer(target.hostname, true);
+  }
+};
+
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
@@ -128,44 +166,20 @@ export async function main(_ns) {
   ]);
 
   if (ns.args[0] == null) {
-    ns.tprint('ERROR NONO No target server given. Exiting.');
+    ns.tprint('ERROR No target server given. Exiting.');
     ns.exit();
   }
 
   if (ns.args[0].toLowerCase() === 'delete-all') {
-    ns.tprint('WARN Deleting all your purchased servers...');
-    const servers = ns.getPurchasedServers();
-    for (const sourceName of servers) {
-      ns.killall(sourceName);
-      ns.deleteServer(sourceName);
-    }
-    ns.tprint('Done.');
+    await deleteAll();
   } else if (ns.args[0].toLowerCase() === 'redeploy') {
-    const servers = ns.getPurchasedServers();
-    for (const sourceName of servers) {
-      const targetName = source2TargetName(sourceName);
-      ns.killall(sourceName);
-      // await ns.sleep(500);
-      await copyDependencies(sourceName);
-      ns.exec('singleAttack.js', sourceName, 1, targetName);
-    }
-    ns.tprintf('Finished redeploying scripts to your %d servers', servers.length);
+    await redeployAll();
   } else if (ns.args[0].toLowerCase() === 'all') {
-    // try to attack as many servers as possible
-    const serverLimit = ns.getPurchasedServerLimit();
-    const currentServerCount = ns.getPurchasedServers().length;
-    const remainingSeverCount = serverLimit - currentServerCount;
-    const targets = getViableTargets().slice(0, remainingSeverCount);
-    ns.tprintf('targets: %s', JSON.stringify(targets, null, 4));
+    await deployAll();
+  } else if (flags.delete) {
+    deleteServer(target2SourceName(ns.args[0]));
   } else {
     const targetName = ns.args[0];
-    const sourceName = target2SourceName(targetName);
-
-    if (flags.delete) {
-      deleteServer(sourceName);
-      ns.exit();
-    }
-
-    await deployServer(sourceName, targetName, flags.parallel);
+    await deployServer(targetName, flags.parallel);
   }
 }
