@@ -1,9 +1,9 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { calcTotalRamCost, calcAttackTimes } from './helpers/ramCalculations';
-import { formatTime, formatDuration, SECOND } from './helpers/formatters';
-import logServerInfo from './helpers/logServerInfo';
+import { calcTotalRamCost, calcAttackTimes } from 'helpers/ramCalculations';
+import { formatTime, formatDuration, SECOND } from 'helpers/formatters';
+import logServerInfo from 'helpers/logServerInfo';
 
 export function autocomplete(data) {
   return [...data.servers]; // This script autocompletes the list of servers.
@@ -95,7 +95,7 @@ export async function main(_ns) {
   ns.disableLog('disableLog');
   ns.disableLog('sleep');
   ns.disableLog('getServerMinSecurityLevel');
-  ns.tail();
+  // ns.tail();
 
   const targetName = ns.args[0];
   const sourceName = ns.getServer().hostname;

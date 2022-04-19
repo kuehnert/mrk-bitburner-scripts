@@ -77,12 +77,12 @@ export async function main(_ns) {
     ['quiet', false],
   ]);
 
-  let detailedServers = await getServersDetailed(ns, flags.forceRefresh);
+  let detailedServers = await getServersDetailed(ns, flags.forceRefresh || ns.args[0] == 'owned');
 
   for (const server of detailedServers) {
     const { hostname, portsNeeded, isRoot } = server;
     await stealFiles(hostname);
-    // await copyScripts(hostname);
+
     if (!isRoot) {
       server.isRoot = hackServer(hostname, portsNeeded);
     }

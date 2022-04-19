@@ -1,26 +1,34 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { formatMoney } from 'helpers/formatters';
-import { calcTotalRamCost } from 'helpers/ramCalculations';
+import { formatMoney } from '/helpers/formatters';
+import { calcTotalRamCost } from '/helpers/ramCalculations';
 
 export const autocomplete = data => [...data.servers];
 
+const singleScript = 'singleAttack.js';
+const parallelScript = 'multiAttack.js';
+
 const DEPENDENCIES = [
-  'singleAttack.js',
+  singleScript,
+  parallelScript,
+  '/helpers/fakeFormulas.js',
+  '/helpers/formatters.js',
+  '/helpers/logServerInfo.js',
+  '/helpers/ramCalculations.js',
+  '/workers/delayedGrow.js',
+  '/workers/delayedHack.js',
+  '/workers/delayedWeaken.js',
   '/workers/minigrow.js',
   '/workers/minihack.js',
   '/workers/miniweaken.js',
   '/workers/primeServer.js',
-  '/helpers/formatters.js',
-  '/helpers/fakeFormulas.js',
-  '/helpers/logServerInfo.js',
 ];
 
 export const target2SourceName = targetName => 'HACK' + targetName;
 export const source2TargetName = sourceName => sourceName.substring(4);
 
-const purchaseServer = (sourceName, targetName) => {
+const purchaseServer = (sourceName, targetName, parallel) => {
   const ownedCount = ns.getPurchasedServers().length;
   const ownedLimit = ns.getPurchasedServerLimit();
   if (ownedCount >= ownedLimit) {
@@ -33,9 +41,10 @@ const purchaseServer = (sourceName, targetName) => {
   }
 
   ns.tprintf('Determining hacking memory requirements...');
-  const { serverSizeRequired } = calcTotalRamCost(ns, targetName);
-  const cost = ns.getPurchasedServerCost(serverSizeRequired);
-  ns.tprintf('We need a server with %d GB. Cost %s.', serverSizeRequired, formatMoney(ns, cost));
+  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, true);
+  const desiredRam = parallel ? parallelServerSizeRequired : serverSizeRequired;
+  const cost = ns.getPurchasedServerCost(desiredRam);
+  ns.tprintf('We need a server with %d GB. Cost %s.', desiredRam, formatMoney(ns, cost));
 
   const myMoney = ns.getServerMoneyAvailable('home');
   if (cost > myMoney) {
@@ -43,14 +52,14 @@ const purchaseServer = (sourceName, targetName) => {
     ns.exit();
   }
 
-  return ns.purchaseServer(sourceName, serverSizeRequired);
+  return ns.purchaseServer(sourceName, desiredRam);
 };
 
 const copyDependencies = async sourceName => {
   await ns.scp(DEPENDENCIES, sourceName);
 };
 
-const deployServer = async (sourceName, targetName) => {
+const deployServer = async (sourceName, targetName, parallel) => {
   ns.tprintf(
     'INFO Purchasing and configuring server %s to attack target %s',
     sourceName,
@@ -63,7 +72,7 @@ const deployServer = async (sourceName, targetName) => {
     ns.killall(sourceName);
     await ns.sleep(500);
   } else {
-    const newServerName = purchaseServer(sourceName, targetName);
+    const newServerName = purchaseServer(sourceName, targetName, parallel);
     if (newServerName === sourceName) {
       ns.tprintf('SUCCESS Bought new server.');
     } else {
@@ -76,7 +85,9 @@ const deployServer = async (sourceName, targetName) => {
   await copyDependencies(sourceName);
 
   // ns.tprintf('Final step: running SingleAttack.js...');
-  const result = ns.exec('singleAttack.js', sourceName, 1, targetName);
+  const script = parallel ? parallelScript : singleScript;
+  const result = ns.exec(script, sourceName, 1, targetName);
+
   if (result === 0) {
     ns.tprint('ERROR Running script. Exiting.');
     ns.exit();
@@ -112,6 +123,7 @@ export async function main(_ns) {
   const flags = ns.flags([
     ['debug', false],
     ['delete', false],
+    ['parallel', true],
   ]);
 
   if (!ns.args[0]) {
@@ -120,13 +132,13 @@ export async function main(_ns) {
   }
 
   if (ns.args[0].toLowerCase() === 'delete-all') {
-    ns.tprint("WARN Deleting all your purchased servers...");
+    ns.tprint('WARN Deleting all your purchased servers...');
     const servers = ns.getPurchasedServers();
     for (const sourceName of servers) {
       ns.killall(sourceName);
       ns.deleteServer(sourceName);
     }
-    ns.tprint("Done.")
+    ns.tprint('Done.');
   } else if (ns.args[0].toLowerCase() === 'redeploy') {
     const servers = ns.getPurchasedServers();
     for (const sourceName of servers) {
@@ -146,6 +158,6 @@ export async function main(_ns) {
       ns.exit();
     }
 
-    await deployServer(sourceName, targetName);
+    await deployServer(sourceName, targetName, flags.parallel);
   }
 }

@@ -2,7 +2,7 @@
 let ns = null;
 
 import { formatMoney } from 'helpers/formatters';
-import { source2TargetName } from 'deploySingleAttack';
+import { source2TargetName } from 'deployAttack';
 
 const formatMoneySMH = (ns, amount) => {
   return [1, 60, 60 * 60].map(mult => formatMoney(ns, amount * mult));
@@ -22,13 +22,20 @@ export async function main(_ns) {
 
   for (const server of farm) {
     const target = source2TargetName(server);
-    const income = ns.getScriptIncome('singleAttack.js', server, target);
+    let income;
+    if (ns.scriptRunning('singleAttack.js', server)) {
+      income = ns.getScriptIncome('singleAttack.js', server, target);
+    } else {
+      income = ns.getScriptIncome('multiAttack.js', server, target);
+    }
+
     if (income > -1) {
       portfolio.push({ target, income });
     }
   }
 
   portfolio = portfolio.sort((a, b) => b.income - a.income);
+  ns.printf('portfolio: %s', JSON.stringify(portfolio, null, 4));
 
   ns.tprintf(
     'INFO Total Current Income:\t%s/sec\t%s/min\t%s/hour',

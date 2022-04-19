@@ -2,7 +2,7 @@
 let ns = null;
 
 import { formatMoney } from '/helpers/formatters';
-import { target2SourceName } from 'deploySingleAttack';
+import { target2SourceName } from 'deployAttack';
 
 export const isHackCandidate = (
   _ns,

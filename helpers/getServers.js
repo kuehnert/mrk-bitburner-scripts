@@ -70,6 +70,7 @@ const analyseServer = server => {
 export const getServersDetailed = async (_ns, forceReload = false) => {
   ns = _ns;
   const servers = await getServers(ns, forceReload);
+
   // slice kicks out 'home'
   return servers.slice(1).map(s => analyseServer(s));
 };
