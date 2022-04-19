@@ -1,8 +1,21 @@
 /** @type import("..").NS */
 let ns = null;
+
+import { getMyPortLevel } from 'helpers/getMyPortLevel'
+
 let _servers = null;
 const MINUTE = 60 * 1000;
 const filename = '/data/routes.txt';
+
+export const isHackCandidate = (
+  _ns,
+  { hackMoneyPerTime, portsNeeded, hackChance, hackLevel },
+  portLevel
+) =>
+  hackMoneyPerTime > 0 &&
+  portLevel >= portsNeeded &&
+  _ns.getHackingLevel() >= hackLevel &&
+  hackChance >= 0.6;
 
 const findServers = (node, done = [node], route = []) => {
   const nodeData = ns.getServer(node);
@@ -45,6 +58,11 @@ export const getServers = async (_ns, forceReload = false) => {
 export const getHackedServers = async (_ns, forceReload = false) => {
   ns = _ns;
   return (await getServers(_ns, forceReload)).filter(s => !s.purchasedByPlayer);
+};
+
+export const getViableTargets = async _ns => {
+  ns = _ns;
+  return getHackedServers(ns).filter(s => isHackCandidate(ns, s, getMyPortLevel(ns)));
 };
 
 const calcHackTime = hostname =>

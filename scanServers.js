@@ -1,38 +1,13 @@
 import { getServersDetailed } from '/helpers/getServers';
-import logServer, { isHackCandidate } from '/helpers/logServer';
+import logServer from '/helpers/logServer';
+import isHackCandidate from '/helpers/isHackCandidate'
+import getMyPortLevel from '/helpers/getMyPortLevel'
 
 /** @type import(".").NS */
 let ns = null;
 
-const programs = ns => [
-  { filename: 'BruteSSH.exe', command: ns.brutessh },
-  { filename: 'FTPCrack.exe', command: ns.ftpcrack },
-  { filename: 'RelaySMTP.exe', command: ns.relaysmtp },
-  { filename: 'HTTPWorm.exe', command: ns.httpworm },
-  { filename: 'SQLInject.exe', command: ns.sqlinject },
-];
-
-// const files = [
-//   'minihack.js',
-//   'minigrow.js',
-//   'miniweaken.js',
-//   '/newserver/OP.js',
-//   '/newserver/grow.js',
-//   '/newserver/hack.js',
-//   '/newserver/weaken.js',
-// ];
-
-function getMyPortLevel() {
-  let pl = 0;
-  while (pl < programs(ns).length && ns.fileExists(programs(ns)[pl].filename, 'home')) {
-    pl++;
-  }
-
-  return pl;
-}
-
 function hackServer(server, portsNeeded) {
-  const portLevel = getMyPortLevel();
+  const portLevel = getMyPortLevel(ns);
   for (let i = 0; i < portLevel; i++) {
     programs(ns)[i].command(server);
   }
@@ -108,12 +83,12 @@ export async function main(_ns) {
       );
     } else if (ns.args[0] === 'targets') {
       detailedServers = detailedServers
-        .filter(s => isHackCandidate(ns, s, getMyPortLevel()))
+        .filter(s => isHackCandidate(ns, s, getMyPortLevel(ns)))
         .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
     }
   }
 
   for (let i = 0; i < detailedServers.length; i++) {
-    logServer(ns, getMyPortLevel(), i, detailedServers[i]);
+    logServer(ns, getMyPortLevel(ns), i, detailedServers[i]);
   }
 }

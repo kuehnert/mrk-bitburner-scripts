@@ -1,10 +1,11 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { getViableTargets } from '/helpers/getServers';
 import { formatMoney } from '/helpers/formatters';
 import { calcTotalRamCost } from '/helpers/ramCalculations';
 
-export const autocomplete = data => [...data.servers];
+export const autocomplete = data => ['all', 'delete-all', 'redeploy', ...data.servers];
 
 const singleScript = 'singleAttack.js';
 const parallelScript = 'multiAttack.js';
@@ -126,8 +127,8 @@ export async function main(_ns) {
     ['parallel', true],
   ]);
 
-  if (!ns.args[0]) {
-    ns.tprint('ERROR No target server given. Exiting.');
+  if (ns.args[0] == null) {
+    ns.tprint('ERROR NONO No target server given. Exiting.');
     ns.exit();
   }
 
@@ -149,6 +150,13 @@ export async function main(_ns) {
       ns.exec('singleAttack.js', sourceName, 1, targetName);
     }
     ns.tprintf('Finished redeploying scripts to your %d servers', servers.length);
+  } else if (ns.args[0].toLowerCase() === 'all') {
+    // try to attack as many servers as possible
+    const serverLimit = ns.getPurchasedServerLimit();
+    const currentServerCount = ns.getPurchasedServers().length;
+    const remainingSeverCount = serverLimit - currentServerCount;
+    const targets = getViableTargets().slice(0, remainingSeverCount);
+    ns.tprintf('targets: %s', JSON.stringify(targets, null, 4));
   } else {
     const targetName = ns.args[0];
     const sourceName = target2SourceName(targetName);

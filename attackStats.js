@@ -4,8 +4,8 @@ let ns = null;
 import { formatMoney } from 'helpers/formatters';
 import { source2TargetName } from 'deployAttack';
 
-const formatMoneySMH = (ns, amount) => {
-  return [1, 60, 60 * 60].map(mult => formatMoney(ns, amount * mult));
+const formatMoneySMH = (_ns, amount) => {
+  return [1, 60, 60 * 60].map(mult => formatMoney(_ns, amount * mult));
 };
 
 const printIncome = ({ target, income }) => {

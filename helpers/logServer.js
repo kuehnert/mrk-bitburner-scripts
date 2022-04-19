@@ -3,16 +3,7 @@ let ns = null;
 
 import { formatMoney } from '/helpers/formatters';
 import { target2SourceName } from 'deployAttack';
-
-export const isHackCandidate = (
-  _ns,
-  { hackMoneyPerTime, portsNeeded, hackChance, hackLevel },
-  portLevel
-) =>
-  hackMoneyPerTime > 0 &&
-  portLevel >= portsNeeded &&
-  _ns.getHackingLevel() >= hackLevel &&
-  hackChance >= 0.6;
+import { isHackCandidate } from 'helpers/isHackCandidate'
 
 export default function logServer(_ns, myPortLevel, index, server) {
   ns = _ns;
