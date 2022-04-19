@@ -87,6 +87,6 @@ export async function main(_ns) {
   const sourceName = ns.getServer().hostname;
   const targetName = ns.args[0];
 
-  ns.print('INFO PRIMING server');
+  ns.printf('INFO PRIMING server %s from %s', targetName, sourceName);
   await primeServer(sourceName, targetName);
 }

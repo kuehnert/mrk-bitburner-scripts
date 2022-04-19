@@ -15,6 +15,7 @@ import runScript from '/automations/runScript';
 export const MILLION = 1000000;
 
 export default [
+  { action: 'deleteStaleDataFiles' },
   {
     action: 'universityCourse',
     params: {
@@ -25,7 +26,7 @@ export default [
     },
     doneExpression: 'ns.getHackingLevel() >= 10',
   },
-  { action: 'runScript', params: { script: 'scanServers.js', args: 'quiet' } },
+  { action: 'runScript', params: { script: 'scanServers.js', args: '--quiet' } },
   { action: 'runScript', params: { script: 'contracts.js' } },
   {
     action: 'purchaseTor',
@@ -111,6 +112,4 @@ export default [
   },
 
   // // augmentations from Daedalus
-
-  { action: 'installBackdoor', params: 'The-Cave', prereq: { hacking: 925 } },
 ];

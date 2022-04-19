@@ -5,8 +5,18 @@ const MINUTE = 60 * 1000;
 const filename = '/data/routes.txt';
 
 const findServers = (node, done = [node], route = []) => {
+  const nodeData = ns.getServer(node);
   const connected = ns.scan(node).filter(s => !done.includes(s));
-  let allServers = [{ name: node, route: route.concat([node]) }];
+  let allServers = [
+    {
+      hostname: node,
+      route: route.concat([node]),
+      hackLevel: nodeData.requiredHackingSkill,
+      hasBackdoor: nodeData.backdoorInstalled,
+      organizationName: nodeData.organizationName,
+      purchasedByPlayer: nodeData.purchasedByPlayer,
+    },
+  ];
 
   for (const newServer of connected) {
     allServers = allServers.concat(
@@ -21,39 +31,38 @@ export const getServers = async (_ns, forceReload = false) => {
   ns = _ns;
 
   if (forceReload || !ns.fileExists(filename, 'home')) {
-    ns.print('WARN Rediscovering servers...');
+    ns.tprint('WARN Rediscovering servers...');
     _servers = findServers('home');
     await ns.write(filename, JSON.stringify(_servers), 'w');
   } else if (!_servers) {
-    ns.print('INFO Loading servers...');
+    ns.tprint('INFO Loading servers...');
     _servers = JSON.parse(ns.read(filename));
   }
 
   return _servers;
 };
 
-const calcHackTime = name =>
-  (ns.getHackTime(name) + ns.getWeakenTime(name) + ns.getGrowTime(name)) /
-  MINUTE;
+export const getHackedServers = async (_ns, forceReload = false) => {
+  ns = _ns;
+  return (await getServers(_ns, forceReload)).filter(s => !s.purchasedByPlayer);
+};
+
+const calcHackTime = hostname =>
+  (ns.getHackTime(hostname) + ns.getWeakenTime(hostname) + ns.getGrowTime(hostname)) / MINUTE;
 
 const analyseServer = server => {
-  const { name } = server;
-  const serverData = ns.getServer(name);
+  const { hostname } = server;
 
   let newServer = { ...server };
-  newServer.ram = ns.getServerMaxRam(name);
-  newServer.maxMoney = ns.getServerMaxMoney(name);
-  newServer.money = ns.getServerMoneyAvailable(name);
-  newServer.portsNeeded = ns.getServerNumPortsRequired(name);
-  newServer.hackTime = calcHackTime(name);
-  newServer.hackLevel = serverData.requiredHackingSkill;
-  newServer.hasBackdoor = serverData.backdoorInstalled;
-  newServer.hackPercentage = ns.hackAnalyze(name);
-  newServer.hackChance = ns.hackAnalyzeChance(name);
+  newServer.ram = ns.getServerMaxRam(hostname);
+  newServer.maxMoney = ns.getServerMaxMoney(hostname);
+  newServer.money = ns.getServerMoneyAvailable(hostname);
+  newServer.portsNeeded = ns.getServerNumPortsRequired(hostname);
+  newServer.hackTime = calcHackTime(hostname);
+  newServer.hackPercentage = ns.hackAnalyze(hostname);
+  newServer.hackChance = ns.hackAnalyzeChance(hostname);
   newServer.hackMoneyPerTime = newServer.maxMoney / newServer.hackTime / 100.0;
-  newServer.isRoot = ns.hasRootAccess(name);
-  newServer.organizationName = serverData.organizationName;
-  newServer.purchasedByPlayer = serverData.purchasedByPlayer;
+  newServer.isRoot = ns.hasRootAccess(hostname);
 
   return newServer;
 };
@@ -61,6 +70,7 @@ const analyseServer = server => {
 export const getServersDetailed = async (_ns, forceReload = false) => {
   ns = _ns;
   const servers = await getServers(ns, forceReload);
+  // slice kicks out 'home'
   return servers.slice(1).map(s => analyseServer(s));
 };
 

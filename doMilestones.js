@@ -3,13 +3,14 @@ let ns = null;
 const DEBUG = false;
 
 import { formatMoney } from '/helpers/formatters';
-import purchaseTor from '/automations/purchaseTor';
 import gymWorkout from '/automations/gymWorkout';
-import universityCourse from '/automations/universityCourse';
-import purchaseProgram from '/automations/purchaseProgram';
+import deleteStaleDataFiles from '/automations/deleteStaleDataFiles';
 import installBackdoor from '/automations/installBackdoor';
 import purchaseAugmentations from '/automations/purchaseAugmentations';
+import purchaseProgram from '/automations/purchaseProgram';
+import purchaseTor from '/automations/purchaseTor';
 import runScript from '/automations/runScript';
+import universityCourse from '/automations/universityCourse';
 import milestones, { MILLION } from '/automations/milestones';
 
 const buildCommand = ({ action, params }) => {

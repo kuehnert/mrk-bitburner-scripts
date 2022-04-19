@@ -12,15 +12,15 @@ const programs = ns => [
   { filename: 'SQLInject.exe', command: ns.sqlinject },
 ];
 
-const files = [
-  'minihack.js',
-  'minigrow.js',
-  'miniweaken.js',
-  '/newserver/OP.js',
-  '/newserver/grow.js',
-  '/newserver/hack.js',
-  '/newserver/weaken.js',
-];
+// const files = [
+//   'minihack.js',
+//   'minigrow.js',
+//   'miniweaken.js',
+//   '/newserver/OP.js',
+//   '/newserver/grow.js',
+//   '/newserver/hack.js',
+//   '/newserver/weaken.js',
+// ];
 
 function getMyPortLevel() {
   let pl = 0;
@@ -45,9 +45,9 @@ function hackServer(server, portsNeeded) {
   return ns.hasRootAccess(server);
 }
 
-async function copyScripts(server) {
-  await ns.scp(files, server);
-}
+// async function copyScripts(server) {
+//   await ns.scp(files, server);
+// }
 
 async function stealFiles(server) {
   const litFiles = ns.ls(server, '.lit');
@@ -64,29 +64,36 @@ export function autocomplete() {
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
-  ns.disableLog('disableLog');
-  ns.disableLog('getServerMaxRam');
-  ns.disableLog('getServerMaxMoney');
-  ns.disableLog('getServerMoneyAvailable');
-  ns.disableLog('getServerNumPortsRequired');
-  ns.disableLog('getHackingLevel');
-  ns.disableLog('scp');
+  // ns.disableLog('disableLog');
+  // ns.disableLog('getServerMaxRam');
+  // ns.disableLog('getServerMaxMoney');
+  // ns.disableLog('getServerMoneyAvailable');
+  // ns.disableLog('getServerNumPortsRequired');
+  // ns.disableLog('getHackingLevel');
+  // ns.disableLog('scp');
 
-  const forceRefresh = ns.args[0] === 'forceRefresh';
+  const flags = ns.flags([
+    ['forceRefresh', false],
+    ['quiet', false],
+  ]);
 
-  let detailedServers = await getServersDetailed(ns, forceRefresh);
+  let detailedServers = await getServersDetailed(ns, flags.forceRefresh);
 
   for (const server of detailedServers) {
-    const { name, portsNeeded, isRoot } = server;
-    await stealFiles(name);
-    await copyScripts(name);
+    const { hostname, portsNeeded, isRoot } = server;
+    await stealFiles(hostname);
+    // await copyScripts(hostname);
     if (!isRoot) {
-      server.isRoot = hackServer(name, portsNeeded);
+      server.isRoot = hackServer(hostname, portsNeeded);
     }
   }
 
   // ns.printf('detailedServers: %s', JSON.stringify(detailedServers, null, 4));
   await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
+
+  if (flags.quiet) {
+    ns.exit();
+  }
 
   if (ns.args[0] === 'owned') {
     detailedServers = detailedServers.filter(s => s.purchasedByPlayer).sort(a => a.hostname);
@@ -103,10 +110,6 @@ export async function main(_ns) {
       detailedServers = detailedServers
         .filter(s => isHackCandidate(ns, s, getMyPortLevel()))
         .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
-    } else if (ns.args[0] === 'quiet') {
-      ns.exit();
-    } else {
-      detailedServers = detailedServers.sort(s => s.name);
     }
   }
 

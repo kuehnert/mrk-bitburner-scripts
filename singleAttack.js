@@ -10,7 +10,7 @@ const log = (
   moneyCurrent,
   moneyMax,
   securityCurrent,
-  securityThresh,
+  securityMin,
   sleep,
   threads
 ) => {
@@ -22,7 +22,7 @@ const log = (
     formatMoney(ns, moneyMax),
     // ns.nFormat(moneyMax / 1000.0, '0,0'),
     securityCurrent,
-    securityThresh,
+    securityMin,
     // securityMin
     ns.nFormat(sleep / 1000.0, '00:00:00'),
     threads
@@ -71,10 +71,8 @@ export async function main(_ns) {
   let action;
   let moneyCurrent;
   let moneyMax;
-  let moneyThresh;
   let securityCurrent;
   let securityMin;
-  let securityThresh;
   let sleepTime;
   let threads;
 
@@ -88,16 +86,26 @@ export async function main(_ns) {
   // Infinite loop that continously hacks/grows/weakens the target server
   while (true) {
     moneyMax = ns.getServerMaxMoney(targetName);
-    moneyThresh = moneyMax * 0.9;
     moneyCurrent = ns.getServerMoneyAvailable(targetName);
 
     securityMin = ns.getServerMinSecurityLevel(targetName);
-    securityThresh = securityMin + 1.0;
     securityCurrent = ns.getServerSecurityLevel(targetName);
 
     const availableRAM = ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName);
 
-    if (ns.getServerSecurityLevel(targetName) > securityThresh) {
+    if (ns.getServerMoneyAvailable(targetName) < moneyMax) {
+      action = 'grow';
+      sleepTime = ns.getGrowTime(targetName);
+      const cost = ns.getScriptRam('workers/minigrow.js');
+      const maxThreads = Math.floor(availableRAM / cost);
+      const growPercent = getGrowPercent(ns, ns.getServer(targetName));
+      const growThreads = Math.round(Math.log(2) / Math.log(growPercent));
+      threads = Math.min(maxThreads, growThreads);
+
+      if (threads > 0) {
+        ns.exec('workers/minigrow.js', sourceName, threads, targetName);
+      }
+    } else if (ns.getServerSecurityLevel(targetName) > securityMin) {
       action = 'weaken';
       sleepTime = ns.getWeakenTime(targetName);
       const cost = ns.getScriptRam('workers/miniweaken.js');
@@ -109,18 +117,6 @@ export async function main(_ns) {
 
       if (threads > 0) {
         ns.exec('workers/miniweaken.js', sourceName, threads, targetName);
-      }
-    } else if (ns.getServerMoneyAvailable(targetName) < moneyThresh) {
-      action = 'grow';
-      sleepTime = ns.getGrowTime(targetName);
-      const cost = ns.getScriptRam('workers/minigrow.js');
-      const maxThreads = Math.floor(availableRAM / cost);
-      const growPercent = getGrowPercent(ns, ns.getServer(targetName));
-      const growThreads = Math.round(Math.log(2) / Math.log(growPercent));
-      threads = Math.min(maxThreads, growThreads);
-
-      if (threads > 0) {
-        ns.exec('workers/minigrow.js', sourceName, threads, targetName);
       }
     } else {
       action = 'hack';

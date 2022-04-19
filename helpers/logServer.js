@@ -24,7 +24,7 @@ export default function logServer(_ns, myPortLevel, index, server) {
     hasBackdoor,
     isRoot,
     maxMoney,
-    name,
+    hostname,
     portsNeeded,
     ram,
   } = server;
@@ -33,7 +33,7 @@ export default function logServer(_ns, myPortLevel, index, server) {
   const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
   const isCandidate = isHackCandidate(_ns, server, myPortLevel);
   let candidateStr = '  ';
-  const isAttacked = ns.getPurchasedServers().includes(target2SourceName(name));
+  const isAttacked = ns.getPurchasedServers().includes(target2SourceName(hostname));
 
   if (isAttacked) {
     candidateStr = ' ✓';
@@ -45,7 +45,7 @@ export default function logServer(_ns, myPortLevel, index, server) {
     "%s%2d %-18s %d Ports, level %4d, %s %s, %4f GB, %9s, %6.2f', %9s, %3.0f%%",
     candidateStr,
     index,
-    name,
+    hostname,
     portsNeeded,
     hackLevel,
     isRootStr,

@@ -1,6 +1,9 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { formatTime, MINUTE } from 'helpers/formatters';
+import { getHackedServers } from 'helpers/getServers';
+
 import AlgorithmicStockTraderI from '/contracts/AlgorithmicStockTraderI';
 import AlgorithmicStockTraderII from '/contracts/AlgorithmicStockTraderII';
 import AlgorithmicStockTraderIII from '/contracts/AlgorithmicStockTraderIII';
@@ -20,43 +23,17 @@ import TotalWaystoSum from '/contracts/TotalWaystoSum';
 import UniquePathsinaGridI from '/contracts/UniquePathsinaGridI';
 import UniquePathsinaGridII from '/contracts/UniquePathsinaGridII';
 
-const ONE_MINUTE = 60000;
-const SLEEP_TIME = 10 * ONE_MINUTE;
-let doneServers;
-let contracts;
-const impossible = [];
+const SLEEP_TIME = 20 * MINUTE;
 
-async function scanContractServers(server, path = []) {
-  if (server.match('Attack')) {
-    return;
-  }
-
-  // ns.printf('looking at server %s', server);
+const getContractsOnServer = server => {
   const files = ns.ls(server, '.cct');
 
-  for (const file of files) {
-    contracts.push({
-      server,
-      file,
-      type: ns.codingcontract.getContractType(file, server),
-      path: path
-        .concat(server)
-        .map(el => 'connect ' + el)
-        .join('; '),
-    });
-  }
-
-  // scan for connected servers
-  let servers = ns.scan(server);
-  for (const remote of servers) {
-    if (!doneServers.includes(remote)) {
-      doneServers.push(remote);
-      path.push(server);
-      await scanContractServers(remote, path);
-      path.pop();
-    }
-  }
-}
+  return files.map(file => ({
+    server,
+    file,
+    type: ns.codingcontract.getContractType(file, server),
+  }));
+};
 
 const solveContract = async contract => {
   const { file, server } = contract;
@@ -80,7 +57,7 @@ const solveContract = async contract => {
     ns.tprintf('Coding Contract: %s', JSON.stringify(result, null, 4));
   } else {
     ns.printf(
-      "WARN Don't know how to solve %s yet. Saving it in /data/unknown_contracts.txt.",
+      "WARN Don't know how to solve problem '%s' yet. Saving it in /data/unknown_contracts.txt.",
       type.toUpperCase()
     );
     // contract.description = ns.codingcontract.getDescription(file, server);
@@ -99,28 +76,34 @@ export async function main(_ns) {
   ns.disableLog('exec');
   ns.clearLog();
 
-  let servers = ns.scan('home');
+  ns.tprint('INFO Looking for hacking contracts');
+  const servers = await getHackedServers(ns);
+  let contracts;
+  let impossible = [];
 
   while (true) {
-    doneServers = ['home'];
     contracts = [];
 
-    for (const remote of servers) {
-      doneServers.push(remote);
-      await scanContractServers(remote, []);
+    for (const server of servers) {
+      contracts.push(getContractsOnServer(server.hostname));
     }
 
     // remove known unsolvable contracts
     contracts = contracts.filter(c => impossible.find(e => e.file === c.file));
 
     if (ns.args[0] === 'noop') {
-      ns.tprintf('Found %d contracts:\n%s', contracts.length, JSON.stringify(contracts, null, 4));
+      ns.tprintf(
+        '%s Found %d contracts:\n%s',
+        formatTime(ns),
+        contracts.length,
+        JSON.stringify(contracts, null, 4)
+      );
       ns.exit();
     } else if (contracts.length === 0) {
-      ns.printf('No contracts, sleeping %d minutes...', SLEEP_TIME / ONE_MINUTE);
+      ns.printf('%s No contracts, sleeping %d minutes...', formatTime(ns), SLEEP_TIME / MINUTE);
       await ns.sleep(SLEEP_TIME);
     } else {
-      ns.printf('Found ' + contracts.length + ' contracts: ');
+      ns.printf('%s Found %d contracts: ', formatTime(ns), contracts.length);
       for (let i = 0; i < contracts.length; i++) {
         const contract = contracts[i];
         await solveContract(contract);

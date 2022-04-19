@@ -8,7 +8,7 @@ export const hasFormulas = ns => ns.fileExists('Formulas.exe', 'home');
 
 export const getGrowPercent = (ns, serverData, threads = 1, player = ns.getPlayer()) => {
   if (hasFormulas(ns)) {
-    return ns.formulas.hacking.growPercent(serverData, threads, player);
+    return ns.formulas.hacking.growPercent(serverData, threads, player, ns.getServer().cpuCores);
   } else {
     return myGrowPercent(serverData, threads, player);
   }
