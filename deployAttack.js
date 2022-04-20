@@ -1,12 +1,20 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { getViableTargets } from '/helpers/getServers';
+import { getHackedServers, getViableTargets } from '/helpers/getServers';
 import { formatMoney } from '/helpers/formatters';
 import { calcTotalRamCost } from '/helpers/ramCalculations';
 import { source2TargetName, target2SourceName } from '/helpers/names';
+import isHackCandidate from '/helpers/isHackCandidate';
+import getMyPortLevel from '/helpers/getMyPortLevel';
 
-export const autocomplete = data => ['all', 'delete-all', 'redeploy', ...data.servers];
+export const autocomplete = data => [
+  'all',
+  'delete-all',
+  'redeploy',
+  'redistribute',
+  ...data.servers,
+];
 
 const singleScript = 'singleAttack.js';
 const parallelScript = 'multiAttack.js';
@@ -128,6 +136,37 @@ const redeployAll = async () => {
   ns.tprintf('Finished redeploying scripts to your %d servers', servers.length);
 };
 
+const redistribute = async () => {
+  // ensure that all the top targets are being attacked
+  const serverLimit = ns.getPurchasedServerLimit();
+  let viableServers = await getHackedServers(ns);
+  viableServers = viableServers
+    .filter(s => isHackCandidate(ns, s, getMyPortLevel(ns)))
+    .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
+  const top25 = viableServers.slice(0, serverLimit);
+  const toAttack = top25.filter(s => !s.isAttacked).map(s => s.hostname);
+
+  ns.tprintf(
+    'Currently attacking %d/%d of the top targets',
+    serverLimit - toAttack.length,
+    serverLimit
+  );
+  ns.tprintf('targeting: %s', toAttack);
+
+  const toDelete = viableServers
+    .filter(s => s.isAttacked && !top25.includes(s))
+    .map(s => s.hostname);
+  ns.tprintf('toDelete: %s', toDelete);
+
+  for (const deleteName of toDelete) {
+    deleteServer(target2SourceName(deleteName));
+  }
+
+  for (const deployName of toAttack) {
+    await deployServer(deployName, true);
+  }
+};
+
 const deleteAll = async () => {
   ns.tprint('WARN Deleting all your purchased servers...');
 
@@ -172,10 +211,12 @@ export async function main(_ns) {
 
   if (ns.args[0].toLowerCase() === 'delete-all') {
     await deleteAll();
-  } else if (ns.args[0].toLowerCase() === 'redeploy') {
-    await redeployAll();
   } else if (ns.args[0].toLowerCase() === 'all') {
     await deployAll();
+  } else if (ns.args[0].toLowerCase() === 'redeploy') {
+    await redeployAll();
+  } else if (ns.args[0].toLowerCase() === 'redistribute') {
+    await redistribute();
   } else if (flags.delete) {
     deleteServer(target2SourceName(ns.args[0]));
   } else {
