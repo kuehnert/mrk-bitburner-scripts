@@ -2,7 +2,7 @@
 let ns = null;
 
 import { formatMoney } from 'helpers/formatters';
-import { source2TargetName } from 'deployAttack';
+import { source2TargetName } from 'helpers/names';
 
 const formatMoneySMH = (_ns, amount) => {
   return [1, 60, 60 * 60].map(mult => formatMoney(_ns, amount * mult));

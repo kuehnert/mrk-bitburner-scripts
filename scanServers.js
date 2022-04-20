@@ -1,15 +1,18 @@
 import { getServersDetailed } from '/helpers/getServers';
 import logServer from '/helpers/logServer';
-import isHackCandidate from '/helpers/isHackCandidate'
-import getMyPortLevel from '/helpers/getMyPortLevel'
+import isHackCandidate from '/helpers/isHackCandidate';
+import getMyPortLevel from '/helpers/getMyPortLevel';
+import { getPrograms } from '/helpers/getMyPortLevel';
 
 /** @type import(".").NS */
 let ns = null;
 
 function hackServer(server, portsNeeded) {
+  const programs = getPrograms(ns);
   const portLevel = getMyPortLevel(ns);
+
   for (let i = 0; i < portLevel; i++) {
-    programs(ns)[i].command(server);
+    programs[i].command(server);
   }
 
   if (portsNeeded <= portLevel) {

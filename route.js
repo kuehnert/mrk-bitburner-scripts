@@ -5,7 +5,7 @@ import getServers from '/helpers/getServers';
 
 const findServer = async target => {
   const servers = await getServers(ns);
-  const server = servers.find(s => s.name === target);
+  const server = servers.find(s => s.hostname === target);
 
   if (!server) {
     ns.tprintf('ERROR routing to %s: server unknown. Exiting.', target);
@@ -15,8 +15,8 @@ const findServer = async target => {
   return server;
 };
 
-const printRoute = ({ name, route }) => {
-  ns.tprintf('INFO Route to %s: %s', name, route.join(', '));
+const printRoute = ({ hostname, route }) => {
+  ns.tprintf('INFO Route to %s: %s', hostname, route.join(', '));
 };
 
 const followRoute = route => {
