@@ -18,7 +18,8 @@ export default (_ns, serverName) => {
   const growTime = ns.getGrowTime(serverName);
 
   ns.printf(
-    'Money: %s/%s (%s) %s; Security: %.1f/%.1f (%s) %s',
+    '#### %s: Money: %s/%s (%s) %s; Security: %.1f/%.1f (%s) %s',
+    serverName,
     formatMoney(ns, server.moneyAvailable),
     formatMoney(ns, server.moneyMax),
     formatDuration(ns, growTime),

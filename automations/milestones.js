@@ -13,6 +13,7 @@ import runScript from '/automations/runScript';
 */
 
 export const MILLION = 1000000;
+export const BILLION = 1000 * MILLION;
 
 export default [
   { action: 'deleteStaleDataFiles' },
@@ -42,7 +43,7 @@ export default [
   {
     action: 'gymWorkout',
     params: 'ALL 10 true',
-    doneExpression: 'ns.getPlayer().strength >= 10',
+    doneExpression: 'ns.getPlayer().agility >= 10',
   },
   { action: 'installBackdoor', params: 'CSEC', prereq: { hacking: 59 } },
   {
@@ -78,6 +79,17 @@ export default [
     params: 'SQLInject.exe',
     prereq: { money: 250 * MILLION },
     doneExpression: "ns.fileExists('SQLInject.exe', 'home')",
+  },
+  {
+    action: 'gymWorkout',
+    params: 'ALL 50 true',
+    doneExpression: 'ns.getPlayer().agility >= 50',
+  },
+  {
+    action: 'purchaseProgram',
+    params: 'Formulas.exe',
+    prereq: { money: 5 * BILLION },
+    doneExpression: "ns.fileExists('Formulas.exe', 'home')",
   },
   { action: 'installBackdoor', params: 'I.I.I.I', prereq: { hacking: 345 } },
   {
