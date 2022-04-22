@@ -70,7 +70,8 @@ const analyseServer = server => {
   let newServer = {
     ...server,
     ram: ns.getServerMaxRam(hostname),
-    maxMoney: ns.getServerMaxMoney(hostname),    money: ns.getServerMoneyAvailable(hostname),
+    maxMoney: ns.getServerMaxMoney(hostname),
+    money: ns.getServerMoneyAvailable(hostname),
     portsNeeded: ns.getServerNumPortsRequired(hostname),
     hackTime: calcHackTime(hostname),
     hackPercentage: ns.hackAnalyze(hostname),

@@ -1,7 +1,7 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { calcTotalRamCost, calcAttackTimes } from 'helpers/ramCalculations';
+import { calcTotalRamCost, calcAttackTimes, calcMaxThreads } from 'helpers/ramCalculations';
 import { formatTime, formatDuration, SECOND } from 'helpers/formatters';
 import logServerInfo from 'helpers/logServerInfo';
 
@@ -16,15 +16,35 @@ const SCRIPTS = {
   primeServer: '/workers/primeServer.js',
 };
 
-const BUFFER = 500; // one second between each finished command
+const BUFFER = 500; // time between each finished command
 
 const calcAttackDelays = ({ growTime, hackTime, weakenTime }) => {
-  return {
+  let delays = {
     growDelay: weakenTime - BUFFER - growTime,
     hackDelay: weakenTime - 2 * BUFFER - hackTime,
     weakenDelay: 0, // assume weaken always takes longest
     sleepTime: weakenTime + BUFFER,
   };
+
+  if (delays.growDelay < 0) {
+    delays = {
+      growDelay: 0,
+      hackDelay: delays.hackDelay + -delays.growDelay,
+      weakenDelay: delays.weakenDelay + -delays.growDelay,
+      sleepTime: delays.sleepTime + -delays.growDelay,
+    };
+  }
+
+  if (delays.weakenDelay < 0) {
+    delays = {
+      growDelay: delays.growDelay + -delays.weakenDelay,
+      hackDelay: delays.hackDelay + -delays.weakenDelay,
+      weakenDelay: 0,
+      sleepTime: delays.sleepTime + delays.weakenDelay,
+    };
+  }
+
+  return delays;
 };
 
 const printTimes = (threadCounts, attackTimes, attackDelays) => {
@@ -36,7 +56,7 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
     'INFO threads: hack %11d\tgrow %11d\tweaken %11d',
     hackThreads,
     growThreads,
-    weakenThreads,
+    weakenThreads
   );
 
   ns.printf(
@@ -89,6 +109,43 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
   }
 };
 
+const checkDelays = attackDelays => {
+  const { growDelay, hackDelay, weakenDelay } = attackDelays;
+
+  if (growDelay < 0 || hackDelay < 0 || weakenDelay < 0) {
+    ns.print('ERROR Something went horribly wrong. Exiting.');
+    ns.exit();
+  }
+};
+
+const prepareAttack = async (sourceName, targetName, flags) => {
+  const threadCounts = calcTotalRamCost(ns, targetName);
+  const attackTimes = calcAttackTimes(ns, targetName);
+  const attackDelays = calcAttackDelays(attackTimes);
+
+  printTimes(threadCounts, attackTimes, attackDelays);
+  checkDelays(attackDelays);
+
+  if (flags.noop) {
+    ns.exit();
+  }
+
+  await primeServer(sourceName, targetName);
+  await performAttack(sourceName, targetName, threadCounts, attackDelays);
+};
+
+const bombAttack = async (sourceName, targetName) => {
+  ns.tprintf('WARN Bombing server %s with all my might!', targetName);
+  const threadCounts = calcMaxThreads(ns, sourceName);
+  const attackTimes = calcAttackTimes(ns, targetName);
+  const attackDelays = calcAttackDelays(attackTimes);
+
+  printTimes(threadCounts, attackTimes, attackDelays);
+  checkDelays(attackDelays);
+
+  await performAttack(sourceName, targetName, threadCounts, attackDelays);
+};
+
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
@@ -103,6 +160,7 @@ export async function main(_ns) {
   const flags = ns.flags([
     ['noop', false],
     ['killall', false],
+    ['bomb', false],
   ]);
 
   if (flags.killall) {
@@ -110,26 +168,9 @@ export async function main(_ns) {
     for (const script of Object.values(SCRIPTS)) {
       ns.scriptKill(script, sourceName);
     }
-
-    ns.exit();
+  } else if (flags.bomb) {
+    await bombAttack(sourceName, targetName);
+  } else {
+    await prepareAttack(sourceName, targetName, flags);
   }
-
-  const threadCounts = calcTotalRamCost(ns, targetName);
-  const attackTimes = calcAttackTimes(ns, targetName);
-  const attackDelays = calcAttackDelays(attackTimes);
-  const { growDelay, hackDelay, weakenDelay } = attackDelays;
-
-  printTimes(threadCounts, attackTimes, attackDelays);
-
-  if (flags.noop) {
-    ns.exit();
-  }
-
-  if (growDelay < 0 || hackDelay < 0 || weakenDelay < 0) {
-    ns.print('ERROR Something went horribly wrong. Exiting.');
-    ns.exit();
-  }
-
-  await primeServer(sourceName, targetName);
-  await performAttack(sourceName, targetName, threadCounts, attackDelays);
 }

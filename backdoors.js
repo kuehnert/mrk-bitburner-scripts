@@ -25,7 +25,7 @@ export async function main(_ns) {
     'INFO installing backdoors on %d servers: %s',
     servers.length,
     servers
-      .map(s => s.name)
+      .map(s => s.hostname)
       .join(', ')
       .toUpperCase()
   );

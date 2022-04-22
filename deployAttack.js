@@ -2,11 +2,12 @@
 let ns = null;
 
 import { getHackedServers, getViableTargets } from '/helpers/getServers';
-import { formatMoney } from '/helpers/formatters';
+import { formatMoney, formatNumber } from '/helpers/formatters';
 import { calcTotalRamCost } from '/helpers/ramCalculations';
 import { source2TargetName, target2SourceName } from '/helpers/names';
 import isHackCandidate from '/helpers/isHackCandidate';
 import getMyPortLevel from '/helpers/getMyPortLevel';
+import { getAffordableMaxServerRam } from '/helpers/purchasedServers';
 
 export const autocomplete = data => [
   'all',
@@ -35,7 +36,7 @@ const DEPENDENCIES = [
   '/workers/primeServer.js',
 ];
 
-const purchaseServer = (sourceName, targetName, parallel) => {
+const checkPurchasedServerCountLimit = () => {
   const ownedCount = ns.getPurchasedServers().length;
   const ownedLimit = ns.getPurchasedServerLimit();
   if (ownedCount >= ownedLimit) {
@@ -46,8 +47,10 @@ const purchaseServer = (sourceName, targetName, parallel) => {
     );
     ns.exit();
   }
+};
 
-  ns.tprintf('Determining hacking memory requirements...');
+const purchaseServer = (sourceName, targetName, parallel) => {
+  checkPurchasedServerCountLimit();
   const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, true);
   const desiredRam = parallel ? parallelServerSizeRequired : serverSizeRequired;
   const cost = ns.getPurchasedServerCost(desiredRam);
@@ -62,11 +65,25 @@ const purchaseServer = (sourceName, targetName, parallel) => {
   return ns.purchaseServer(sourceName, desiredRam);
 };
 
+const purchaseBomb = sourceName => {
+  checkPurchasedServerCountLimit();
+  const desiredRam = getAffordableMaxServerRam(ns);
+
+  if (desiredRam === 0) {
+    ns.tprint('ERROR Cannot afford any server right now. Exiting.');
+    ns.exit();
+  }
+
+  ns.printf('desiredRam: %s', formatNumber(ns, desiredRam));
+
+  return ns.purchaseServer(sourceName, desiredRam);
+};
+
 const copyDependencies = async sourceName => {
   await ns.scp(DEPENDENCIES, sourceName);
 };
 
-const deployServer = async (targetName, parallel) => {
+const deployServer = async (targetName, parallel, bomb = false) => {
   const sourceName = target2SourceName(targetName);
 
   ns.tprintf(
@@ -81,27 +98,33 @@ const deployServer = async (targetName, parallel) => {
     ns.killall(sourceName);
     await ns.sleep(500);
   } else {
-    const newServerName = purchaseServer(sourceName, targetName, parallel);
-    if (newServerName === sourceName) {
-      ns.tprintf('SUCCESS Bought new server.');
+    if (bomb) {
+      purchaseBomb(sourceName);
     } else {
-      ns.tprintf('ERROR Something went wrong when buying new server. Exiting.');
-      ns.exit();
+      const newServerName = purchaseServer(sourceName, targetName, parallel);
+      if (newServerName === sourceName) {
+        ns.tprintf('SUCCESS Bought new server.');
+      } else {
+        ns.tprintf('ERROR Something went wrong when buying new server. Exiting.');
+        ns.exit();
+      }
     }
   }
 
   ns.tprintf('Copying all dependencies to %s...', sourceName);
   await copyDependencies(sourceName);
 
-  // ns.tprintf('Final step: running SingleAttack.js...');
   const script = parallel ? parallelScript : singleScript;
-  const result = ns.exec(script, sourceName, 1, targetName);
+  let result;
+  if (bomb) {
+    result = ns.exec(script, sourceName, 1, targetName, '--bomb');
+  } else {
+    result = ns.exec(script, sourceName, 1, targetName);
+  }
 
   if (result === 0) {
     ns.tprint('ERROR Running script. Exiting.');
     ns.exit();
-  } else {
-    // ns.tprintf('SUCCESS Everything seems to be working. Happy leaning back and earning money');
   }
 };
 
@@ -202,6 +225,7 @@ export async function main(_ns) {
     ['debug', false],
     ['delete', false],
     ['parallel', true],
+    ['bomb', false], // create a server with max RAM to optimise hacking skill gain
   ]);
 
   if (ns.args[0] == null) {
@@ -221,6 +245,6 @@ export async function main(_ns) {
     deleteServer(target2SourceName(ns.args[0]));
   } else {
     const targetName = ns.args[0];
-    await deployServer(targetName, flags.parallel);
+    await deployServer(targetName, flags.parallel, flags.bomb);
   }
 }

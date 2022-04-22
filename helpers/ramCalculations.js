@@ -1,5 +1,7 @@
-import { getGrowPercent, getHackPercent } from 'helpers/fakeFormulas';
-import { hasFormulas } from 'helpers/fakeFormulas';
+/** @type import("..").NS */
+let ns = null;
+
+import { getGrowPercent, getHackPercent, hasFormulas } from 'helpers/fakeFormulas';
 
 export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
   const serverData = ns.getServer(serverName);
@@ -51,6 +53,17 @@ const calcScriptRamCost = (ns, script, threads) => {
 const calcServerRamSize = ramNeeded => {
   const exponent = Math.ceil(Math.log2(ramNeeded));
   return Math.pow(2, exponent);
+};
+
+export const calcMaxThreads = (_ns, sourceName) => {
+  ns = _ns;
+  let availableRam = (ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName)) / 3.0;
+
+  return {
+    growThreads: Math.floor(availableRam / ns.getScriptRam('/workers/minigrow.js')),
+    hackThreads: Math.floor(availableRam / ns.getScriptRam('/workers/minihack.js')),
+    weakenThreads: Math.floor(availableRam / ns.getScriptRam('/workers/miniweaken.js')),
+  };
 };
 
 export const calcTotalRamCost = (ns, serverName) => {

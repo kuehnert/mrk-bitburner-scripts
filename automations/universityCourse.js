@@ -13,7 +13,7 @@ export default async function universityCourse(_ns, params) {
   } else {
     while (ns.getPlayer()[skill] < level) {
       // study at least x seconds
-      await ns.sleep(10 * SECOND);
+      await ns.sleep(5 * SECOND);
     }
 
     ns.stopAction();

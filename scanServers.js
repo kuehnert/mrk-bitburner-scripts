@@ -1,11 +1,10 @@
+/** @type import(".").NS */
+let ns = null;
+
 import { getServersDetailed } from '/helpers/getServers';
 import logServer from '/helpers/logServer';
 import isHackCandidate from '/helpers/isHackCandidate';
-import getMyPortLevel from '/helpers/getMyPortLevel';
-import { getPrograms } from '/helpers/getMyPortLevel';
-
-/** @type import(".").NS */
-let ns = null;
+import getMyPortLevel, { getPrograms } from '/helpers/getMyPortLevel';
 
 function hackServer(server, portsNeeded) {
   const programs = getPrograms(ns);
@@ -19,13 +18,8 @@ function hackServer(server, portsNeeded) {
     ns.nuke(server);
   }
 
-  // ns.printf('%s ports: %d/%d', server, portLevel, portsNeeded);
   return ns.hasRootAccess(server);
 }
-
-// async function copyScripts(server) {
-//   await ns.scp(files, server);
-// }
 
 async function stealFiles(server) {
   const litFiles = ns.ls(server, '.lit');
@@ -36,24 +30,19 @@ async function stealFiles(server) {
 }
 
 export function autocomplete() {
-  return ['forceRefresh', 'owned', 'levels', 'milestones', 'quiet', 'targets'];
+  return ['--forceRefresh', 'owned', 'levels', 'milestones', 'quiet', 'targets'];
 }
 
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
-  // ns.disableLog('disableLog');
-  // ns.disableLog('getServerMaxRam');
-  // ns.disableLog('getServerMaxMoney');
-  // ns.disableLog('getServerMoneyAvailable');
-  // ns.disableLog('getServerNumPortsRequired');
-  // ns.disableLog('getHackingLevel');
-  // ns.disableLog('scp');
 
   const flags = ns.flags([
     ['forceRefresh', false],
     ['quiet', false],
   ]);
+
+  // ns.tprintf('flags: %s', JSON.stringify(flags, null, 4));
 
   let detailedServers = await getServersDetailed(ns, flags.forceRefresh || ns.args[0] == 'owned');
 
@@ -66,7 +55,6 @@ export async function main(_ns) {
     }
   }
 
-  // ns.printf('detailedServers: %s', JSON.stringify(detailedServers, null, 4));
   await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
 
   if (flags.quiet) {
