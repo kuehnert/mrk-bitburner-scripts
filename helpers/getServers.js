@@ -36,11 +36,11 @@ export const getServers = async (_ns, forceReload = false) => {
   ns = _ns;
 
   if (forceReload || !ns.fileExists(filename, 'home')) {
-    ns.tprint('WARN Rediscovering servers...');
+    // ns.tprint('WARN Rediscovering servers...');
     _servers = findServers('home');
     await ns.write(filename, JSON.stringify(_servers), 'w');
   } else if (!_servers) {
-    ns.tprint('INFO Loading servers...');
+    // ns.tprint('INFO Loading servers...');
     _servers = JSON.parse(ns.read(filename));
   }
 

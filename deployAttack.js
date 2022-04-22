@@ -7,13 +7,21 @@ import { calcTotalRamCost } from '/helpers/ramCalculations';
 import { source2TargetName, target2SourceName } from '/helpers/names';
 import isHackCandidate from '/helpers/isHackCandidate';
 import getMyPortLevel from '/helpers/getMyPortLevel';
-import { getAffordableMaxServerRam } from '/helpers/purchasedServers';
+import {
+  getPurchasedServerCosts,
+  getAffordableMaxServerRam,
+} from '/helpers/purchasedServers';
 
 export const autocomplete = data => [
   'all',
+  'cost',
   'delete-all',
+  'exp',
   'redeploy',
   'redistribute',
+  'stats',
+  '--bomb',
+  '--delete',
   ...data.servers,
 ];
 
@@ -51,10 +59,18 @@ const checkPurchasedServerCountLimit = () => {
 
 const purchaseServer = (sourceName, targetName, parallel) => {
   checkPurchasedServerCountLimit();
-  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, true);
+  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(
+    ns,
+    targetName,
+    true
+  );
   const desiredRam = parallel ? parallelServerSizeRequired : serverSizeRequired;
   const cost = ns.getPurchasedServerCost(desiredRam);
-  ns.tprintf('We need a server with %d GB. Cost %s.', desiredRam, formatMoney(ns, cost));
+  ns.tprintf(
+    'We need a server with %d GB. Cost %s.',
+    desiredRam,
+    formatMoney(ns, cost)
+  );
 
   const myMoney = ns.getServerMoneyAvailable('home');
   if (cost > myMoney) {
@@ -93,7 +109,10 @@ const deployServer = async (targetName, parallel, bomb = false) => {
   );
 
   if (ns.getPurchasedServers().includes(sourceName)) {
-    ns.tprintf('WARN You already own a server called %s. Re-configuring it.', sourceName);
+    ns.tprintf(
+      'WARN You already own a server called %s. Re-configuring it.',
+      sourceName
+    );
     ns.tprintf('Killing all processes on %s. Waiting 2 seconds.', sourceName);
     ns.killall(sourceName);
     await ns.sleep(500);
@@ -105,7 +124,9 @@ const deployServer = async (targetName, parallel, bomb = false) => {
       if (newServerName === sourceName) {
         ns.tprintf('SUCCESS Bought new server.');
       } else {
-        ns.tprintf('ERROR Something went wrong when buying new server. Exiting.');
+        ns.tprintf(
+          'ERROR Something went wrong when buying new server. Exiting.'
+        );
         ns.exit();
       }
     }
@@ -202,7 +223,7 @@ const deleteAll = async () => {
   ns.tprint('Done.');
 };
 
-const deployAll = async () => {
+const deployAll = async ({ bomb }) => {
   // try to attack as many servers as possible
   const serverLimit = ns.getPurchasedServerLimit();
   const currentServerCount = ns.getPurchasedServers().length;
@@ -210,8 +231,26 @@ const deployAll = async () => {
   const viableServers = await getViableTargets(ns);
   const targets = viableServers.slice(0, remainingSeverCount);
 
-  for (const target of targets) {
-    await deployServer(target.hostname, true);
+  if (viableServers.length === 0) {
+    ns.tprintf('WARN There currently are no viable targets. Exiting');
+  } else if (currentServerCount === serverLimit) {
+    ns.tprintf(
+      'WARN You already own a maximum %d out of %d servers. Exiting',
+      currentServerCount,
+      serverLimit
+    );
+  } else {
+    for (const target of targets) {
+      await deployServer(target.hostname, true, bomb);
+    }
+  }
+};
+
+const printServerCost = () => {
+  const pricelist = getPurchasedServerCosts(ns);
+  // ns.tprintf('pricelist: %s', JSON.stringify(pricelist, null, 4));
+  for (const { ram, cost, affordable } of pricelist) {
+    ns.tprintf('1 Server with %s GB:\t%s\t%dx', formatNumber(ns, ram), formatMoney(ns, cost), affordable);
   }
 };
 
@@ -228,23 +267,32 @@ export async function main(_ns) {
     ['bomb', false], // create a server with max RAM to optimise hacking skill gain
   ]);
 
-  if (ns.args[0] == null) {
-    ns.tprint('ERROR No target server given. Exiting.');
+  if (ns.args.length === 0) {
+    ns.tprint('ERROR No target server or command given. Exiting.');
     ns.exit();
-  }
-
-  if (ns.args[0].toLowerCase() === 'delete-all') {
+  } else if (ns.args[0].toLowerCase() === 'delete-all') {
     await deleteAll();
   } else if (ns.args[0].toLowerCase() === 'all') {
-    await deployAll();
+    await deployAll(flags);
+  } else if (ns.args[0].toLowerCase() === 'cost') {
+    printServerCost();
+    ns.exit();
   } else if (ns.args[0].toLowerCase() === 'redeploy') {
     await redeployAll();
   } else if (ns.args[0].toLowerCase() === 'redistribute') {
     await redistribute();
+  } else if (ns.args[0].toLowerCase() === 'stats') {
+    ns.run('helpers/calcAttackStats.js', 1);
+    ns.exit();
+  } else if (ns.args[0].toLowerCase() === 'exp') {
+    ns.run('helpers/calcAttackStats.js', 1, '--exp');
+    ns.exit();
   } else if (flags.delete) {
     deleteServer(target2SourceName(ns.args[0]));
   } else {
     const targetName = ns.args[0];
     await deployServer(targetName, flags.parallel, flags.bomb);
   }
+
+  ns.run('scanServers.js', 1, '--forceRefresh', '--quiet');
 }

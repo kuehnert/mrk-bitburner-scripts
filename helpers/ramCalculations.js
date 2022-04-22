@@ -1,7 +1,11 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { getGrowPercent, getHackPercent, hasFormulas } from 'helpers/fakeFormulas';
+import {
+  getGrowPercent,
+  getHackPercent,
+  hasFormulas,
+} from 'helpers/fakeFormulas';
 
 export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
   const serverData = ns.getServer(serverName);
@@ -57,12 +61,23 @@ const calcServerRamSize = ramNeeded => {
 
 export const calcMaxThreads = (_ns, sourceName) => {
   ns = _ns;
-  let availableRam = (ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName)) / 3.0;
+  let availableRam =
+    (ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName)) / 3.0;
+
+  if (sourceName === 'home' && ns.getServerMaxRam(sourceName) >= 64) {
+    availableRam -= 16; // buffer for other scripts
+  }
 
   return {
-    growThreads: Math.floor(availableRam / ns.getScriptRam('/workers/minigrow.js')),
-    hackThreads: Math.floor(availableRam / ns.getScriptRam('/workers/minihack.js')),
-    weakenThreads: Math.floor(availableRam / ns.getScriptRam('/workers/miniweaken.js')),
+    growThreads: Math.floor(
+      availableRam / ns.getScriptRam('/workers/minigrow.js')
+    ),
+    hackThreads: Math.floor(
+      availableRam / ns.getScriptRam('/workers/minihack.js')
+    ),
+    weakenThreads: Math.floor(
+      availableRam / ns.getScriptRam('/workers/miniweaken.js')
+    ),
   };
 };
 
@@ -73,7 +88,11 @@ export const calcTotalRamCost = (ns, serverName) => {
 
   const growRam = calcScriptRamCost(ns, '/workers/minigrow.js', growThreads);
   const hackRam = calcScriptRamCost(ns, '/workers/minihack.js', hackThreads);
-  const weakenRam = calcScriptRamCost(ns, '/workers/miniweaken.js', weakenThreads);
+  const weakenRam = calcScriptRamCost(
+    ns,
+    '/workers/miniweaken.js',
+    weakenThreads
+  );
   const maxRam = Math.max(growRam, hackRam, weakenRam);
 
   const mainScriptRam = ns.getScriptRam('singleAttack.js');
@@ -104,7 +123,9 @@ export const calcAttackTimes = (ns, serverName) => {
     return {
       growTime: Math.round(ns.formulas.hacking.growTime(serverData, player)),
       hackTime: Math.round(ns.formulas.hacking.hackTime(serverData, player)),
-      weakenTime: Math.round(ns.formulas.hacking.weakenTime(serverData, player)),
+      weakenTime: Math.round(
+        ns.formulas.hacking.weakenTime(serverData, player)
+      ),
     };
   } else {
     return {
