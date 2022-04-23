@@ -1,11 +1,12 @@
 /** @type import("..").NS */
 let ns = null;
 
-import logServerInfo, { isServerPrimed } from 'helpers/logServerInfo';
+import logServerInfo, { isServerPrimed } from '/helpers/logServerInfo';
+import { miniGrowScript, miniWeakenScript } from '/helpers/globals';
 
 const runWeaken = (sourceName, targetName, weakenThreads) => {
   if (weakenThreads > 0) {
-    const result = ns.exec('workers/miniweaken.js', sourceName, weakenThreads, targetName);
+    const result = ns.exec(miniWeakenScript, sourceName, weakenThreads, targetName);
 
     if (result === 0) {
       ns.print('Error running weaken script. Aborting.');
@@ -16,7 +17,7 @@ const runWeaken = (sourceName, targetName, weakenThreads) => {
 
 const runGrow = (sourceName, targetName, growThreads) => {
   if (growThreads > 0) {
-    const result = ns.exec('workers/minigrow.js', sourceName, growThreads, targetName);
+    const result = ns.exec(miniGrowScript, sourceName, growThreads, targetName);
 
     if (result === 0) {
       ns.print('Error running grow script. Aborting.');
@@ -27,20 +28,19 @@ const runGrow = (sourceName, targetName, growThreads) => {
 
 const primeServer = async (sourceName, targetName) => {
   const serverMaxRam = ns.getServerMaxRam(sourceName);
-  const weakenCost = ns.getScriptRam('/workers/miniweaken.js', sourceName);
-  const growCost = ns.getScriptRam('/workers/minigrow.js', sourceName);
+  const weakenCost = ns.getScriptRam(miniWeakenScript, sourceName);
+  const growCost = ns.getScriptRam(miniGrowScript, sourceName);
   let target = ns.getServer(targetName);
 
   while (!isServerPrimed(ns, target)) {
     logServerInfo(ns, targetName);
-    let availableRam;
+    let usedRam = ns.getServerUsedRam(sourceName);
 
-    if (ns.getServer().hostname === 'home') {
-      availableRam = Math.min(8192, Math.floor(serverMaxRam / 3.0));
-    } else {
-      availableRam = serverMaxRam - ns.getServerUsedRam(sourceName);
+    if (ns.getHostname() === 'home') {
+      usedRam += 10; // reserve 10 GB for other scripts
     }
 
+    const availableRam = serverMaxRam - usedRam;
     const currentSecurity = ns.getServerSecurityLevel(targetName);
     const minSecurity = ns.getServerMinSecurityLevel(targetName);
     const maxWeakenThreads = Math.floor(availableRam / weakenCost);
@@ -48,10 +48,6 @@ const primeServer = async (sourceName, targetName) => {
     const weakenThreads = Math.min(maxWeakenThreads, optWeakenThreads);
 
     // use all available memory for threads to grow server
-    // ns.printf('availableRam: %s', JSON.stringify(availableRam, null, 4));
-    // ns.printf('weakenCost: %s', JSON.stringify(weakenCost, null, 4));
-    // ns.printf('weakenThreads: %s', JSON.stringify(weakenThreads, null, 4));
-    // ns.printf('growCost: %s', JSON.stringify(growCost, null, 4));
     const growThreads = Math.floor((availableRam - weakenCost * weakenThreads) / growCost);
 
     const weakenTime = ns.getWeakenTime(targetName);

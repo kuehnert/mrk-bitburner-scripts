@@ -60,10 +60,7 @@ export async function main(_ns) {
     portfolio = portfolio.sort((a, b) => b.income - a.income);
   }
 
-  ns.tprintf(
-    'INFO Total Current Income:\t%s/sec\t%s/min\t%s/hour',
-    ...formatMoneySMH(ns, totalIncome)
-  );
+  ns.tprintf('INFO Total Current Income:\t%s/sec\t%s/min\t%s/hour', ...formatMoneySMH(ns, totalIncome));
 
   let total = 0;
   for (const item of portfolio) {

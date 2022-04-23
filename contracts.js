@@ -2,7 +2,7 @@
 let ns = null;
 
 import { formatTime, MINUTE } from 'helpers/formatters';
-import { getHackedServers } from 'helpers/getServers';
+import loadServers from 'helpers/loadServers'
 
 import AlgorithmicStockTraderI from '/contracts/AlgorithmicStockTraderI';
 import AlgorithmicStockTraderII from '/contracts/AlgorithmicStockTraderII';
@@ -81,7 +81,7 @@ export async function main(_ns) {
   ns.clearLog();
 
   ns.tprint('INFO Looking for hacking contracts');
-  const servers = await getHackedServers(ns);
+  const servers = await loadServers(ns);
   let contracts;
   let impossible = [];
 

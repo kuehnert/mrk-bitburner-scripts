@@ -12,20 +12,20 @@
     If no profit can be made, then the answer should be 0
 */
 export default function AlgorithmicStockTraderII(data) {
-  let buy = 0;
-  let sell = 1;
+  let buyPoint = 0;
+  let sellPoint = 1;
   let profit = 0;
 
-  while (sell < data.length && buy < data.length) {
-    if (data[sell] < data[buy]) {
-      buy = sell;
+  while (sellPoint < data.length && buyPoint < data.length) {
+    if (data[sellPoint] < data[buyPoint]) {
+      buyPoint = sellPoint;
     }
-    if (data[sell + 1] > data[sell]) {
-      sell++;
+    if (data[sellPoint + 1] > data[sellPoint]) {
+      sellPoint++;
     } else {
-      profit += data[sell] - data[buy];
-      buy = sell + 1;
-      sell = buy + 1;
+      profit += data[sellPoint] - data[buyPoint];
+      buyPoint = sellPoint + 1;
+      sellPoint = buyPoint + 1;
     }
   }
 

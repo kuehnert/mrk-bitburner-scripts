@@ -29,6 +29,11 @@ const log = (
   );
 };
 
+const growScript = '/workers/miniGrow.js';
+const hackScript = '/workers/miniHack.js';
+const weakenScript = '/workers/miniWeaken.js';
+const primeScript = '/workers/primeServer.js';
+
 export function autocomplete(data) {
   return [...data.servers]; // This script autocompletes the list of servers.
 }
@@ -41,7 +46,7 @@ export async function main(_ns) {
   if (!flags.debug) {
     // ns.disableLog('ALL');
     ns.disableLog('disableLog');
-    ns.disableLog('exec');
+    // ns.disableLog('exec');
     ns.disableLog('kill');
     ns.disableLog('sleep');
     ns.disableLog('getServerMaxMoney');
@@ -57,12 +62,12 @@ export async function main(_ns) {
 
   const sourceName = ns.getServer().hostname;
 
-  ns.kill('workers/miniweaken.js', sourceName);
-  ns.kill('workers/minigrow.js', sourceName);
-  ns.kill('workers/minihack.js', sourceName);
+  ns.kill(weakenScript, sourceName);
+  ns.kill(growScript, sourceName);
+  ns.kill(hackScript, sourceName);
 
   if (!ns.args[0]) {
-    ns.print('ERROR No target server give. Exiting.');
+    ns.print('ERROR No target server given. Exiting.');
     ns.exit();
   }
   const targetName = ns.args[0];
@@ -76,12 +81,11 @@ export async function main(_ns) {
   let sleepTime;
   let threads;
 
-  ns.printf('INFO PRIMING target server %s...', targetName);
-  const pid = ns.exec('workers/primeServer.js', sourceName, 1, targetName);
-  // const pid = ns.exec('workers/primeServer.js', 'home', 1, targetName); // home has more power but cannot handle too many
-  while (ns.isRunning(pid, sourceName)) {
-    await ns.sleep(SECOND);
-  }
+  // ns.printf('INFO PRIMING target server %s...', targetName);
+  // const pid = ns.exec(primeScript, sourceName, 1, targetName);
+  // while (ns.isRunning(pid, sourceName)) {
+  //   await ns.sleep(SECOND);
+  // }
 
   ns.printf('INFO PRIMING target server %s...', targetName);
   // Infinite loop that continously hacks/grows/weakens the target server
@@ -95,30 +99,32 @@ export async function main(_ns) {
     const availableRAM =
       ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName);
 
-    if (ns.getServerMoneyAvailable(targetName) < moneyMax * 0.98) {
+    if (ns.getServerMoneyAvailable(targetName) < moneyMax * 0.8) {
       action = 'grow';
       sleepTime = ns.getGrowTime(targetName);
-      const cost = ns.getScriptRam('workers/minigrow.js', sourceName);
+      const cost = ns.getScriptRam(growScript, sourceName);
       const maxThreads = Math.floor(availableRAM / cost);
       const growPercent = getGrowPercent(ns, ns.getServer(targetName));
       const growThreads = Math.round(Math.log(2) / Math.log(growPercent));
       threads = Math.min(maxThreads, growThreads);
 
       if (threads > 0) {
-        ns.exec('workers/minigrow.js', sourceName, threads, targetName);
+        ns.exec(growScript, sourceName, threads, targetName);
       }
-    } else if (ns.getServerSecurityLevel(targetName) > securityMin + 0.1) {
+    } else if (ns.getServerSecurityLevel(targetName) > securityMin * 3) {
       action = 'weaken';
       sleepTime = ns.getWeakenTime(targetName);
-      const cost = ns.getScriptRam('workers/miniweaken.js', sourceName);
+      const cost = ns.getScriptRam(weakenScript, sourceName);
       const maxThreads = Math.floor(availableRAM / cost);
 
       const weakenDifference = securityCurrent - securityMin;
       const weakenThreads = Math.round(weakenDifference / 0.02);
+      ns.printf('maxThreads: %s', JSON.stringify(maxThreads, null, 4));
+      ns.printf('weakenThreads: %s', JSON.stringify(weakenThreads, null, 4));
       threads = Math.min(maxThreads, weakenThreads);
 
       if (threads > 0) {
-        ns.exec('workers/miniweaken.js', sourceName, threads, targetName);
+        ns.exec(weakenScript, sourceName, threads, targetName);
       }
     } else {
       action = 'hack';
@@ -129,17 +135,8 @@ export async function main(_ns) {
       const hackThreads = Math.round(0.5 / hackPercent);
       threads = Math.min(maxThreads, hackThreads);
 
-      // ns.printf('availableRAM: %s', JSON.stringify(availableRAM, null, 4));
-      // ns.printf('cost: %s', JSON.stringify(cost, null, 4));
-      // ns.printf(
-      //   'maxThreads: %d, hackThreads: %d, final: %d',
-      //   maxThreads,
-      //   hackThreads,
-      //   threads
-      // );
-
       if (threads > 0) {
-        ns.exec('workers/minihack.js', sourceName, threads, targetName);
+        ns.exec(hackScript, sourceName, threads, targetName);
       }
     }
 

@@ -1,10 +1,10 @@
 /** @type import(".").NS */
 let ns = null;
 
-import getServers from '/helpers/getServers';
+import { routesFile } from '/helpers/globals';
 
 const findServer = async target => {
-  const servers = await getServers(ns);
+  const servers = JSON.parse(ns.read(routesFile));
   const server = servers.find(s => s.hostname === target);
 
   if (!server) {

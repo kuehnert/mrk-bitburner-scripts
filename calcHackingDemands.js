@@ -30,29 +30,15 @@ export async function main(_ns) {
   const { growTime, hackTime, weakenTime } = calcAttackTimes(ns, serverName);
 
   ns.tprintf('INFO analysing server %s', serverName);
+  ns.tprintf('GROW   threads: %4d\tRAM required: %4d GB\ttime: %s', growThreads, growRam, formatDuration(ns, growTime));
+  ns.tprintf('HACK   threads: %4d\tRAM required: %4d GB\ttime: %s', hackThreads, hackRam, formatDuration(ns, hackTime));
   ns.tprintf(
-    'GROW   threads: %3d\tRAM required: %3d GB\ttime: %s',
-    growThreads,
-    growRam,
-    formatDuration(ns, growTime)
-  );
-  ns.tprintf(
-    'HACK   threads: %3d\tRAM required: %3d GB\ttime: %s',
-    hackThreads,
-    hackRam,
-    formatDuration(ns, hackTime)
-  );
-  ns.tprintf(
-    'WEAKEN threads: %3d\tRAM required: %3d GB\ttime: %s',
+    'WEAKEN threads: %4d\tRAM required: %4d GB\ttime: %s',
     weakenThreads,
     weakenRam,
     formatDuration(ns, weakenTime)
   );
-  ns.tprintf(
-    'single-thread       server ram required: %4d GB => %4d GB server',
-    ramRequired,
-    serverSizeRequired
-  );
+  ns.tprintf('single-thread       server ram required: %4d GB => %4d GB server', ramRequired, serverSizeRequired);
   ns.tprintf(
     'parallel processing server ram required: %4d GB => %4d GB server',
     parallelRamRequired,

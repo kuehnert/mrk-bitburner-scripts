@@ -4,7 +4,9 @@
 // https://github.com/danielyxie/bitburner/blob/23baae56cf430f002e806e953681998decff22da/src/Constants.ts
 // https://github.com/danielyxie/bitburner/blob/23baae56cf430f002e806e953681998decff22da/src/BitNode/BitNodeMultipliers.ts
 
-export const hasFormulas = ns => ns.fileExists('Formulas.exe', 'home');
+import { useFormulas } from '/helpers/globals'
+
+export const hasFormulas = ns => useFormulas && ns.fileExists('Formulas.exe', 'home');
 
 export const getGrowPercent = (ns, serverData, threads = 1, player = ns.getPlayer()) => {
   if (hasFormulas(ns)) {
@@ -18,7 +20,7 @@ export const getHackPercent = (ns, serverData, player = ns.getPlayer()) => {
   if (hasFormulas(ns)) {
     return ns.formulas.hacking.hackPercent(serverData, player);
   } else {
-    return myHackPercent(serverData, player) / 5; // BAD HACK
+    return myHackPercent(serverData, player); // BAD HACK
   }
 };
 
@@ -34,8 +36,7 @@ export function myHackPercent(server, player) {
   const difficultyMult = (100 - server.hackDifficulty) / 100;
   const skillMult = (player.hacking - (server.requiredHackingSkill - 1)) / player.hacking;
   const percentMoneyHacked =
-    (difficultyMult * skillMult * player.hacking_money_mult * BitNodeMultipliers.ScriptHackMoney) /
-    balanceFactor;
+    (difficultyMult * skillMult * player.hacking_money_mult * BitNodeMultipliers.ScriptHackMoney) / balanceFactor;
 
   if (percentMoneyHacked < 0) {
     return 0;
@@ -65,10 +66,7 @@ export function myGrowPercent(server, threads, player, cores = 1) {
   //Apply serverGrowth for the calculated number of growth cycles
   const coreBonus = 1 + (cores - 1) / 16;
 
-  return Math.pow(
-    adjGrowthRate,
-    numServerGrowthCyclesAdjusted * player.hacking_grow_mult * coreBonus
-  );
+  return Math.pow(adjGrowthRate, numServerGrowthCyclesAdjusted * player.hacking_grow_mult * coreBonus);
 }
 
 const CONSTANTS = {

@@ -4,30 +4,20 @@ let ns = null;
 import { getHackedServers, getViableTargets } from '/helpers/getServers';
 
 const hackScript = '/workers/miniHack.js';
-const growScript = '/workers/minigrow.js';
+const growScript = '/workers/miniGrow.js';
 const weakenScript = '/workers/miniWeaken.js';
 
 const dependencies = [growScript, hackScript, weakenScript];
 
 const getAttackers = async () => {
-  return (await getHackedServers(ns, false)).filter(
-    s => s.isRoot && s.ram >= 4
-  );
+  return (await getHackedServers(ns, false)).filter(s => s.isRoot && s.ram >= 4);
 };
 
 const getTargetNames = async () => {
   return (await getViableTargets(ns)).slice(0, 1).map(s => s.hostname);
 };
 
-const log = (
-  action,
-  target,
-  moneyCurrent,
-  moneyThresh,
-  securityCurrent,
-  securityThresh,
-  sleep
-) => {
+const log = (action, target, moneyCurrent, moneyThresh, securityCurrent, securityThresh, sleep) => {
   ns.printf(
     '%-15s, %-6s: $%sk/$%sk, security: %.0f/%.0f, %s',
     target,
@@ -42,19 +32,34 @@ const log = (
   );
 };
 
+export const autocomplete = data => [...data.servers];
+
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
   ns.disableLog('disableLog');
-  ns.disableLog('ALL');
+  ns.disableLog('scp');
+  ns.disableLog('getServerMaxRam');
+  ns.disableLog('getServerUsedRam');
+  ns.disableLog('getServerMaxMoney');
+  ns.disableLog('getServerMoneyAvailable');
+  ns.disableLog('getServerMinSecurityLevel');
+  ns.disableLog('getServerSecurityLevel');
+  ns.disableLog('getServerNumPortsRequired');
+  ns.disableLog('sleep');
+  // ns.disableLog('ALL');
+  ns.tail();
 
   const attackers = await getAttackers();
-  const targetNames = await getTargetNames();
-  ns.tprintf('INFO Attacking target(s): %s', targetNames.join(', '));
-  ns.tprintf(
-    'INFO Attacking sources(s): %s',
-    attackers.map(s => s.hostname).join(', ')
-  );
+  let targetNames;
+  if (ns.args[0]) {
+    targetNames = [ns.args[0]];
+  } else {
+    targetNames = await getTargetNames();
+  }
+
+  ns.printf('INFO Attacking target(s): %s', targetNames.join(', '));
+  ns.printf('INFO Attacking sources(s): %s', attackers.map(s => s.hostname).join(', '));
 
   let moneyMax;
   let moneyThresh;
@@ -76,10 +81,10 @@ export async function main(_ns) {
     counter = (counter + 1) % targetNames.length;
     target = targetNames[counter];
     moneyMax = ns.getServerMaxMoney(target);
-    moneyThresh = moneyMax * 0.9;
+    moneyThresh = moneyMax * 0.7;
     moneyCurrent = ns.getServerMoneyAvailable(target);
     securityMin = ns.getServerMinSecurityLevel(target);
-    securityThresh = securityMin + 2;
+    securityThresh = securityMin * 3;
     securityCurrent = ns.getServerSecurityLevel(target);
 
     if (securityCurrent > securityThresh) {
@@ -127,15 +132,7 @@ export async function main(_ns) {
     }
 
     // ns.printf('%-6s %s, sleep %.0fs', action, target, sleepTime / 1000);
-    log(
-      action,
-      target,
-      moneyCurrent,
-      moneyThresh,
-      securityCurrent,
-      securityThresh,
-      sleepTime
-    );
+    log(action, target, moneyCurrent, moneyMax, securityCurrent, securityMin, sleepTime);
     await ns.sleep(sleepTime + 100);
   }
 }

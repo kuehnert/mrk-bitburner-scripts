@@ -70,8 +70,8 @@ export async function main(_ns) {
       detailedServers = detailedServers.sort((a, b) => a.hackLevel - b.hackLevel);
     } else if (ns.args[0] === 'milestones') {
       detailedServers = detailedServers.filter(s =>
-        s.name.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/)
-      );
+        s.hostname.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/)
+      ).sort((a, b) => a.hackLevel - b.hackLevel);
     } else if (ns.args[0] === 'targets') {
       detailedServers = detailedServers
         .filter(s => isHackCandidate(ns, s, getMyPortLevel(ns)))

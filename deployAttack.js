@@ -7,10 +7,8 @@ import { calcTotalRamCost } from '/helpers/ramCalculations';
 import { source2TargetName, target2SourceName } from '/helpers/names';
 import isHackCandidate from '/helpers/isHackCandidate';
 import getMyPortLevel from '/helpers/getMyPortLevel';
-import {
-  getPurchasedServerCosts,
-  getAffordableMaxServerRam,
-} from '/helpers/purchasedServers';
+import { getPurchasedServerCosts, getAffordableMaxServerRam } from '/helpers/purchasedServers';
+import { miniHackScript, miniGrowScript, miniWeakenScript } from '/helpers/globals';
 
 export const autocomplete = data => [
   'all',
@@ -29,48 +27,37 @@ const singleScript = 'singleAttack.js';
 const parallelScript = 'multiAttack.js';
 
 const DEPENDENCIES = [
-  singleScript,
-  parallelScript,
   '/helpers/fakeFormulas.js',
   '/helpers/formatters.js',
+  '/helpers/globals.js',
   '/helpers/logServerInfo.js',
   '/helpers/ramCalculations.js',
   '/workers/delayedGrow.js',
   '/workers/delayedHack.js',
   '/workers/delayedWeaken.js',
-  '/workers/minigrow.js',
-  '/workers/minihack.js',
-  '/workers/miniweaken.js',
   '/workers/primeServer.js',
+  miniGrowScript,
+  miniHackScript,
+  miniWeakenScript,
+  parallelScript,
+  singleScript,
 ];
 
 const checkPurchasedServerCountLimit = () => {
   const ownedCount = ns.getPurchasedServers().length;
   const ownedLimit = ns.getPurchasedServerLimit();
   if (ownedCount >= ownedLimit) {
-    ns.tprintf(
-      'ERROR You already own a maximum %d out of %d servers. Exiting',
-      ownedCount,
-      ownedLimit
-    );
+    ns.tprintf('ERROR You already own a maximum %d out of %d servers. Exiting', ownedCount, ownedLimit);
     ns.exit();
   }
 };
 
 const purchaseServer = (sourceName, targetName, parallel) => {
   checkPurchasedServerCountLimit();
-  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(
-    ns,
-    targetName,
-    true
-  );
+  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, true);
   const desiredRam = parallel ? parallelServerSizeRequired : serverSizeRequired;
   const cost = ns.getPurchasedServerCost(desiredRam);
-  ns.tprintf(
-    'We need a server with %d GB. Cost %s.',
-    desiredRam,
-    formatMoney(ns, cost)
-  );
+  ns.tprintf('We need a server with %d GB. Cost %s.', desiredRam, formatMoney(ns, cost));
 
   const myMoney = ns.getServerMoneyAvailable('home');
   if (cost > myMoney) {
@@ -102,17 +89,10 @@ const copyDependencies = async sourceName => {
 const deployServer = async (targetName, parallel, bomb = false) => {
   const sourceName = target2SourceName(targetName);
 
-  ns.tprintf(
-    'INFO Purchasing and configuring server %s to attack target %s',
-    sourceName,
-    targetName
-  );
+  ns.tprintf('INFO Purchasing and configuring server %s to attack target %s', sourceName, targetName);
 
   if (ns.getPurchasedServers().includes(sourceName)) {
-    ns.tprintf(
-      'WARN You already own a server called %s. Re-configuring it.',
-      sourceName
-    );
+    ns.tprintf('WARN You already own a server called %s. Re-configuring it.', sourceName);
     ns.tprintf('Killing all processes on %s. Waiting 2 seconds.', sourceName);
     ns.killall(sourceName);
     await ns.sleep(500);
@@ -124,9 +104,7 @@ const deployServer = async (targetName, parallel, bomb = false) => {
       if (newServerName === sourceName) {
         ns.tprintf('SUCCESS Bought new server.');
       } else {
-        ns.tprintf(
-          'ERROR Something went wrong when buying new server. Exiting.'
-        );
+        ns.tprintf('ERROR Something went wrong when buying new server. Exiting.');
         ns.exit();
       }
     }
@@ -167,20 +145,22 @@ const deleteServer = sourceName => {
   }
 };
 
-const redeployAll = async () => {
+const redeployAll = async ({ parallel }) => {
   const servers = ns.getPurchasedServers();
 
   for (const sourceName of servers) {
     const targetName = source2TargetName(sourceName);
     ns.killall(sourceName);
     await copyDependencies(sourceName);
-    ns.exec('singleAttack.js', sourceName, 1, targetName);
+
+    const script = parallel ? parallelScript : singleScript;
+    ns.exec(script, sourceName, 1, targetName);
   }
 
   ns.tprintf('Finished redeploying scripts to your %d servers', servers.length);
 };
 
-const redistribute = async () => {
+const redistribute = async flags => {
   // ensure that all the top targets are being attacked
   const serverLimit = ns.getPurchasedServerLimit();
   let viableServers = await getHackedServers(ns);
@@ -190,16 +170,10 @@ const redistribute = async () => {
   const top25 = viableServers.slice(0, serverLimit);
   const toAttack = top25.filter(s => !s.isAttacked).map(s => s.hostname);
 
-  ns.tprintf(
-    'Currently attacking %d/%d of the top targets',
-    serverLimit - toAttack.length,
-    serverLimit
-  );
+  ns.tprintf('Currently attacking %d/%d of the top targets', serverLimit - toAttack.length, serverLimit);
   ns.tprintf('targeting: %s', toAttack);
 
-  const toDelete = viableServers
-    .filter(s => s.isAttacked && !top25.includes(s))
-    .map(s => s.hostname);
+  const toDelete = viableServers.filter(s => s.isAttacked && !top25.includes(s)).map(s => s.hostname);
   ns.tprintf('toDelete: %s', toDelete);
 
   for (const deleteName of toDelete) {
@@ -223,7 +197,7 @@ const deleteAll = async () => {
   ns.tprint('Done.');
 };
 
-const deployAll = async ({ bomb }) => {
+const deployAll = async ({ bomb, parallel }) => {
   // try to attack as many servers as possible
   const serverLimit = ns.getPurchasedServerLimit();
   const currentServerCount = ns.getPurchasedServers().length;
@@ -234,14 +208,10 @@ const deployAll = async ({ bomb }) => {
   if (viableServers.length === 0) {
     ns.tprintf('WARN There currently are no viable targets. Exiting');
   } else if (currentServerCount === serverLimit) {
-    ns.tprintf(
-      'WARN You already own a maximum %d out of %d servers. Exiting',
-      currentServerCount,
-      serverLimit
-    );
+    ns.tprintf('WARN You already own a maximum %d out of %d servers. Exiting', currentServerCount, serverLimit);
   } else {
     for (const target of targets) {
-      await deployServer(target.hostname, true, bomb);
+      await deployServer(target.hostname, parallel, bomb);
     }
   }
 };
@@ -278,14 +248,14 @@ export async function main(_ns) {
     printServerCost();
     ns.exit();
   } else if (ns.args[0].toLowerCase() === 'redeploy') {
-    await redeployAll();
+    await redeployAll(flags);
   } else if (ns.args[0].toLowerCase() === 'redistribute') {
     await redistribute();
   } else if (ns.args[0].toLowerCase() === 'stats') {
-    ns.run('helpers/calcAttackStats.js', 1);
+    ns.run('/helpers/calcAttackStats.js', 1);
     ns.exit();
   } else if (ns.args[0].toLowerCase() === 'exp') {
-    ns.run('helpers/calcAttackStats.js', 1, '--exp');
+    ns.run('/helpers/calcAttackStats.js', 1, '--exp');
     ns.exit();
   } else if (flags.delete) {
     deleteServer(target2SourceName(ns.args[0]));

@@ -1,7 +1,8 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { getGrowPercent, getHackPercent, hasFormulas } from 'helpers/fakeFormulas';
+import { getGrowPercent, getHackPercent, hasFormulas } from '/helpers/fakeFormulas';
+import { miniGrowScript, miniHackScript, miniWeakenScript } from '/helpers/globals';
 
 export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
   const serverData = ns.getServer(serverName);
@@ -19,7 +20,7 @@ export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
  */
 export const calcGrowThreads = (ns, serverName, percentage = 0.5) => {
   const serverData = simulatePrimedServer(ns, serverName, percentage);
-  const growPercent = getGrowPercent(ns, serverData);
+  const growPercent = getGrowPercent(ns, serverData, 1, ns.getPlayer());
 
   return Math.round(Math.log(2) / Math.log(growPercent));
 };
@@ -29,9 +30,9 @@ export const calcGrowThreads = (ns, serverName, percentage = 0.5) => {
  */
 export const calcHackThreads = (ns, serverName, percentage = 0.5) => {
   const serverData = simulatePrimedServer(ns, serverName);
-  const hackPercent = getHackPercent(ns, serverData);
+  const hackPercent = getHackPercent(ns, serverData, ns.getPlayer(), true);
 
-  return Math.round(percentage / hackPercent);
+  return Math.floor(percentage / hackPercent);
 };
 
 export const calcWeakenThreads = (ns, serverName, percentage = 0.5) => {
@@ -60,13 +61,13 @@ export const calcMaxThreads = (_ns, sourceName) => {
   let availableRam = (ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName)) / 3.0;
 
   if (sourceName === 'home' && ns.getServerMaxRam(sourceName) >= 64) {
-    availableRam -= 16; // buffer for other scripts
+    availableRam -= 20; // buffer for other scripts
   }
 
   return {
-    growThreads: Math.floor(availableRam / ns.getScriptRam('/workers/minigrow.js')),
-    hackThreads: Math.floor(availableRam / ns.getScriptRam('/workers/minihack.js')),
-    weakenThreads: Math.floor(availableRam / ns.getScriptRam('/workers/miniweaken.js')),
+    growThreads: Math.floor(availableRam / ns.getScriptRam(miniGrowScript)),
+    hackThreads: Math.floor(availableRam / ns.getScriptRam(miniHackScript)),
+    weakenThreads: Math.floor(availableRam / ns.getScriptRam(miniWeakenScript)),
   };
 };
 
@@ -86,7 +87,7 @@ export const calcPossibleThreads = (_ns, targetName) => {
     availableRam -= 10; // Deduct 10 GB for other scripts
   }
 
-  const possibleTotalThreads = availableRam / ns.getScriptRam('/workers/delayedGrow.js');
+  const possibleTotalThreads = availableRam / ns.getScriptRam(miniGrowScript);
   const possibleRatio = possibleTotalThreads / totalThreads;
 
   if (possibleRatio < 1) {
@@ -103,9 +104,9 @@ export const calcTotalRamCost = (ns, targetName) => {
   const hackThreads = calcHackThreads(ns, targetName);
   const weakenThreads = calcWeakenThreads(ns, targetName);
 
-  const growRam = calcScriptRamCost(ns, '/workers/minigrow.js', growThreads);
-  const hackRam = calcScriptRamCost(ns, '/workers/minihack.js', hackThreads);
-  const weakenRam = calcScriptRamCost(ns, '/workers/miniweaken.js', weakenThreads);
+  const growRam = calcScriptRamCost(ns, miniGrowScript, growThreads);
+  const hackRam = calcScriptRamCost(ns, miniHackScript, hackThreads);
+  const weakenRam = calcScriptRamCost(ns, miniWeakenScript, weakenThreads);
   const maxRam = Math.max(growRam, hackRam, weakenRam);
 
   const mainScriptRam = ns.getScriptRam('multiAttack.js');
@@ -128,7 +129,8 @@ export const calcTotalRamCost = (ns, targetName) => {
   };
 };
 
-export const calcAttackTimes = (ns, serverName) => {
+export const calcAttackTimes = (_ns, serverName) => {
+  ns = _ns;
   const serverData = simulatePrimedServer(ns, serverName);
   const player = ns.getPlayer();
 

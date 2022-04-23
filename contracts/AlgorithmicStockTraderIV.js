@@ -15,23 +15,23 @@
 */
 // find all possible profitable transactions
 const algorithmicStockTrader = data => {
-  let buy = 0;
-  let sell = 1;
+  let buyPoint = 0;
+  let sellPoint = 1;
   let profit = 0;
   let transactions = [];
 
-  while (sell < data.length && buy < data.length - 1) {
-    if (data[sell] < data[buy]) {
-      buy = sell;
+  while (sellPoint < data.length && buyPoint < data.length - 1) {
+    if (data[sellPoint] < data[buyPoint]) {
+      buyPoint = sellPoint;
     }
 
-    if (data[sell + 1] > data[sell]) {
-      sell++;
+    if (data[sellPoint + 1] > data[sellPoint]) {
+      sellPoint++;
     } else {
-      profit = data[sell] - data[buy];
-      transactions.push({ buy, sell, profit });
-      buy = sell + 1;
-      sell = buy + 1;
+      profit = data[sellPoint] - data[buyPoint];
+      transactions.push({ buyPoint, sellPoint, profit });
+      buyPoint = sellPoint + 1;
+      sellPoint = buyPoint + 1;
     }
   }
 
@@ -52,13 +52,13 @@ const findMergers = (data, transactions) => {
     const next = transactions[i + 1];
 
     let newTransactions = transactions.slice(0, i);
-    const buy = data[current.buy] < data[next.buy] ? current.buy : next.buy;
-    const sell =
-      buy === current.buy && data[current.sell] > data[next.sell]
-        ? current.sell
-        : next.sell;
+    const buyPoint = data[current.buyPoint] < data[next.buyPoint] ? current.buyPoint : next.buyPoint;
+    const sellPoint =
+      buyPoint === current.buyPoint && data[current.sellPoint] > data[next.sellPoint]
+        ? current.sellPoint
+        : next.sellPoint;
 
-    newTransactions.push({ buy, sell, profit: data[sell] - data[buy] });
+    newTransactions.push({ buyPoint, sellPoint, profit: data[sellPoint] - data[buyPoint] });
 
     newTransactions = newTransactions.concat(
       transactions.slice(i + 2, transactions.length)
