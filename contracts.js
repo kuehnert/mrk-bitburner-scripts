@@ -74,6 +74,10 @@ export async function main(_ns) {
   ns.disableLog('scan');
   ns.disableLog('sleep');
   ns.disableLog('exec');
+  ns.disableLog('getServerMaxRam');
+  ns.disableLog('getServerMaxMoney');
+  ns.disableLog('getServerMoneyAvailable');
+  ns.disableLog('getServerNumPortsRequired');
   ns.clearLog();
 
   ns.tprint('INFO Looking for hacking contracts');

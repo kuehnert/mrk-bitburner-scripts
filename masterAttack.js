@@ -1,23 +1,22 @@
 /** @type import(".").NS */
-// $185.007m / sec
 let ns = null;
 
-const getAttackers = () => {
-  const attackers = JSON.parse(ns.read('/data/servers.txt')).filter(
+import { getHackedServers, getViableTargets } from '/helpers/getServers';
+
+const hackScript = '/workers/miniHack.js';
+const growScript = '/workers/minigrow.js';
+const weakenScript = '/workers/miniWeaken.js';
+
+const dependencies = [growScript, hackScript, weakenScript];
+
+const getAttackers = async () => {
+  return (await getHackedServers(ns, false)).filter(
     s => s.isRoot && s.ram >= 4
   );
-
-  const myServers = ns.getPurchasedServers().map(name => ({
-    name,
-    ram: ns.getServerMaxRam(name),
-  }));
-  // myServers.push({ name: 'home', ram: ns.getServerMaxRam('home') });
-
-  return attackers.concat(myServers);
 };
 
-const getTargets = () => {
-  return JSON.parse(ns.read('/data/targets.txt')).slice(0, 4);
+const getTargetNames = async () => {
+  return (await getViableTargets(ns)).slice(0, 1).map(s => s.hostname);
 };
 
 const log = (
@@ -45,15 +44,17 @@ const log = (
 
 export async function main(_ns) {
   ns = _ns;
-  ns.disableLog('getServerUsedRam');
-  ns.disableLog('sleep');
+  ns.clearLog();
+  ns.disableLog('disableLog');
   ns.disableLog('ALL');
 
-  const targets = getTargets();
-  ns.tprintf('targets: %s', targets);
-
-  const attackers = getAttackers();
-  // ns.tprintf('attackers: %s', JSON.stringify(attackers, null, 4));
+  const attackers = await getAttackers();
+  const targetNames = await getTargetNames();
+  ns.tprintf('INFO Attacking target(s): %s', targetNames.join(', '));
+  ns.tprintf(
+    'INFO Attacking sources(s): %s',
+    attackers.map(s => s.hostname).join(', ')
+  );
 
   let moneyMax;
   let moneyThresh;
@@ -66,66 +67,61 @@ export async function main(_ns) {
   let target;
   let counter = 0;
 
+  for (const attacker of attackers) {
+    const attackerName = attacker.hostname;
+    await ns.scp(dependencies, attackerName);
+  }
+
   while (true) {
-    counter = (counter + 1) % targets.length;
-    target = targets[counter];
-    // Defines how much money a server should have before we hack it
-    // In this case, it is set to 75% of the server's max money
-    // var moneyThresh = ns.getServerMaxMoney(target) * 0.75;
-    // const moneyMax = ns.getServerMaxMoney(target);
-    // const moneyThresh = moneyMax * 0.8;
+    counter = (counter + 1) % targetNames.length;
+    target = targetNames[counter];
     moneyMax = ns.getServerMaxMoney(target);
-    moneyThresh = moneyMax * 0.8;
+    moneyThresh = moneyMax * 0.9;
     moneyCurrent = ns.getServerMoneyAvailable(target);
-    // Defines the maximum security level the target server can
-    // have. If the target's security level is higher than this,
-    // we'll weaken it before doing anything else
-    // const securityMin = ns.getServerMinSecurityLevel(target) + 5;
-    // const securityThresh = securityMin + 5;
-    securityMin = ns.getServerMinSecurityLevel(target) + 5;
-    securityThresh = securityMin + 5;
+    securityMin = ns.getServerMinSecurityLevel(target);
+    securityThresh = securityMin + 2;
     securityCurrent = ns.getServerSecurityLevel(target);
 
     if (securityCurrent > securityThresh) {
       action = 'weaken';
       sleepTime = ns.getWeakenTime(target);
-      const cost = ns.getScriptRam('miniweaken.js');
+      const cost = ns.getScriptRam(weakenScript);
 
       for (const attacker of attackers) {
-        const attackerName = attacker.name;
+        const attackerName = attacker.hostname;
         const attackerRAM = attacker.ram - ns.getServerUsedRam(attackerName);
         const threads = Math.floor(attackerRAM / cost);
 
         if (threads > 0) {
-          ns.exec('miniweaken.js', attackerName, threads, target);
+          ns.exec(weakenScript, attackerName, threads, target);
         }
       }
     } else if (moneyCurrent < moneyThresh) {
       action = 'grow';
       sleepTime = ns.getGrowTime(target);
-      const cost = ns.getScriptRam('minigrow.js');
+      const cost = ns.getScriptRam(growScript);
 
       for (const attacker of attackers) {
-        const attackerName = attacker.name;
+        const attackerName = attacker.hostname;
         const attackerRAM = attacker.ram - ns.getServerUsedRam(attackerName);
         const threads = Math.floor(attackerRAM / cost);
 
         if (threads > 0) {
-          ns.exec('minigrow.js', attackerName, threads, target);
+          ns.exec(growScript, attackerName, threads, target);
         }
       }
     } else {
       action = 'hack';
       sleepTime = ns.getHackTime(target);
-      const cost = ns.getScriptRam('minihack.js');
+      const cost = ns.getScriptRam(hackScript);
 
       for (const attacker of attackers) {
-        const attackerName = attacker.name;
+        const attackerName = attacker.hostname;
         const attackerRAM = attacker.ram - ns.getServerUsedRam(attackerName);
         const threads = Math.floor(attackerRAM / cost);
 
         if (threads > 0) {
-          ns.exec('minihack.js', attackerName, threads, target);
+          ns.exec(hackScript, attackerName, threads, target);
         }
       }
     }

@@ -1,44 +1,72 @@
 /** @type import(".").NS */
 let ns = null;
-let _augmentations = null;
 
-const joinInvitations = () => {
-  const invites = ns.checkFactionInvitations();
+import uniqueElements from './helpers/uniqueElements';
 
-  for (const invite of invites) {
-    ns.joinFaction(invite);
-  }
+const allAugmentationsNamesFile = '/data/allAugmentationNames.txt';
+const allAugmentationsFile = '/data/allAugmentationDetails.txt';
+
+// const joinAllInvitations = () => {
+//   const invites = ns.checkFactionInvitations();
+//   for (const invite of invites) {
+//     ns.joinFaction(invite);
+//   }
+// };
+
+const fetchAllAugmentationsDetailed = async () => {
+  const names = await fetchAllAugmentationNames();
+  const ownedAugmentations = ns.getOwnedAugmentations(true);
+  const installedAugmentations = ns.getOwnedAugmentations(false);
+
+  const augmentations = names.map(an => ({
+    name: an,
+    prerequisites: ns.getAugmentationPrereq(an),
+    price: ns.getAugmentationPrice(an),
+    reputationRequired: ns.getAugmentationRepReq(an),
+    stats: ns.getAugmentationStats(an),
+    purchased: ownedAugmentations.includes(an),
+    installed: installedAugmentations.includes(an),
+  }));
+
+  await ns.write(allAugmentationsFile, JSON.stringify(augmentations), 'w');
+  return augmentations;
 };
 
-const getAugmentations = () => {
-  if (_augmentations != null) {
-    return _augmentations;
-  } else {
-    _augmentations = {};
-    const ownedAugmentations = ns.getOwnedAugmentations(true);
-    const installedAugmentations = ns.getOwnedAugmentations(false);
-    const player = ns.getPlayer();
-    const factions = player.factions;
-
-    for (const faction of factions) {
-      const factionAugmentations = ns.getAugmentationsFromFaction(faction);
-
-      for (const fa of factionAugmentations) {
-        const aug = _augmentations[fa] ?? { name: fa };
-        aug.prerequisites = ns.getAugmentationPrereq(fa);
-        aug.price = ns.getAugmentationPrice(fa);
-        aug.reputationRequired = ns.getAugmentationRepReq(fa);
-        aug.stats = ns.getAugmentationStats(fa);
-        aug.factions ??= [];
-        aug.factions.push(faction);
-        aug.purchased = ownedAugmentations.includes(fa);
-        aug.installed = installedAugmentations.includes(fa);
-        _augmentations[fa] = aug;
-      }
-    }
-
-    return _augmentations;
+const fetchAllAugmentationNames = async () => {
+  let augmentationNames = ns.getOwnedAugmentations(true);
+  const factions = ns.getPlayer().factions;
+  for (const faction of factions) {
+    augmentationNames = augmentationNames.concat(
+      ns.getAugmentationsFromFaction(faction)
+    );
   }
+  augmentationNames = uniqueElements(augmentationNames).sort();
+
+  if (!ns.fileExists(allAugmentationsNamesFile)) {
+    await ns.write(
+      allAugmentationsNamesFile,
+      JSON.stringify(augmentationNames),
+      'w'
+    );
+  } else {
+    const readAugmentationsNames = JSON.parse(
+      ns.read(allAugmentationsNamesFile)
+    );
+    if (augmentationNames.length > readAugmentationsNames.length) {
+      await ns.write(
+        allAugmentationsNamesFile,
+        JSON.stringify(augmentationNames),
+        'w'
+      );
+    }
+  }
+
+  return augmentationNames;
+};
+
+const loadAugmentations = () => {
+  const json = ns.read(allAugmentationsFile);
+  return JSON.parse(json);
 };
 
 const affordable = () => {
@@ -48,18 +76,12 @@ const affordable = () => {
   );
 };
 
-
-
 export async function main(_ns) {
   ns = _ns;
-  // ns.disableLog('asleep');
   ns.clearLog();
   ns.tail();
 
-  // const augmentations = getAugmentations();
-  // ns.printf('augmentations: %s', JSON.stringify(augmentations, null, 4));
-
-
-
-  ns.printf('affordable: %s', JSON.stringify(affordable(), null, 4));
+  // const augmentations = loadAugmentations();
+  const augmentations = await fetchAllAugmentationsDetailed();
+  ns.printf('augmentations: %s', JSON.stringify(augmentations, null, 4));
 }

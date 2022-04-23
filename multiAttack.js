@@ -1,7 +1,11 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { calcTotalRamCost, calcAttackTimes, calcMaxThreads } from 'helpers/ramCalculations';
+import {
+  calcPossibleThreads,
+  calcAttackTimes,
+  calcMaxThreads,
+} from 'helpers/ramCalculations';
 import { formatTime, formatDuration, SECOND } from 'helpers/formatters';
 import logServerInfo from 'helpers/logServerInfo';
 
@@ -86,14 +90,24 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
 };
 
 const primeServer = async (sourceName, targetName) => {
-  ns.printf('INFO %s PRIMING server %s from %s...', formatTime(ns), targetName, sourceName);
+  ns.printf(
+    'INFO %s PRIMING server %s from %s...',
+    formatTime(ns),
+    targetName,
+    sourceName
+  );
   const pid = ns.exec(SCRIPTS.primeServer, sourceName, 1, targetName);
   while (ns.isRunning(pid)) {
     await ns.sleep(SECOND);
   }
 };
 
-const performAttack = async (sourceName, targetName, threadCounts, attackDelays) => {
+const performAttack = async (
+  sourceName,
+  targetName,
+  threadCounts,
+  attackDelays
+) => {
   const { growThreads, hackThreads, weakenThreads } = threadCounts;
   const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
 
@@ -109,21 +123,32 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
   }
 };
 
+const checkThreads = threadCounts => {
+  const allOK = Object.values(threadCounts).every(v => v >= 1);
+
+  if (!allOK) {
+    ns.tprint('ERROR Not enough RAM for multi-attack. Exiting.');
+    ns.exit();
+  }
+};
+
 const checkDelays = attackDelays => {
   const { growDelay, hackDelay, weakenDelay } = attackDelays;
 
   if (growDelay < 0 || hackDelay < 0 || weakenDelay < 0) {
-    ns.print('ERROR Something went horribly wrong. Exiting.');
+    ns.tprint('ERROR Something went horribly wrong concerning the delays. Exiting.');
     ns.exit();
   }
 };
 
 const prepareAttack = async (sourceName, targetName, flags) => {
-  const threadCounts = calcTotalRamCost(ns, targetName);
+  const threadCounts = calcPossibleThreads(ns, targetName);
   const attackTimes = calcAttackTimes(ns, targetName);
   const attackDelays = calcAttackDelays(attackTimes);
 
   printTimes(threadCounts, attackTimes, attackDelays);
+
+  checkThreads(threadCounts);
   checkDelays(attackDelays);
 
   if (flags.noop) {
@@ -152,7 +177,7 @@ export async function main(_ns) {
   ns.disableLog('disableLog');
   ns.disableLog('sleep');
   ns.disableLog('getServerMinSecurityLevel');
-  // ns.tail();
+  ns.tail();
 
   const targetName = ns.args[0];
   const sourceName = ns.getServer().hostname;

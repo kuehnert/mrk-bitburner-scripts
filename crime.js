@@ -36,7 +36,7 @@ const getCrimes = () => {
 const findBestCrimes = () => {
   const crimes = getCrimes();
   const filtered = crimes.filter(c => c.chance >= MIN_CHANCE_LIMIT);
-  const best = filtered.length > 0 ? filtered : crimes;
+  const best = filtered.length > 0 ? filtered : crimes.sort(c => c.chance).slice(0, 1);
 
   return best.sort((a, b) => b.profitPerTime - a.profitPerTime).slice(0, 4);
 };
@@ -67,8 +67,9 @@ export async function main(_ns) {
 
   let crimeIndex = 0;
   while (true) {
-    const time = ns.commitCrime(findBestCrimes()[crimeIndex].name);
-    crimeIndex = (crimeIndex + 1) % 2;
+    const bestCrimes = findBestCrimes()
+    const time = ns.commitCrime(bestCrimes[crimeIndex].name);
+    crimeIndex = (crimeIndex + 1) % bestCrimes.length;
     await ns.asleep(time * 0.8); // sleep 80% of the projected time
 
     if (!ns.isBusy()) {
