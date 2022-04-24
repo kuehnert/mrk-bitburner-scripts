@@ -1,3 +1,5 @@
+export const MILLION = 1000000;
+export const BILLION = 1000 * MILLION;
 
 export const miniHackScript = '/workers/miniHack.js';
 export const miniGrowScript = '/workers/miniGrow.js';
