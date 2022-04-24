@@ -1,13 +1,7 @@
 /** @type import("..").NS */
 let ns = null;
 
-const unwanted = [
-  'ServerProfiler.exe',
-  'DeepscanV1.exe',
-  'DeepscanV2.exe',
-  'AutoLink.exe',
-  'Formulas.exe',
-];
+const unwanted = ['ServerProfiler.exe', 'DeepscanV1.exe', 'DeepscanV2.exe', 'AutoLink.exe', 'Formulas.exe'];
 
 export default async function purchaseProgram(_ns, params) {
   ns = _ns;
@@ -18,12 +12,13 @@ export default async function purchaseProgram(_ns, params) {
     for (const program of programs) {
       const success = ns.purchaseProgram(program);
 
-      if (!success) {
+      if (success) {
+        ns.run()
+        return true;
+      } else {
         return false;
       }
     }
-
-    return true;
   } else {
     return ns.purchaseProgram(params);
   }

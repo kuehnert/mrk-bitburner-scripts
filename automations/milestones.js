@@ -40,6 +40,7 @@ export default [
     prereq: { money: 200000 },
     doneExpression: "ns.fileExists('BruteSSH.exe', 'home')",
   },
+  { action: 'runScript', params: { script: 'scanServers.js', args: '--quiet' } },
   {
     action: 'gymWorkout',
     params: 'ALL 10 true',
@@ -57,6 +58,7 @@ export default [
     prereq: { money: 1.5 * MILLION },
     doneExpression: "ns.fileExists('FTPCrack.exe', 'home')",
   },
+  { action: 'runScript', params: { script: 'scanServers.js', args: '--quiet' } },
   {
     action: 'installBackdoor',
     params: 'avmnite-02h',
@@ -68,18 +70,21 @@ export default [
     prereq: { money: 5 * MILLION },
     doneExpression: "ns.fileExists('relaySMTP.exe', 'home')",
   },
+  { action: 'runScript', params: { script: 'scanServers.js', args: '--quiet' } },
   {
     action: 'purchaseProgram',
     params: 'HTTPWorm.exe',
     prereq: { money: 30 * MILLION },
     doneExpression: "ns.fileExists('HTTPWorm.exe', 'home')",
   },
+  { action: 'runScript', params: { script: 'scanServers.js', args: '--quiet' } },
   {
     action: 'purchaseProgram',
     params: 'SQLInject.exe',
     prereq: { money: 250 * MILLION },
     doneExpression: "ns.fileExists('SQLInject.exe', 'home')",
   },
+  { action: 'runScript', params: { script: 'scanServers.js', args: '--quiet' } },
   {
     action: 'gymWorkout',
     params: 'ALL 50 true',

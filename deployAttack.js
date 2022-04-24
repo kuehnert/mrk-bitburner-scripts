@@ -203,7 +203,7 @@ const deployAll = async ({ bomb, parallel }) => {
   const currentServerCount = ns.getPurchasedServers().length;
   const remainingSeverCount = serverLimit - currentServerCount;
   const viableServers = await getViableTargets(ns);
-  const targets = viableServers.slice(0, remainingSeverCount);
+  const targets = viableServers.sort((a,b) => a.parallelServerSizeRequired - b.parallelServerSizeRequired).slice(0, remainingSeverCount);
 
   if (viableServers.length === 0) {
     ns.tprintf('WARN There currently are no viable targets. Exiting');

@@ -36,8 +36,9 @@ const primeServer = async (sourceName, targetName) => {
     logServerInfo(ns, targetName);
     let usedRam = ns.getServerUsedRam(sourceName);
 
-    if (ns.getHostname() === 'home') {
-      usedRam += 10; // reserve 10 GB for other scripts
+    if (ns.getHostname() === 'home' && serverMaxRam > 1024) {
+      // usedRam += 50; // reserve 10 GB for other scripts
+      usedRam += 806; // reserve 10 GB for other scripts
     }
 
     const availableRam = serverMaxRam - usedRam;
