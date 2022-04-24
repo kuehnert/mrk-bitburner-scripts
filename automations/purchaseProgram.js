@@ -5,6 +5,7 @@ const unwanted = ['ServerProfiler.exe', 'DeepscanV1.exe', 'DeepscanV2.exe', 'Aut
 
 export default async function purchaseProgram(_ns, params) {
   ns = _ns;
+  let result;
 
   if (params.toUpperCase() === 'ALL') {
     const programs = ns.getDarkwebPrograms().filter(p => !unwanted.includes(p));
@@ -12,14 +13,16 @@ export default async function purchaseProgram(_ns, params) {
     for (const program of programs) {
       const success = ns.purchaseProgram(program);
 
-      if (success) {
-        ns.run()
-        return true;
-      } else {
+      if (!success) {
         return false;
       }
     }
+
+    result = true;
   } else {
-    return ns.purchaseProgram(params);
+    result = ns.purchaseProgram(params);
   }
+
+  ns.run('scanServer.js', 1, '--quiet');
+  return result;
 }

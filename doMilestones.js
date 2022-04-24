@@ -38,16 +38,18 @@ export async function main(_ns) {
   ns = _ns;
 
   if (!DEBUG) {
-    ns.disableLog('asleep');
     ns.disableLog('disableLog');
+    ns.disableLog('asleep');
     ns.disableLog('exec');
+    ns.disableLog('getHackingLevel');
     ns.disableLog('purchaseProgram');
     ns.disableLog('purchaseTor');
-    ns.disableLog('getHackingLevel');
-    ns.disableLog('gymWorkout');
+    ns.disableLog('singularity.gymWorkout');
+    ns.disableLog('singularity.stopAction');
+    ns.disableLog('singularity.travelToCity');
     ns.disableLog('sleep');
-    ns.disableLog('stopAction');
   }
+
   ns.clearLog();
   ns.tail();
 

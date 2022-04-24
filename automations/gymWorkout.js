@@ -48,17 +48,10 @@ const fastestGym = async () => {
 
 const valueGym = async () => {
   const gyms = await getGyms();
-  return gyms.reduce(
-    (best, g) => (g.costGain > best.costGain ? g : best),
-    gyms[0]
-  );
+  return gyms.reduce((best, g) => (g.costGain > best.costGain ? g : best), gyms[0]);
 };
 
-const workoutSkillToLevel = async (
-  level = 10,
-  skill = 'strength',
-  preferSpeed = false
-) => {
+const workoutSkillToLevel = async (level = 10, skill = 'strength', preferSpeed = false) => {
   let stats = ns.getPlayer();
   const gym = await (preferSpeed ? fastestGym() : valueGym());
 
@@ -66,11 +59,7 @@ const workoutSkillToLevel = async (
     ns.printf('Travelling to %s...', gym.city);
     const success = ns.travelToCity(gym.city);
     if (!success) {
-      ns.printf(
-        'Error travelling from %s to %s. Aborting.',
-        stats.city,
-        gym.city
-      );
+      ns.printf('Error travelling from %s to %s. Aborting.', stats.city, gym.city);
       ns.exit();
     }
   }
@@ -86,12 +75,7 @@ const workoutSkillToLevel = async (
     return true;
   }
 
-  ns.printf(
-    'Working out on %s from level %d to %d...',
-    skill,
-    stats[skill],
-    level
-  );
+  ns.printf('Working out on %s from level %d to %d...', skill, stats[skill], level);
 
   while (stats[skill] < level) {
     const success = ns.gymWorkout(gym.name, skill, false);
@@ -112,23 +96,20 @@ const workoutAllToLevel = async (level = 10, preferSpeed = false) => {
   for (const skill of skills) {
     const success = await workoutSkillToLevel(level, skill, preferSpeed);
     if (!success) {
-      return false;
+      // return false;
     }
   }
 
   return true;
 };
 
-export async function main(_ns) {
+export async function main(_ns, { skill = 'ALL', level = 10, speed = true }) {
   ns = _ns;
-  const skill = ns.args[0] ?? 'ALL';
-  const level = ns.args[1] ?? 10;
-  const preferSpeed = ns.args[2] ?? false;
 
   if (skill.toUpperCase() === 'ALL') {
-    return workoutAllToLevel(level, preferSpeed);
+    return workoutAllToLevel(level, speed);
   } else {
-    return workoutSkillToLevel(level, skill, preferSpeed);
+    return workoutSkillToLevel(level, skill, speed);
   }
 }
 

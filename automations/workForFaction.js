@@ -4,6 +4,8 @@ let ns = null;
 import { formatDuration, formatNumber, SECOND } from '/helpers/formatters';
 import { findFaction, FACTION_INPUT_NAMES } from '/helpers/factionHelper';
 
+const interval = 30; // 30-second sleeps
+
 const WORK_TYPES = ['hacking contracts', 'security work', 'field work'];
 
 const maxRep = (a, b) => (a > ns.getAugmentationRepReq(b) ? a : b);
@@ -59,17 +61,17 @@ export async function main(_ns) {
   while (factionRep < maxRepReq) {
     const previous = factionRep;
     ns.workForFaction(faction, WORK_TYPES[0], flags.focus);
-    await ns.sleep(10 * SECOND);
+    await ns.sleep(interval * SECOND);
 
     factionRep = ns.getFactionRep(faction);
     const toGo = maxRepReq - factionRep;
-    const gainRate = (factionRep - previous) / 10.0;
+    const gainRate = (factionRep - previous) / interval;
 
     const duration = (toGo / gainRate) * 1000;
     const durationStr = formatDuration(ns, duration);
 
     ns.printf(
-      'Factkion %s: %s reputation points to go (%.1f/s). ETA: %s...',
+      'Fackion %s: %s reputation points to go (%.1f/s). ETA: %s...',
       faction,
       formatNumber(ns, toGo),
       // formatNumber(ns, maxRepReq),
