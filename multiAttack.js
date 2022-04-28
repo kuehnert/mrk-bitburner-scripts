@@ -3,11 +3,13 @@ let ns = null;
 
 import {
   calcPossibleThreads,
+  calcAttackDelays,
   calcAttackTimes,
   calcMaxThreads,
 } from 'helpers/ramCalculations';
 import { formatTime, formatDuration, SECOND } from '/helpers/formatters';
 import logServerInfo from '/helpers/logServerInfo';
+import { BUFFER } from '/helpers/globals'
 
 export function autocomplete(data) {
   return [...data.servers]; // This script autocompletes the list of servers.
@@ -18,37 +20,6 @@ const SCRIPTS = {
   hack: '/workers/delayedHack.js',
   weaken: '/workers/delayedWeaken.js',
   primeServer: '/workers/primeServer.js',
-};
-
-const BUFFER = 500; // time between each finished command
-
-const calcAttackDelays = ({ growTime, hackTime, weakenTime }) => {
-  let delays = {
-    growDelay: weakenTime - BUFFER - growTime,
-    hackDelay: weakenTime - 2 * BUFFER - hackTime,
-    weakenDelay: 0, // assume weaken always takes longest
-    sleepTime: weakenTime + BUFFER,
-  };
-
-  if (delays.growDelay < 0) {
-    delays = {
-      growDelay: 0,
-      hackDelay: delays.hackDelay + -delays.growDelay,
-      weakenDelay: delays.weakenDelay + -delays.growDelay,
-      sleepTime: delays.sleepTime + -delays.growDelay,
-    };
-  }
-
-  if (delays.weakenDelay < 0) {
-    delays = {
-      growDelay: delays.growDelay + -delays.weakenDelay,
-      hackDelay: delays.hackDelay + -delays.weakenDelay,
-      weakenDelay: 0,
-      sleepTime: delays.sleepTime + delays.weakenDelay,
-    };
-  }
-
-  return delays;
 };
 
 const printTimes = (threadCounts, attackTimes, attackDelays) => {

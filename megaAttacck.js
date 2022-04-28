@@ -4,12 +4,11 @@ let ns = null;
 import { calcTotalRamCost, calcAttackTimes } from './helpers/ramCalculations';
 import { formatTime, formatDuration, SECOND } from './helpers/formatters';
 import logServerInfo from './helpers/logServerInfo';
+import { BUFFER } from '/helpers/globals'
 
 export function autocomplete(data) {
   return [...data.servers]; // This script autocompletes the list of servers.
 }
-
-const BUFFER = 500; // one second between each finished command
 
 export async function main(_ns) {
   ns = _ns;

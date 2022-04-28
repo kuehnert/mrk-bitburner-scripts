@@ -42,8 +42,6 @@ export async function main(_ns) {
     ['quiet', false],
   ]);
 
-  // ns.tprintf('flags: %s', JSON.stringify(flags, null, 4));
-
   let detailedServers = await getServersDetailed(ns, flags.forceRefresh || ns.args[0] == 'owned');
 
   for (const server of detailedServers) {
@@ -69,9 +67,9 @@ export async function main(_ns) {
     if (ns.args[0] === 'levels') {
       detailedServers = detailedServers.sort((a, b) => a.hackLevel - b.hackLevel);
     } else if (ns.args[0] === 'milestones') {
-      detailedServers = detailedServers.filter(s =>
-        s.hostname.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/)
-      ).sort((a, b) => a.hackLevel - b.hackLevel);
+      detailedServers = detailedServers
+        .filter(s => s.hostname.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/))
+        .sort((a, b) => a.hackLevel - b.hackLevel);
     } else if (ns.args[0] === 'targets') {
       detailedServers = detailedServers
         .filter(s => isHackCandidate(ns, s, getMyPortLevel(ns)))

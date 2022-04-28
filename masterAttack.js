@@ -47,8 +47,8 @@ export async function main(_ns) {
   ns.disableLog('getServerSecurityLevel');
   ns.disableLog('getServerNumPortsRequired');
   ns.disableLog('sleep');
-  // ns.disableLog('ALL');
-  ns.tail();
+  ns.disableLog('ALL');
+  // ns.tail();
 
   const attackers = await getAttackers();
   let targetNames;

@@ -1,63 +1,20 @@
 /** @type import(".").NS */
 let ns = null;
-let _crimes = null;
 
-const SECOND = 1000;
-const MIN_CHANCE_LIMIT = 0.6;
+import { SECOND } from '/helpers/globals';
+import { getCrimes, logCrime } from '/helpers/crimeHelper';
+import { crimeLookup, CRIME_ARGS } from './helpers/crimeHelper';
 
-const crimesStr = [
-  'shoplift',
-  'rob store',
-  'mug someone',
-  'larceny',
-  'deal drugs',
-  'bond forgery',
-  'traffic illegal arms',
-  'homicide',
-  'grand theft auto',
-  'kidnap and ransom',
-  'assassinate',
-  'heist',
-];
+// will consider crimes with 60% chance or better
+const MIN_CHANCE_LIMIT = 0.5;
 
-let _lookup;
+const findBestCrimes = async (all = false) => {
+  const crimes = await getCrimes(ns);
+  const filtered = all ? crimes : crimes.filter(c => c.chance >= MIN_CHANCE_LIMIT);
+  let best = filtered.length > 0 ? filtered : crimes.sort(c => c.chance).slice(0, 1);
 
-const crimeArgs = crimesStr.map(s => s.replace(/\s/, '-'));
-const crimeLookup = arg => {
-  _lookup ??= crimesStr.reduce((map, c, i) => {
-    map[crimeArgs[i]] = c;
-    return map;
-  }, {});
-
-  return _lookup[arg];
+  return best.sort((a, b) => b.profitPerTime - a.profitPerTime);
 };
-
-const getCrimes = () => {
-  _crimes ??= crimesStr.map(c => ({
-    name: c,
-    stats: ns.getCrimeStats(c),
-    chance: ns.getCrimeChance(c),
-  }));
-
-  return _crimes.map(c => ({
-    ...c,
-    profitPerTime: c.stats.money / c.stats.time,
-  }));
-};
-
-const findBestCrimes = () => {
-  const crimes = getCrimes();
-  const filtered = crimes.filter(c => c.chance >= MIN_CHANCE_LIMIT);
-  const best = filtered.length > 0 ? filtered : crimes.sort(c => c.chance).slice(0, 1);
-
-  return best.sort((a, b) => b.profitPerTime - a.profitPerTime).slice(0, 4);
-};
-
-const findBestCrime = () => {
-  return findBestCrimes()[0];
-};
-
-export const autocomplete = () => [...crimeArgs, 'noop'];
 
 const commitCrime = async name => {
   const time = ns.commitCrime(name);
@@ -74,25 +31,25 @@ const commitCrime = async name => {
   }
 };
 
-const commitOneCrime = async name => {
+const commitBestCrimes = async myCrimes => {
   // Stop ongoing action so commitCrime output is less cluttered
-  ns.stopAction();
-  while (true) {
-    await commitCrime(name);
+  // ns.stopAction();
+  let bestCrimes = myCrimes;
+  if (!myCrimes) {
+    const cs = await findBestCrimes();
+    bestCrimes = cs.map(c => c.name);
   }
-};
 
-const commitBestCrimes = async () => {
-  // Stop ongoing action so commitCrime output is less cluttered
-  ns.stopAction();
-
+  const maxCrimes = Math.min(2, bestCrimes.length);
   let crimeIndex = 0;
+
   while (true) {
-    const bestCrimes = findBestCrimes();
-    await commitOneCrime(bestCrimes[crimeIndex].name);
-    crimeIndex = (crimeIndex + 1) % bestCrimes.length;
+    await commitCrime(bestCrimes[crimeIndex]);
+    crimeIndex = (crimeIndex + 1) % maxCrimes;
   }
 };
+
+export const autocomplete = () => ['list', '--all', '--tail', ...CRIME_ARGS];
 
 export async function main(_ns) {
   ns = _ns;
@@ -100,20 +57,25 @@ export async function main(_ns) {
   ns.disableLog('asleep');
   ns.disableLog('exit');
   ns.disableLog('singularity.stopAction');
-  let currentCrimes;
+
+  const flags = ns.flags([['all', false]]);
 
   if (!ns.args[0]) {
     ns.clearLog();
     ns.tail();
     await commitBestCrimes();
-  } else if (ns.args[0] === 'noop') {
-    ns.tprintf('Best crimes: %s. Exiting.', JSON.stringify(findBestCrimes(), null, 4));
+  } else if (ns.args[0] === 'list') {
+    ns.tprintf('Best crimes:');
+    const crimes = await findBestCrimes(true);
+    for (const crime of crimes) {
+      logCrime(ns, crime);
+    }
     ns.exit();
-  } else if (crimeArgs.includes(ns.args[0])) {
+  } else if (CRIME_ARGS.includes(ns.args[0])) {
     const crime = crimeLookup(ns.args[0]);
-    await commitOneCrime(crime);
+    await commitBestCrimes([crime]);
   } else {
-    ns.tprintf("ERROR Invalid crime '%s'. Valid crimes are: %s. Exiting", ns.args[0], crimeArgs.join(', '));
+    ns.tprintf("ERROR Invalid crime '%s'. Valid crimes are: %s. Exiting", ns.args[0], CRIME_ARGS.join(', '));
     ns.exit();
   }
 }

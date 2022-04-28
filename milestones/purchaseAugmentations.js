@@ -1,70 +1,8 @@
 /** @type import("..").NS */
+/*
 let ns = null;
 
 import { formatMoney } from '/helpers/formatters';
-
-let _augmentations = null;
-
-const formatAugmentation = (
-  { name, price, reputationRequired },
-  factionRep
-) => {
-  return ns.sprintf(
-    '%s, %s, %d/%d',
-    name,
-    formatMoney(ns, price),
-    reputationRequired,
-    factionRep
-  );
-};
-
-const getPriceMultiplier = (owned, installed) =>
-  Math.pow(1.9, owned.length - installed.length);
-
-const getAugmentations = () => {
-  if (_augmentations != null) {
-    return _augmentations;
-  } else {
-    _augmentations = {};
-    const ownedAugmentations = ns.getOwnedAugmentations(true);
-    const installedAugmentations = ns.getOwnedAugmentations(false);
-    const player = ns.getPlayer();
-    const factions = player.factions;
-    const multiplier = getPriceMultiplier(
-      ownedAugmentations,
-      installedAugmentations
-    );
-    ns.printf('price multiplier: %s', JSON.stringify(multiplier, null, 4));
-
-    for (const faction of factions) {
-      const factionAugmentations = ns.getAugmentationsFromFaction(faction);
-
-      for (const fa of factionAugmentations) {
-        const aug = _augmentations[fa] ?? { name: fa };
-        aug.prerequisites = ns.getAugmentationPrereq(fa);
-        aug.price = ns.getAugmentationPrice(fa);
-        aug.reputationRequired = ns.getAugmentationRepReq(fa);
-        aug.stats = ns.getAugmentationStats(fa);
-        aug.factions ??= [];
-        aug.factions.push(faction);
-        aug.purchased = ownedAugmentations.includes(fa);
-        aug.installed = installedAugmentations.includes(fa);
-        _augmentations[fa] = aug;
-      }
-    }
-
-    // ns.printf('_augmentations: %s', JSON.stringify(_augmentations, null, 4));
-    return _augmentations;
-  }
-};
-
-const affordable = () => {
-  const myMoney = ns.getServerMoneyAvailable('home');
-  const augsArray = Object.values(getAugmentations());
-  ns.printf('augsArray: %s', JSON.stringify(augsArray, null, 4));
-
-  return augsArray.filter(a => !a.purchased && a.price <= myMoney);
-};
 
 export default async function purchaseAugmentations(_ns, faction) {
   ns = _ns;
@@ -130,5 +68,27 @@ export default async function purchaseAugmentations(_ns, faction) {
     const result = ns.purchaseAugmentation(faction, augName);
 
     return result && purchasable.length === 1;
+  }
+}
+*/
+
+/** @type import("..").NS */
+let ns = null;
+
+const isDone = ({program}) => ns.fileExists(program, 'home');
+
+const checkPreReqs = ({program}) => PRICES[program] <= ns.getServerMoneyAvailable('home');
+
+const perform = ({program}) => ns.purchaseProgram(program);
+
+export default async function main(_ns, params) {
+  ns = _ns;
+
+  if (params.checkIsDone) {
+    return isDone(params);
+  } else if (params.checkPreReqs) {
+    return checkPreReqs(params);
+  } else {
+    return perform(params);
   }
 }

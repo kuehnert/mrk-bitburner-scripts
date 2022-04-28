@@ -1,12 +1,14 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { formatMoney, formatNumber } from 'helpers/formatters';
+import { formatMoney, formatNumber, formatDuration } from 'helpers/formatters';
 import { isHackCandidate } from 'helpers/isHackCandidate';
 
 export default function logServer(_ns, myPortLevel, index, server) {
   ns = _ns;
   const {
+    attackServerCost,
+    attackServerSize,
     hackChance,
     hackLevel,
     hackMoneyPerTime,
@@ -23,16 +25,16 @@ export default function logServer(_ns, myPortLevel, index, server) {
   const isRootStr = isRoot ? 'ROOT' : '    ';
   const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
   const isCandidate = isHackCandidate(_ns, server, myPortLevel);
-  let candidateStr = '  ';
+  let candidateStr = ' ';
 
   if (isAttacked) {
-    candidateStr = ' ✓';
+    candidateStr = 'A';
   } else if (isCandidate) {
-    candidateStr = '🎯';
+    candidateStr = 'C';
   }
 
   ns.tprintf(
-    "%s%2d %-23s %d Ports, level %4d, %s %s, %s GB, %9s, %6.2f', %9s, %3.0f%%",
+    '%s%2d %-23s %d Ports, level %4d, %s %s, %s GB, %9s, %s, %s, %5s, %10s, %3.0f%%',
     candidateStr,
     index,
     hostname,
@@ -42,8 +44,10 @@ export default function logServer(_ns, myPortLevel, index, server) {
     hasBackdoorStr,
     formatNumber(ns, ram),
     formatMoney(ns, maxMoney),
-    hackTime,
     formatMoney(ns, hackMoneyPerTime),
+    formatDuration(ns, hackTime),
+    Number.isFinite(attackServerSize) ? attackServerSize : '-',
+    Number.isFinite(attackServerSize) ? formatMoney(ns, attackServerCost) : '-',
     hackChance * 100.0
   );
 }

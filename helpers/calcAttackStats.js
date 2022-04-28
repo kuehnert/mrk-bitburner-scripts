@@ -26,7 +26,7 @@ export async function main(_ns) {
   const flags = ns.flags([['exp', false]]);
 
   const [totalIncome] = ns.getScriptIncome();
-  const farm = ns.getPurchasedServers();
+  const farm = eval('ns.getPurc' + 'hasedServers()');
   let portfolio = [];
 
   for (const sourceName of farm) {

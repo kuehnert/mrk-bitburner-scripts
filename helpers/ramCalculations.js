@@ -2,7 +2,7 @@
 let ns = null;
 
 import { getGrowPercent, getHackPercent, hasFormulas } from '/helpers/fakeFormulas';
-import { miniGrowScript, miniHackScript, miniWeakenScript } from '/helpers/globals';
+import { miniGrowScript, miniHackScript, miniWeakenScript, BUFFER } from '/helpers/globals';
 
 export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
   const serverData = ns.getServer(serverName);
@@ -147,4 +147,33 @@ export const calcAttackTimes = (_ns, serverName) => {
       weakenTime: Math.round(ns.getWeakenTime(serverName)),
     };
   }
+};
+
+export const calcAttackDelays = ({ growTime, hackTime, weakenTime }) => {
+  let delays = {
+    growDelay: weakenTime - BUFFER - growTime,
+    hackDelay: weakenTime - 2 * BUFFER - hackTime,
+    weakenDelay: 0, // assume weaken always takes longest
+    sleepTime: weakenTime + BUFFER,
+  };
+
+  if (delays.growDelay < 0) {
+    delays = {
+      growDelay: 0,
+      hackDelay: delays.hackDelay + -delays.growDelay,
+      weakenDelay: delays.weakenDelay + -delays.growDelay,
+      sleepTime: delays.sleepTime + -delays.growDelay,
+    };
+  }
+
+  if (delays.weakenDelay < 0) {
+    delays = {
+      growDelay: delays.growDelay + -delays.weakenDelay,
+      hackDelay: delays.hackDelay + -delays.weakenDelay,
+      weakenDelay: 0,
+      sleepTime: delays.sleepTime + delays.weakenDelay,
+    };
+  }
+
+  return delays;
 };

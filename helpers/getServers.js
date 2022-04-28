@@ -4,9 +4,9 @@ let ns = null;
 import { getMyPortLevel } from 'helpers/getMyPortLevel';
 import isHackCandidate from 'helpers/isHackCandidate';
 import { target2SourceName } from 'helpers/names';
+import { calcAttackDelays, calcTotalRamCost, calcAttackTimes } from 'helpers/ramCalculations';
 
 let _servers = null;
-const MINUTE = 60 * 1000;
 const filename = '/data/routes.txt';
 
 const findServers = (node, done = [node], route = []) => {
@@ -24,9 +24,7 @@ const findServers = (node, done = [node], route = []) => {
   ];
 
   for (const newServer of connected) {
-    allServers = allServers.concat(
-      findServers(newServer, done.concat([newServer]), route.concat([node]))
-    );
+    allServers = allServers.concat(findServers(newServer, done.concat([newServer]), route.concat([node])));
   }
 
   return allServers;
@@ -61,10 +59,22 @@ export const getViableTargets = async _ns => {
     .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
 };
 
-const calcHackTime = hostname =>
-  (ns.getHackTime(hostname) + ns.getWeakenTime(hostname) + ns.getGrowTime(hostname)) / MINUTE;
+const calcHackTime = hostname => {
+  const times = calcAttackTimes(ns, hostname);
+  const { sleepTime } = calcAttackDelays(times);
+  return sleepTime;
+};
 
-const analyseServer = server => {
+const calcAttackServerSize = hostname => {
+  const size = calcTotalRamCost(ns, hostname).parallelServerSizeRequired;
+
+  return {
+    attackServerSize: size,
+    attackServerCost: ns.getPurchasedServerCost(size),
+  };
+};
+
+const analyseServer = (server, own) => {
   const { hostname } = server;
 
   let newServer = {
@@ -77,8 +87,9 @@ const analyseServer = server => {
     hackPercentage: ns.hackAnalyze(hostname),
     hackChance: ns.hackAnalyzeChance(hostname),
     isRoot: ns.hasRootAccess(hostname),
-    isAttacked: ns.getPurchasedServers().includes(target2SourceName(hostname)),
+    isAttacked: own.includes(target2SourceName(hostname)),
     hasBackdoor: ns.getServer(hostname).backdoorInstalled,
+    ...calcAttackServerSize(hostname),
   };
 
   newServer.hackMoneyPerTime = newServer.maxMoney / newServer.hackTime / 100.0;
@@ -89,9 +100,9 @@ const analyseServer = server => {
 export const getServersDetailed = async (_ns, forceReload = false) => {
   ns = _ns;
   const servers = await getServers(ns, forceReload);
-
+  const own = servers.map(s => s.hostname).filter(s => s.match(/^HACK/));
   // slice kicks out 'home'
-  return servers.slice(1).map(s => analyseServer(s));
+  return servers.slice(1).map(s => analyseServer(s, own));
 };
 
 export default getServers;

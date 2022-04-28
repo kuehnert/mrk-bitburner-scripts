@@ -71,7 +71,7 @@ export async function main(_ns) {
     const durationStr = formatDuration(ns, duration);
 
     ns.printf(
-      'Fackion %s: %s reputation points to go (%.1f/s). ETA: %s...',
+      'Faction %s: %s reputation points to go (%.1f/s). ETA: %s...',
       faction,
       formatNumber(ns, toGo),
       // formatNumber(ns, maxRepReq),

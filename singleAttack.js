@@ -97,7 +97,7 @@ export async function main(_ns) {
     securityCurrent = ns.getServerSecurityLevel(targetName);
 
     const availableRAM =
-      ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName);
+      ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName) - 10;
 
     if (ns.getServerMoneyAvailable(targetName) < moneyMax * 0.8) {
       action = 'grow';
@@ -119,8 +119,6 @@ export async function main(_ns) {
 
       const weakenDifference = securityCurrent - securityMin;
       const weakenThreads = Math.round(weakenDifference / 0.02);
-      ns.printf('maxThreads: %s', JSON.stringify(maxThreads, null, 4));
-      ns.printf('weakenThreads: %s', JSON.stringify(weakenThreads, null, 4));
       threads = Math.min(maxThreads, weakenThreads);
 
       if (threads > 0) {
@@ -129,10 +127,10 @@ export async function main(_ns) {
     } else {
       action = 'hack';
       sleepTime = ns.getHackTime(targetName);
-      const cost = ns.getScriptRam('/workers/minihack.js', sourceName);
+      const cost = ns.getScriptRam(hackScript, sourceName);
       const maxThreads = Math.floor(availableRAM / cost);
       const hackPercent = getHackPercent(ns, ns.getServer(targetName));
-      const hackThreads = Math.round(0.5 / hackPercent);
+      const hackThreads = Math.floor(0.5 / hackPercent);
       threads = Math.min(maxThreads, hackThreads);
 
       if (threads > 0) {

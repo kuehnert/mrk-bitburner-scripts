@@ -1,20 +1,7 @@
 /** @type import(".").NS */
 let ns = null;
-const SECOND = 1000;
-const crimesStr = [
-  'shoplift',
-  'rob store',
-  'mug someone',
-  'larceny',
-  'deal drugs',
-  'bond forgery',
-  'traffic illegal arms',
-  'homicide',
-  'grand theft auto',
-  'kidnap and ransom',
-  'assassinate',
-  'heist',
-];
+
+import { SECOND } from '/helpers/globals'
 
 export async function main(_ns) {
   ns = _ns;
