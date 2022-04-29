@@ -1,15 +1,10 @@
 /** @type import(".").NS */
 let ns = null;
 
-import {
-  calcPossibleThreads,
-  calcAttackDelays,
-  calcAttackTimes,
-  calcMaxThreads,
-} from 'helpers/ramCalculations';
+import { calcPossibleThreads, calcAttackDelays, calcAttackTimes, calcMaxThreads } from 'helpers/ramCalculations';
 import { formatTime, formatDuration, SECOND } from '/helpers/formatters';
 import logServerInfo from '/helpers/logServerInfo';
-import { BUFFER } from '/helpers/globals'
+import { BUFFER } from '/helpers/globals';
 
 export function autocomplete(data) {
   return [...data.servers]; // This script autocompletes the list of servers.
@@ -27,12 +22,7 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
   const { growTime, hackTime, weakenTime } = attackTimes;
   const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
 
-  ns.printf(
-    'INFO threads: hack %11d\tgrow %11d\tweaken %11d',
-    hackThreads,
-    growThreads,
-    weakenThreads
-  );
+  ns.printf('INFO threads: hack %11d\tgrow %11d\tweaken %11d', hackThreads, growThreads, weakenThreads);
 
   ns.printf(
     'INFO times:   hack %s\tgrow %s\tweaken %s',
@@ -61,36 +51,43 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
 };
 
 const primeServer = async (sourceName, targetName) => {
-  ns.printf(
-    'INFO %s PRIMING server %s from %s...',
-    formatTime(ns),
-    targetName,
-    sourceName
-  );
+  ns.printf('INFO %s PRIMING server %s from %s...', formatTime(ns), targetName, sourceName);
   const pid = ns.exec(SCRIPTS.primeServer, sourceName, 1, targetName);
   while (ns.isRunning(pid)) {
     await ns.sleep(SECOND);
   }
 };
 
-const performAttack = async (
-  sourceName,
-  targetName,
-  threadCounts,
-  attackDelays
-) => {
+const performAttack = async (sourceName, targetName, threadCounts, attackDelays) => {
   const { growThreads, hackThreads, weakenThreads } = threadCounts;
   const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
 
-  while (true) {
-    // assume primed server
-    ns.printf('INFO %s Starting new attack...', formatTime(ns));
-    logServerInfo(ns, targetName);
-    ns.exec(SCRIPTS.hack, sourceName, hackThreads, targetName, hackDelay);
-    ns.exec(SCRIPTS.grow, sourceName, growThreads, targetName, growDelay);
-    ns.exec(SCRIPTS.weaken, sourceName, weakenThreads, targetName, weakenDelay);
+  const shiftThreads = growThreads + hackThreads + weakenThreads;
+  const shiftRam = shiftThreads * ns.getScriptRam(SCRIPTS.weaken);
+  const availableRam = ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName);
+  const shifts = Math.floor(availableRam / shiftRam);
+  // const shifts = Math.min(2, Math.floor(availableRam / shiftRam));
 
-    await ns.sleep(sleepTime);
+  ns.printf(
+    'INFO Parallel threads: %d, RAM needed: %d, RAM available: %d, shifts: %d, shift time: %s',
+    shiftThreads,
+    shiftRam,
+    availableRam,
+    shifts,
+    formatDuration(ns, sleepTime)
+  );
+
+  // assume primed server
+  let shift = 0;
+  while (true) {
+    // ns.printf('INFO %s Starting new attack shift %d...', formatTime(ns), shift);
+    // logServerInfo(ns, targetName);
+    ns.exec(SCRIPTS.hack, sourceName, hackThreads, targetName, hackDelay, shift);
+    ns.exec(SCRIPTS.grow, sourceName, growThreads, targetName, growDelay, shift);
+    ns.exec(SCRIPTS.weaken, sourceName, weakenThreads, targetName, weakenDelay, shift);
+
+    shift = (shift + 1) % shifts;
+    await ns.sleep(Math.round(sleepTime / shifts));
   }
 };
 
@@ -146,8 +143,10 @@ export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
   ns.disableLog('disableLog');
-  ns.disableLog('sleep');
+  ns.disableLog('getServerMaxRam');
   ns.disableLog('getServerMinSecurityLevel');
+  ns.disableLog('getServerUsedRam');
+  ns.disableLog('sleep');
   // ns.tail();
 
   const targetName = ns.args[0];
@@ -164,7 +163,11 @@ export async function main(_ns) {
     for (const script of Object.values(SCRIPTS)) {
       ns.scriptKill(script, sourceName);
     }
-  } else if (flags.bomb) {
+
+    await ns.sleep(SECOND);
+  }
+
+  if (flags.bomb) {
     await bombAttack(sourceName, targetName);
   } else {
     await prepareAttack(sourceName, targetName, flags);

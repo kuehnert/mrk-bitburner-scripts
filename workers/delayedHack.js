@@ -6,12 +6,8 @@ export async function main(_ns) {
 
   const server = ns.args[0];
   const delay = ns.args[1];
+  // const shift = ns.args[2];
 
-  if (delay < 0) {
-    ns.printf("Delay < 0! You doin' your math right?");
-    ns.exit();
-  }
-
-  await ns.sleep(delay);
+  await ns.asleep(delay);
   await ns.hack(server);
 }
