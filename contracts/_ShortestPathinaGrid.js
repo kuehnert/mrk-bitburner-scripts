@@ -56,12 +56,7 @@ const findShortestPath = (grid, x = 0, y = 0, path = '') => {
     let best = null;
 
     for (const direction of directions) {
-      const newSolution = findShortestPath(
-        grid,
-        x + direction.x,
-        y + direction.y,
-        path + direction.name
-      );
+      const newSolution = findShortestPath(grid, x + direction.x, y + direction.y, path + direction.name);
 
       if (!best || (newSolution && newSolution.length < best.length)) {
         best = newSolution;
@@ -73,7 +68,25 @@ const findShortestPath = (grid, x = 0, y = 0, path = '') => {
   }
 };
 
-export default function ShortestPathinaGrid(grid) {
-  const result = findShortestPath(grid);
-  return result ? result : '';
-}
+// export default function ShortestPathinaGrid(grid) {
+//   const result = findShortestPath(grid);
+//   return result ? result : '';
+// }
+
+const input = [
+  [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+  [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+  [0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0],
+  [0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+  [1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1],
+  [0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0],
+  [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+];
+
+const r = findShortestPath(input);
+console.log('r', r);

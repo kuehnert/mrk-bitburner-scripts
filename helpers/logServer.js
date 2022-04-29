@@ -25,12 +25,12 @@ export default function logServer(_ns, myPortLevel, index, server) {
   const isRootStr = isRoot ? 'ROOT' : '    ';
   const hasBackdoorStr = hasBackdoor ? 'BD' : '  ';
   const isCandidate = isHackCandidate(_ns, server, myPortLevel);
-  let candidateStr = ' ';
+  let candidateStr = '  ';
 
   if (isAttacked) {
-    candidateStr = 'A';
+    candidateStr = 'A ';
   } else if (isCandidate) {
-    candidateStr = 'C';
+    candidateStr = '->';
   }
 
   ns.tprintf(
