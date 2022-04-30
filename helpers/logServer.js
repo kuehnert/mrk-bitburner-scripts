@@ -14,6 +14,7 @@ export default function logServer(_ns, myPortLevel, index, server) {
     hackMoneyPerTime,
     hackTime,
     hasBackdoor,
+    homeAttacked,
     isAttacked,
     isRoot,
     maxMoney,
@@ -27,7 +28,9 @@ export default function logServer(_ns, myPortLevel, index, server) {
   const isCandidate = isHackCandidate(_ns, server, myPortLevel);
   let candidateStr = '  ';
 
-  if (isAttacked) {
+  if (homeAttacked) {
+    candidateStr = 'H ';
+  } else if (isAttacked) {
     candidateStr = 'A ';
   } else if (isCandidate) {
     candidateStr = '->';

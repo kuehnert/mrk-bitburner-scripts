@@ -1,14 +1,22 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { hprint, tablePrint } from '/helpers/hprint';
+
 export async function main(_ns) {
   ns = _ns;
+  ns.clearLog();
 
-  ns.tprintf('Hallo');
+  hprint(ns, 'Hallo %d %s', 123, 'World');
+  hprint(ns, 'Hallo I~Friend~ W~orange~ E~red~ S~what~ normal\ttab\tab	tab');
 
-  // Acquire a reference to the terminal list of lines.
-  const list = document.getElementById('terminal');
+  const headers = ['Name', 'Age', 'Size', 'Description'];
+  const data = [
+    ['Matt', 47, 'the biggest', 'Goldilocks Zone'],
+    ['Joe', 42, 'the dummest', 'Goldilocks Zone'],
+    ['Jens', 17, 'the by far dummest', 'Goldilocks Zone'],
+  ];
 
-  // // Inject some HTML.
-  list.insertAdjacentHTML('beforeend', `<li><p color=lime>whatever custom html</p></li>`);
+  tablePrint(ns, headers, data);
+  tablePrint(ns, headers, data);
 }

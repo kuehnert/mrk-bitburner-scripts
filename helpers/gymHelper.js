@@ -1,8 +1,9 @@
-let _gyms = null;
+let ns;
+let _gyms;
 
-export const skills = ['strength', 'defense', 'dexterity', 'agility'];
+export const getGyms = async (_ns, forceReload = false) => {
+  ns = _ns;
 
-export const getGyms = async (forceReload = false) => {
   if (!forceReload && ns.fileExists('/data/gyms.txt')) {
     _gyms ??= JSON.parse(ns.read('/data/gyms.txt'));
     return _gyms;
@@ -39,12 +40,18 @@ export const getGyms = async (forceReload = false) => {
   }
 };
 
-export const fastestGym = async () => {
-  const gyms = await getGyms();
+export const fastestGym = async (_ns) => {
+  ns = _ns;
+
+  const gyms = await getGyms(_ns);
+  // ns.printf('gyms: %s', JSON.stringify(gyms, null, 4));
   return gyms.reduce((best, g) => (g.gain > best.gain ? g : best), gyms[0]);
 };
 
-export const valueGym = async () => {
-  const gyms = await getGyms();
+export const valueGym = async (_ns) => {
+  ns = _ns;
+
+  const gyms = await getGyms(_ns);
+  // ns.printf('gyms: %s', JSON.stringify(gyms, null, 4));
   return gyms.reduce((best, g) => (g.costGain > best.costGain ? g : best), gyms[0]);
 };

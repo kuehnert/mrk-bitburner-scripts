@@ -46,3 +46,5 @@ export const formatNumber = (ns, number) => {
 
   return _fn(ns, number) + prefixes[prefixes.length - 1];
 };
+
+export const formatPercent = (ns, percent) => ns.sprintf('%5.1f%%', percent * 100);

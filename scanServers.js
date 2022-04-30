@@ -36,6 +36,7 @@ export function autocomplete() {
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
+  ns.disableLog('ALL');
 
   const flags = ns.flags([
     ['forceRefresh', false],

@@ -15,6 +15,6 @@ export const serversFile = '/data/servers.txt';
 
 export const useFormulas = true;
 
-export const skills = ['strength', 'defense', 'dexterity', 'agility'];
+export const SKILLS = ['strength', 'defense', 'dexterity', 'agility'];
 
 export const BUFFER = 2000; // one second between each finished command

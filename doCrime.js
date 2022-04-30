@@ -3,7 +3,8 @@ let ns = null;
 
 import { SECOND } from '/helpers/globals';
 import { getCrimes, logCrime } from '/helpers/crimeHelper';
-import { crimeLookup, CRIME_ARGS } from './helpers/crimeHelper';
+import { crimeLookup, printCrimesTable, CRIME_ARGS } from './helpers/crimeHelper';
+import hprint from 'helpers/hprint';
 
 // will consider crimes with 60% chance or better
 const MIN_CHANCE_LIMIT = 0.5;
@@ -49,33 +50,36 @@ const commitBestCrimes = async myCrimes => {
   }
 };
 
+const listCrimes = async () => {
+  hprint(ns, 'I~Best crimes:~');
+
+  const crimes = await findBestCrimes(true);
+  printCrimesTable(ns, crimes);
+};
+
 export const autocomplete = () => ['list', '--all', '--tail', ...CRIME_ARGS];
 
 export async function main(_ns) {
   ns = _ns;
-  ns.disableLog('disableLog');
-  ns.disableLog('asleep');
-  ns.disableLog('exit');
-  ns.disableLog('singularity.stopAction');
+  // ns.disableLog('disableLog');
+  // ns.disableLog('asleep');
+  // ns.disableLog('exit');
+  // ns.disableLog('singularity.stopAction');
+  // ns.clearLog();
+  // ns.tail();
 
-  const flags = ns.flags([['all', false]]);
+  // const flags = ns.flags([['all', false]]);
+  await listCrimes();
 
   if (!ns.args[0]) {
-    ns.clearLog();
-    ns.tail();
     await commitBestCrimes();
   } else if (ns.args[0] === 'list') {
-    ns.tprintf('Best crimes:');
-    const crimes = await findBestCrimes(true);
-    for (const crime of crimes) {
-      logCrime(ns, crime);
-    }
     ns.exit();
   } else if (CRIME_ARGS.includes(ns.args[0])) {
     const crime = crimeLookup(ns.args[0]);
     await commitBestCrimes([crime]);
   } else {
-    ns.tprintf("ERROR Invalid crime '%s'. Valid crimes are: %s. Exiting", ns.args[0], CRIME_ARGS.join(', '));
+    hprint(ns, 'E~ERROR Invalid crime~ W~%s~. Valid crimes are: S~%s~. Exiting.', ns.args[0], CRIME_ARGS.join(', '));
     ns.exit();
   }
 }

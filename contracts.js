@@ -20,6 +20,7 @@ import SanitizeParenthesesinExpression from '/contracts/SanitizeParenthesesinExp
 import SpiralizeMatrix from '/contracts/SpiralizeMatrix';
 import SubarraywithMaximumSum from '/contracts/SubarraywithMaximumSum';
 import TotalWaystoSum from '/contracts/TotalWaystoSum';
+import TotalWaystoSumII from '/contracts/TotalWaystoSumII';
 import UniquePathsinaGridI from '/contracts/UniquePathsinaGridI';
 import UniquePathsinaGridII from '/contracts/UniquePathsinaGridII';
 

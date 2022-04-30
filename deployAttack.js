@@ -10,19 +10,6 @@ import getMyPortLevel from '/helpers/getMyPortLevel';
 import { getPurchasedServerCosts, getAffordableMaxServerRam } from '/helpers/purchasedServers';
 import { miniHackScript, miniGrowScript, miniWeakenScript } from '/helpers/globals';
 
-export const autocomplete = data => [
-  'all',
-  'cost',
-  'delete-all',
-  'exp',
-  'redeploy',
-  'redistribute',
-  'stats',
-  '--bomb',
-  '--delete',
-  ...data.servers,
-];
-
 const singleScript = 'singleAttack.js';
 const parallelScript = 'multiAttack.js';
 
@@ -57,15 +44,21 @@ const purchaseServer = (sourceName, targetName, parallel) => {
   const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, true);
   const desiredRam = parallel ? parallelServerSizeRequired : serverSizeRequired;
   const cost = ns.getPurchasedServerCost(desiredRam);
-  ns.tprintf('We need a server with %d GB. Cost %s.', desiredRam, formatMoney(ns, cost));
+  // ns.tprintf('We need a server with %d GB. Cost %s.', desiredRam, formatMoney(ns, cost));
 
   const myMoney = ns.getServerMoneyAvailable('home');
   if (cost > myMoney) {
-    ns.tprint('ERROR Cannot afford server right now. Exiting.');
+    ns.tprintf(
+      'WARN Cannot afford server to attack %s right now (%s/%s). Exiting.',
+      targetName,
+      formatMoney(ns, myMoney),
+      formatMoney(ns, cost)
+    );
+
     ns.exit();
   }
 
-  return ns.purchaseServer(sourceName, desiredRam);
+  return { hostname: ns.purchaseServer(sourceName, desiredRam), ram: desiredRam, cost };
 };
 
 const purchaseBomb = sourceName => {
@@ -77,8 +70,7 @@ const purchaseBomb = sourceName => {
     ns.exit();
   }
 
-  ns.printf('desiredRam: %s', formatNumber(ns, desiredRam));
-
+  // ns.printf('desiredRam: %s', formatNumber(ns, desiredRam));
   return ns.purchaseServer(sourceName, desiredRam);
 };
 
@@ -89,20 +81,20 @@ const copyDependencies = async sourceName => {
 const deployServer = async (targetName, parallel, bomb = false) => {
   const sourceName = target2SourceName(targetName);
 
-  ns.tprintf('INFO Purchasing and configuring server %s to attack target %s', sourceName, targetName);
+  // ns.tprintf('INFO Purchasing and configuring server %s to attack target %s', sourceName, targetName);
 
   if (ns.getPurchasedServers().includes(sourceName)) {
-    ns.tprintf('WARN You already own a server called %s. Re-configuring it.', sourceName);
-    ns.tprintf('Killing all processes on %s. Waiting 2 seconds.', sourceName);
+    ns.tprintf('WARN You already own a server called %s. Stopping all threads & re-configuring it.', sourceName);
+    // ns.tprintf('Killing all processes on %s.', sourceName);
     ns.killall(sourceName);
-    await ns.sleep(500);
+    await ns.sleep(300);
   } else {
     if (bomb) {
       purchaseBomb(sourceName);
     } else {
-      const newServerName = purchaseServer(sourceName, targetName, parallel);
-      if (newServerName === sourceName) {
-        ns.tprintf('SUCCESS Bought new server.');
+      const { hostname, ram, cost } = purchaseServer(sourceName, targetName, parallel);
+      if (hostname === sourceName) {
+        ns.tprintf('SUCCESS Bought new server %s with %d GB for %s.', hostname, ram, formatMoney(ns, cost));
       } else {
         ns.tprintf('ERROR Something went wrong when buying new server. Exiting.');
         ns.exit();
@@ -110,7 +102,7 @@ const deployServer = async (targetName, parallel, bomb = false) => {
     }
   }
 
-  ns.tprintf('Copying all dependencies to %s...', sourceName);
+  // ns.tprintf('Copying all dependencies to %s...', sourceName);
   await copyDependencies(sourceName);
 
   const script = parallel ? parallelScript : singleScript;
@@ -197,13 +189,27 @@ const deleteAll = async () => {
   ns.tprint('Done.');
 };
 
+const killAll = async () => {
+  ns.tprint('INFO Stopping scripts on all your purchased servers...');
+
+  const servers = ns.getPurchasedServers();
+  for (const sourceName of servers) {
+    ns.killall(sourceName);
+  }
+};
+
 const deployAll = async ({ bomb, parallel }) => {
   // try to attack as many servers as possible
   const serverLimit = ns.getPurchasedServerLimit();
   const currentServerCount = ns.getPurchasedServers().length;
   const remainingSeverCount = serverLimit - currentServerCount;
   const viableServers = await getViableTargets(ns);
-  const targets = viableServers.sort((a,b) => a.parallelServerSizeRequired - b.parallelServerSizeRequired).slice(0, remainingSeverCount);
+
+  const targets = viableServers
+    .sort((a, b) => (a.attackServerSize - b.attackServerSize) * 100 + (b.hackMoneyPerTime - a.hackMoneyPerTime))
+    .slice(0, remainingSeverCount);
+
+  ns.tprintf('Considering targets in order: %s', targets.map(s => s.hostname).join(', '));
 
   if (viableServers.length === 0) {
     ns.tprintf('WARN There currently are no viable targets. Exiting');
@@ -224,6 +230,20 @@ const printServerCost = () => {
   }
 };
 
+export const autocomplete = data => [
+  '--bomb',
+  '--delete',
+  'all',
+  'cost',
+  'delete-all',
+  'exp',
+  'kill-all',
+  'redeploy',
+  'redistribute',
+  'stats',
+  ...data.servers,
+];
+
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
@@ -242,6 +262,8 @@ export async function main(_ns) {
     ns.exit();
   } else if (ns.args[0].toLowerCase() === 'delete-all') {
     await deleteAll();
+  } else if (ns.args[0].toLowerCase() === 'kill-all') {
+    await killAll();
   } else if (ns.args[0].toLowerCase() === 'all') {
     await deployAll(flags);
   } else if (ns.args[0].toLowerCase() === 'cost') {

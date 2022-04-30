@@ -1,9 +1,13 @@
 /** @type import("..").NS */
 let ns = null;
 
+import { SKILLS } from '/helpers/globals';
+import { fastestGym, valueGym } from '/helpers/gymHelper';
+
 const workoutSkillToLevel = async (level = 10, skill = 'strength', preferSpeed = false) => {
   let stats = ns.getPlayer();
-  const gym = await (preferSpeed ? fastestGym() : valueGym());
+  const gym = await (preferSpeed ? fastestGym(ns) : valueGym(ns));
+  // ns.printf('gym: %s', JSON.stringify(gym, null, 4));
 
   if (stats.city !== gym.city) {
     ns.printf('Travelling to %s...', gym.city);
@@ -36,7 +40,8 @@ const workoutSkillToLevel = async (level = 10, skill = 'strength', preferSpeed =
 };
 
 const workoutAllToLevel = async (level = 10, preferSpeed = false) => {
-  for (const skill of skills) {
+  for (const skill of SKILLS) {
+    // ns.printf('skill: %s', JSON.stringify(skill, null, 4));
     const success = await workoutSkillToLevel(level, skill, preferSpeed);
     if (!success) {
       // return false;

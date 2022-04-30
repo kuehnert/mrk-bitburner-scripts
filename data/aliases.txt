@@ -1,10 +1,11 @@
+alias bd="run backdoors.js";
 alias buyall="buy BruteSSH.exe; buy FTPCrack.exe; buy relaySMTP.exe; buy HTTPWorm.exe; buy SQLInject.exe";
-alias l1="r CSEC b";
-alias l2="r avmnite-02h b";
-alias l3="r I.I.I.I b";
-alias l4="r run4theh111z b";
+alias crime="run crime.js";
+alias do="run runCommand.js";
 alias r="run route.js";
 alias sl="run scanServers.js levels";
+alias so="run scanServers.js owned";
 alias st="run scanServers.js targets";
-alias bd="run /sf4/backdoors.js";
-alias crime="run /sf4/crime.js";
+alias dep="run deployAttack.js";
+alias h="home";
+

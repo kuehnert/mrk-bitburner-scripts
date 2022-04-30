@@ -9,7 +9,7 @@ export async function main(_ns) {
   ns.disableLog('exit');
   ns.disableLog('stopAction');
 
-  const crimeName = ns.args[0] || 'mug someone'
+  const crimeName = ns.args[0] || 'shoplift' || 'mug someone'
 
   while (true) {
     const time = ns.commitCrime(crimeName);

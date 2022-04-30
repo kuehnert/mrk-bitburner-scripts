@@ -1,7 +1,8 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { formatMoney } from '/helpers/formatters';
+import { formatMoney, formatPercent } from '/helpers/formatters';
+import { hprint, tablePrint } from 'helpers/hprint';
 
 export const crimesFile = '/data/crimes.txt';
 
@@ -73,7 +74,8 @@ export const logCrime = (
   ns = _ns;
   const expSum = strength_exp + defense_exp + dexterity_exp + agility_exp + charisma_exp + intelligence_exp;
 
-  ns.tprintf(
+  hprint(
+    ns,
     '%-20s\t%5.1f%%\t%3d %4d\t%s %s/s',
     name,
     chance * 100,
@@ -82,4 +84,33 @@ export const logCrime = (
     formatMoney(ns, money),
     formatMoney(ns, profitPerTime)
   );
+};
+
+export const printCrimesTable = (_ns, crimes) => {
+  ns = _ns;
+  const headers = ['Crime', 'Chance', 'Hacking', 'Combat', 'Profit', 'Profit/s'];
+
+  const data = crimes.map(crime => {
+    const {
+      name,
+      chance,
+      stats: {
+        money,
+        hacking_exp,
+        strength_exp,
+        defense_exp,
+        dexterity_exp,
+        agility_exp,
+        charisma_exp,
+        intelligence_exp,
+      },
+      profitPerTime,
+    } = crime;
+
+    const expSum = strength_exp + defense_exp + dexterity_exp + agility_exp + charisma_exp + intelligence_exp;
+
+    return [name, formatPercent(ns, chance), hacking_exp, expSum, formatMoney(ns, money), formatMoney(ns, profitPerTime)];
+  });
+
+  tablePrint(ns, headers, data);
 };

@@ -45,7 +45,7 @@ export const getServers = async (_ns, forceReload = false) => {
   return _servers;
 };
 
-export const getHackedServers = async (_ns, forceReload = false) => {
+export const getHackedServers = async (_ns, forceReload = true) => {
   ns = _ns;
   const hacked = await getServersDetailed(ns, forceReload);
   return hacked.filter(s => !s.purchasedByPlayer);
@@ -53,7 +53,7 @@ export const getHackedServers = async (_ns, forceReload = false) => {
 
 export const getViableTargets = async _ns => {
   ns = _ns;
-  const viable = await getHackedServers(ns);
+  const viable = await getHackedServers(ns, true);
   return viable
     .filter(s => !s.isAttacked && isHackCandidate(ns, s, getMyPortLevel(ns)))
     .sort((a, b) => b.hackMoneyPerTime - a.hackMoneyPerTime);
@@ -77,6 +77,11 @@ const calcAttackServerSize = hostname => {
 const analyseServer = (server, own) => {
   const { hostname } = server;
 
+  const homeTargets = ns
+    .ps('home')
+    .filter(s => s.filename.match(/attack/i))
+    .map(s => s.args[0]);
+
   let newServer = {
     ...server,
     ram: ns.getServerMaxRam(hostname),
@@ -88,6 +93,7 @@ const analyseServer = (server, own) => {
     hackChance: ns.hackAnalyzeChance(hostname),
     isRoot: ns.hasRootAccess(hostname),
     isAttacked: own.includes(target2SourceName(hostname)),
+    homeAttacked: homeTargets.includes(hostname),
     hasBackdoor: ns.getServer(hostname).backdoorInstalled,
     ...calcAttackServerSize(hostname),
   };
