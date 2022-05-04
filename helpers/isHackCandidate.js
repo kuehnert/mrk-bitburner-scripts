@@ -13,7 +13,7 @@ export const isHackCandidate = (
     hackMoneyPerTime > 0 &&
     portLevel >= portsNeeded &&
     _ns.getHackingLevel() >= hackLevel &&
-    hackChance >= 0.6
+    hackChance >= 0.85
   );
 };
 

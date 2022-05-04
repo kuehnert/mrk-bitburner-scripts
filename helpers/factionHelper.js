@@ -1,35 +1,53 @@
 export const FACTIONS = [
+  // City
   'Aevum',
+  'Chongqing',
+  'Ishima',
+  'New Tokyo',
+  'Sector-12',
+  'Volhaven',
+
+  // Hacking
   'BitRunners',
   'CyberSec',
   'Daedalus',
-  'Ishima',
-  'New Tokyo',
+  'Illuminati',
+  'Netburners',
   'NiteSec',
-  'Sector-12',
-  'Slum Snakes',
-  'Tetrads',
   'The Black Hand',
+  'The Covenant',
+
+  // Crime
+  'Silhouette',
+  'Slum Snakes',
+  'Speakers for the Dead',
+  'Tetrads',
+  'The Dark Army',
+  'The Syndicate',
   'Tian Di Hui',
+
+  // Corporations
+  'Bachman & Associates',
+  'Blade Industries',
+  'Clarke Incorporated',
+  'ECorp',
+  'Four Sigma',
+  'Fulcrum Secret Technologies',
+  'KuaiGong International',
+  'MegaCorp',
+  'NWO',
+  'OmniTek Incorporated',
 ];
 
-const FIND_NAMES = {
-  aevum: 'Aevum',
-  bitrunners: 'BitRunners',
-  cybersec: 'CyberSec',
-  daedalus: 'Daedalus',
-  ishima: 'Ishima',
-  nitesec: 'NiteSec',
-  newtokyo: 'New Tokyo',
-  sector12: 'Sector-12',
-  slumsnakes: 'Slum Snakes',
-  tetrads: 'Tetrads',
-  theblackhand: 'The Black Hand',
-  tiandiui: 'Tian Di Hui',
-};
+const simplifyName = s => s.replace(/[\s\-]/g, '').toLowerCase();
+
+const FIND_NAMES = FACTIONS.reduce((map, s) => {
+  map[simplifyName(s)] = s;
+  return map;
+}, {});
 
 export const FACTION_INPUT_NAMES = Object.keys(FIND_NAMES);
 
-export const findFaction = s => FIND_NAMES[s.replace(/[\s\-]/, '').toLowerCase()];
+export const findFaction = s => FIND_NAMES[simplifyName(s)];
 
 export const validFaction = s => FACTIONS.includes(s);

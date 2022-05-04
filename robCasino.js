@@ -1,11 +1,12 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { formatMoney } from 'helpers/formatters';
 import { hprint } from 'helpers/hprint';
 
 const MAX_WAGER = 100000000;
 const CLICK_SLEEP_TIME = null;
-const SAVE_SLEEP_TIME = 500;
+const SAVE_SLEEP_TIME = 200;
 
 export async function main(_ns) {
   ns = _ns;
@@ -13,12 +14,11 @@ export async function main(_ns) {
   // ns.clearLog();
   ns.tail();
 
-  const player = ns.getPlayer();
-  const { location, city } = player;
+  const { location, city } = ns.getPlayer();
 
   if (city !== 'Aevum') {
     hprint(ns, 'You are in location S~%s~ in city S~%s~', location, city);
-    hprint('W~We are travelling to Aevum!~');
+    hprint(ns, 'W~We are travelling to Aevum!~');
     const success = ns.travelToCity('Aevum');
 
     if (!success) {
@@ -48,7 +48,11 @@ export async function main(_ns) {
 
   const bSave = find("//button[@aria-label = 'save game']");
   const tfWager = find('//input[@value = 1000000]');
-  setText(tfWager, '' + Math.min(MAX_WAGER, player.money));
+  const myMoney = ns.getServerMoneyAvailable('home');
+  const wager = Math.min(MAX_WAGER, myMoney);
+  ns.printf('Wagering %s/%s money', formatMoney(ns, wager), formatMoney(ns, MAX_WAGER));
+  setText(tfWager, '' + wager);
+  let winCounter = 0;
 
   while (true) {
     const bStart = find("//button[text() = 'Start']");
@@ -61,6 +65,11 @@ export async function main(_ns) {
 
     let won = null;
     while (won === null) {
+      if (winCounter > 15) {
+        ns.print('We seem to have been kicked out. Exiting.');
+        ns.exit();
+      }
+
       const bHit = find("//button[text() = 'Hit']");
       let allCounts = pCount.querySelectorAll('span');
       let total = Number(allCounts[allCounts.length - 1].innerText);
@@ -91,6 +100,7 @@ export async function main(_ns) {
       if (find("//p[contains(text(), 'You won')]") || find("//p[contains(text(), 'You Won')]")) {
         ns.print('SUCCESS WON game.');
         won = true;
+        winCounter += 1;
       }
 
       if (find("//p[contains(text(), 'Tie')]")) {

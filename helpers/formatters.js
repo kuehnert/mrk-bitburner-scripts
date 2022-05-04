@@ -1,6 +1,4 @@
-export const SECOND = 1000;
-export const MINUTE = 60 * SECOND;
-export const HOUR = 60 * MINUTE;
+import { HOUR, MINUTE, SECOND, THOUSAND, MILLION } from 'helpers/globals';
 
 /**
  * Formats the current time of the system in the format 21:35:00
@@ -48,3 +46,16 @@ export const formatNumber = (ns, number) => {
 };
 
 export const formatPercent = (ns, percent) => ns.sprintf('%5.1f%%', percent * 100);
+
+export const amountFromString = str => {
+  const lastChar = str.slice(-1);
+  const rest = str.slice(0, -1);
+
+  if (lastChar === 'm') {
+    return +rest * MILLION;
+  } else if (lastChar === 'k') {
+    return +rest * THOUSAND;
+  } else {
+    return +str;
+  }
+};

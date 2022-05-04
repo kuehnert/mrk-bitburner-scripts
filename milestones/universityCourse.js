@@ -1,7 +1,7 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { SECOND } from '/helpers/formatters';
+import { SECOND } from '/helpers/globals';
 
 const COURSES = {
   hacking: ['computer science', 'data structure', 'networks', 'algorithms'],

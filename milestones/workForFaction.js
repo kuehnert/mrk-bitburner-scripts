@@ -1,8 +1,9 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { formatDuration, formatNumber, SECOND } from '/helpers/formatters';
+import { formatDuration, formatNumber, amountFromString } from '/helpers/formatters';
 import { findFaction, FACTION_INPUT_NAMES } from '/helpers/factionHelper';
+import { SECOND } from 'helpers/globals';
 
 const interval = 30; // 30-second sleeps
 
@@ -20,7 +21,7 @@ const getPurchasableAugmentations = faction => {
 
 const getMaxRepReq = augs => augs.map(a => ns.getAugmentationRepReq(a)).reduce((d, a) => Math.max(d, a), 0);
 
-export const autocomplete = () => [...FACTION_INPUT_NAMES, '--focus'];
+export const autocomplete = () => [...FACTION_INPUT_NAMES, '--focus', '--target'];
 
 export async function main(_ns) {
   ns = _ns;
@@ -31,7 +32,10 @@ export async function main(_ns) {
   ns.tail();
 
   const faction = findFaction(ns.args[0]);
-  const flags = ns.flags([['focus', false]]);
+  const flags = ns.flags([
+    ['focus', false],
+    ['target', null],
+  ]);
 
   if (!faction) {
     ns.tprintf(
@@ -48,19 +52,42 @@ export async function main(_ns) {
   }
 
   const augs = getPurchasableAugmentations(faction);
-  const maxRepReq = getMaxRepReq(augs);
   let factionRep = ns.getFactionRep(faction);
+  let maxRepReq = getMaxRepReq(augs);
 
-  ns.printf(
-    'Working for faction %s, increasing reputation from %s to %s...',
+  if (flags.target) {
+    maxRepReq = amountFromString(flags.target);
+  }
+
+  let bestType = null;
+  for (let i = 0; i < WORK_TYPES.length; i++) {
+    const success = ns.workForFaction(faction, WORK_TYPES[i], true);
+    if (success) {
+      bestType = WORK_TYPES[i];
+      break;
+    } else {
+      ns.tprintf("No work type '%s'", WORK_TYPES[i]);
+    }
+  }
+
+  if (!bestType) {
+    ns.tprintf('ERROR No suitable work type for faction %s. Exiting.', faction);
+    ns.exit();
+  }
+
+  const msg = ns.sprintf(
+    'INFO Doing %s for faction %s, increasing reputation from %s to %s...',
+    bestType,
     faction,
     formatNumber(ns, factionRep),
     formatNumber(ns, maxRepReq)
   );
+  ns.print(msg);
+  ns.tprint(msg);
 
   while (factionRep < maxRepReq) {
     const previous = factionRep;
-    ns.workForFaction(faction, WORK_TYPES[0], flags.focus);
+    ns.workForFaction(faction, bestType, flags.focus);
     await ns.sleep(interval * SECOND);
 
     factionRep = ns.getFactionRep(faction);
@@ -71,7 +98,7 @@ export async function main(_ns) {
     const durationStr = formatDuration(ns, duration);
 
     ns.printf(
-      'Faction %s: %s reputation points to go (%.1f/s). ETA: %s...',
+      '%s: %s reputation to go (%.1f/s). ETA: %s...',
       faction,
       formatNumber(ns, toGo),
       // formatNumber(ns, maxRepReq),

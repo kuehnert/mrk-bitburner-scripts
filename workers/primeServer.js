@@ -58,7 +58,7 @@ const primeServer = async (sourceName, targetName) => {
 
     runWeaken(sourceName, targetName, weakenThreads);
     runGrow(sourceName, targetName, growThreads);
-    await ns.sleep(waitTime);
+    await ns.asleep(waitTime);
     target = ns.getServer(targetName);
   }
 
@@ -78,7 +78,7 @@ export async function main(_ns) {
   ns.disableLog('getServerMinSecurityLevel');
   ns.disableLog('getServerSecurityLevel');
   ns.disableLog('getServerUsedRam');
-  ns.disableLog('sleep');
+  ns.disableLog('asleep');
   // ns.tail();
 
   const sourceName = ns.getServer().hostname;

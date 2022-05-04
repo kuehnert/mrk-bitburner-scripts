@@ -16,27 +16,27 @@ const milestones = [
   // Faction CSEC
   { level: 5, action: 'installBackdoor', params: { server: 'CSEC' } },
   { level: 6, action: 'joinFaction', params: { faction: 'CyberSec' } },
-  { level: 7, action: 'purchaseAugmentations', params: { faction: 'CyberSec' } },
+  // { level: 7, action: 'purchaseAugmentations', params: { faction: 'CyberSec' } },
 
   // Faction NiteSec
   { level: 6, action: 'installBackdoor', params: { server: 'avmnite-02h' } },
   { level: 7, action: 'joinFaction', params: { faction: 'NiteSec' } },
-  { level: 8, action: 'purchaseAugmentations', params: { faction: 'NiteSec' } },
+  // { level: 8, action: 'purchaseAugmentations', params: { faction: 'NiteSec' } },
 
   // Faction The Black Hand
   { level: 8, action: 'installBackdoor', params: { server: 'I.I.I.I' } },
   { level: 9, action: 'joinFaction', params: { faction: 'The Black Hand' } },
-  { level: 8, action: 'purchaseAugmentations', params: { faction: 'The Black Hand' } },
+  // { level: 8, action: 'purchaseAugmentations', params: { faction: 'The Black Hand' } },
 
   // Faction Bitrunners
   { level: 9, action: 'installBackdoor', params: { faction: 'run4theh111z' } },
   { level: 10, action: 'joinFaction', params: { faction: 'BitRunners' } },
-  { level: 11, action: 'purchaseAugmentations', params: { faction: 'BitRunners' } },
+  // { level: 11, action: 'purchaseAugmentations', params: { faction: 'BitRunners' } },
 
   // Faction Daedalus
   { level: 10, action: 'installBackdoor', params: { faction: '.' } },
   { level: 11, action: 'joinFaction', params: { faction: 'Daedalus' } },
-  { level: 12, action: 'purchaseAugmentations', params: { faction: 'Daedalus' } },
+  // { level: 12, action: 'purchaseAugmentations', params: { faction: 'Daedalus' } },
 
   // Routine Jobs
   { level: 99, action: 'gymWorkout', params: { skill: 'ALL', level: 10, speed: true } },

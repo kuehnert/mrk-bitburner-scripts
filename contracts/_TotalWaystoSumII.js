@@ -24,6 +24,22 @@ const sumUp = (target, sum, numbers) => {
   }
 };
 
+// https://www.geeksforgeeks.org/ways-sum-n-using-array-elements-repetition-allowed/?ref=rp
+const sumUpSmart = (sum, numbers) => {
+  let counts = new Array(sum + 1).fill(0);
+
+  counts[0] = 1; // base case
+  for (let i = 1; i <= sum; i++) {
+    for (let j = 0; j < numbers.length; j++) {
+      if (i >= numbers[j]) {
+        counts[i] += counts[i - numbers[j]];
+      }
+    }
+  }
+  counts;
+  return counts[sum];
+};
+
 export default function TotalWaysToSumII(input) {
   const [target, numbers] = input;
   return sumUp(target, 0, numbers);

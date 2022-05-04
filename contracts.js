@@ -1,7 +1,8 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { formatTime, MINUTE } from 'helpers/formatters';
+import { formatTime } from 'helpers/formatters';
+import { MINUTE } from 'helpers/globals';
 import loadServers from 'helpers/loadServers';
 
 import AlgorithmicStockTraderI from '/contracts/AlgorithmicStockTraderI';
@@ -20,7 +21,7 @@ import SanitizeParenthesesinExpression from '/contracts/SanitizeParenthesesinExp
 import SpiralizeMatrix from '/contracts/SpiralizeMatrix';
 import SubarraywithMaximumSum from '/contracts/SubarraywithMaximumSum';
 import TotalWaystoSum from '/contracts/TotalWaystoSum';
-import TotalWaystoSumII from '/contracts/TotalWaystoSumII';
+// import TotalWaystoSumII from '/contracts/TotalWaystoSumII';
 import UniquePathsinaGridI from '/contracts/UniquePathsinaGridI';
 import UniquePathsinaGridII from '/contracts/UniquePathsinaGridII';
 
@@ -113,7 +114,7 @@ export async function main(_ns) {
       );
 
       if (impossible.length > 0) {
-        ns.printf("unknown contracts on servers: %s", impossible.map(c => c.server).join(", "));
+        ns.printf("WARN Unknown contracts on servers: %s", impossible.map(c => c.server).join(", "));
       }
       await ns.sleep(SLEEP_TIME);
     } else {

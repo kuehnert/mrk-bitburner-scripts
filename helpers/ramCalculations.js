@@ -99,14 +99,14 @@ export const calcPossibleThreads = (_ns, targetName) => {
   return threads;
 };
 
-export const calcTotalRamCost = (ns, targetName) => {
+export const calcTotalRamCost = (ns, targetName, shifts = 1) => {
   const growThreads = calcGrowThreads(ns, targetName);
   const hackThreads = calcHackThreads(ns, targetName);
   const weakenThreads = calcWeakenThreads(ns, targetName);
 
-  const growRam = calcScriptRamCost(ns, miniGrowScript, growThreads);
-  const hackRam = calcScriptRamCost(ns, miniHackScript, hackThreads);
-  const weakenRam = calcScriptRamCost(ns, miniWeakenScript, weakenThreads);
+  const growRam = calcScriptRamCost(ns, miniGrowScript, growThreads) * shifts;
+  const hackRam = calcScriptRamCost(ns, miniHackScript, hackThreads) * shifts;
+  const weakenRam = calcScriptRamCost(ns, miniWeakenScript, weakenThreads) * shifts;
   const maxRam = Math.max(growRam, hackRam, weakenRam);
 
   const mainScriptRam = ns.getScriptRam('multiAttack.js');
@@ -163,6 +163,15 @@ export const calcAttackDelays = ({ growTime, hackTime, weakenTime }) => {
       hackDelay: delays.hackDelay + -delays.growDelay,
       weakenDelay: delays.weakenDelay + -delays.growDelay,
       sleepTime: delays.sleepTime + -delays.growDelay,
+    };
+  }
+
+  if (delays.hackDelay < 0) {
+    delays = {
+      growDelay: delays.growDelay + -delays.hackDelay,
+      hackDelay: 0,
+      weakenDelay: delays.weakenDelay + -delays.hackDelay,
+      sleepTime: delays.sleepTime + -delays.hackDelay,
     };
   }
 

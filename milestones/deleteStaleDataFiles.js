@@ -1,7 +1,7 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { MINUTE } from 'helpers/formatters';
+import { MINUTE } from 'helpers/globals';
 
 const DELETE_PERIOD = 3 * MINUTE;
 

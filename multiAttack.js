@@ -2,9 +2,8 @@
 let ns = null;
 
 import { calcPossibleThreads, calcAttackDelays, calcAttackTimes, calcMaxThreads } from 'helpers/ramCalculations';
-import { formatTime, formatDuration, SECOND } from '/helpers/formatters';
-import logServerInfo from '/helpers/logServerInfo';
-import { BUFFER } from '/helpers/globals';
+import { formatTime, formatDuration } from '/helpers/formatters';
+import { SECOND } from '/helpers/globals';
 
 export function autocomplete(data) {
   return [...data.servers]; // This script autocompletes the list of servers.
@@ -22,39 +21,39 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
   const { growTime, hackTime, weakenTime } = attackTimes;
   const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
 
-  ns.printf('INFO threads: hack %11d\tgrow %11d\tweaken %11d', hackThreads, growThreads, weakenThreads);
+  ns.tprintf('INFO threads: hack %11d\tgrow %11d\tweaken %11d', hackThreads, growThreads, weakenThreads);
 
-  ns.printf(
+  ns.tprintf(
     'INFO times:   hack %s\tgrow %s\tweaken %s',
     formatDuration(ns, hackTime, true),
     formatDuration(ns, growTime, true),
     formatDuration(ns, weakenTime, true)
   );
 
-  ns.printf(
+  ns.tprintf(
     'INFO delays:  hack %s\tgrow %s\tweaken %s',
     formatDuration(ns, hackDelay, true),
     formatDuration(ns, growDelay, true),
     formatDuration(ns, weakenDelay, true)
   );
 
-  ns.print('INFO ' + '-'.repeat(69));
+  ns.tprint('INFO ' + '-'.repeat(69));
 
-  ns.printf(
+  ns.tprintf(
     'INFO sums:   hack %s\tgrow %s\tweaken %s',
     formatDuration(ns, hackTime + hackDelay, true),
     formatDuration(ns, growTime + growDelay, true),
     formatDuration(ns, weakenTime + weakenDelay, true)
   );
 
-  ns.printf('Attack waves every %s', formatDuration(ns, sleepTime, true));
+  ns.tprintf('Attack waves every %s', formatDuration(ns, sleepTime, true));
 };
 
 const primeServer = async (sourceName, targetName) => {
   ns.printf('INFO %s PRIMING server %s from %s...', formatTime(ns), targetName, sourceName);
   const pid = ns.exec(SCRIPTS.primeServer, sourceName, 1, targetName);
   while (ns.isRunning(pid)) {
-    await ns.sleep(SECOND);
+    await ns.asleep(SECOND);
   }
 };
 
@@ -65,8 +64,11 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
   const shiftThreads = growThreads + hackThreads + weakenThreads;
   const shiftRam = shiftThreads * ns.getScriptRam(SCRIPTS.weaken);
   const availableRam = ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName);
-  const shifts = Math.floor(availableRam / shiftRam);
-  // const shifts = Math.min(2, Math.floor(availableRam / shiftRam));
+
+  const ramShifts = Math.floor(availableRam / shiftRam);
+  const timeShifts = Math.floor(sleepTime / 1000);
+  ns.printf("shifts: ram: %d, time: %d", ramShifts, timeShifts);
+  const shifts = Math.min(ramShifts, timeShifts);
 
   ns.printf(
     'INFO Parallel threads: %d, RAM needed: %d, RAM available: %d, shifts: %d, shift time: %s',
@@ -80,14 +82,14 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
   // assume primed server
   let shift = 0;
   while (true) {
-    // ns.printf('INFO %s Starting new attack shift %d...', formatTime(ns), shift);
+    ns.printf('INFO %s Starting new attack shift %d...', formatTime(ns), shift);
     // logServerInfo(ns, targetName);
     ns.exec(SCRIPTS.hack, sourceName, hackThreads, targetName, hackDelay, shift);
     ns.exec(SCRIPTS.grow, sourceName, growThreads, targetName, growDelay, shift);
     ns.exec(SCRIPTS.weaken, sourceName, weakenThreads, targetName, weakenDelay, shift);
 
     shift = (shift + 1) % shifts;
-    await ns.sleep(Math.round(sleepTime / shifts));
+    await ns.asleep(Math.round(sleepTime / shifts));
   }
 };
 
@@ -105,6 +107,7 @@ const checkDelays = attackDelays => {
 
   if (growDelay < 0 || hackDelay < 0 || weakenDelay < 0) {
     ns.tprint('ERROR Something went horribly wrong concerning the delays. Exiting.');
+    ns.tprintf("growDelay: %d, hackDelay: %d, weakenDelay: %d", growDelay, hackDelay, weakenDelay)
     ns.exit();
   }
 };
@@ -143,9 +146,12 @@ export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
   ns.disableLog('disableLog');
+  ns.disableLog('exec');
+  ns.disableLog('killall');
   ns.disableLog('getServerMaxRam');
   ns.disableLog('getServerMinSecurityLevel');
   ns.disableLog('getServerUsedRam');
+  ns.disableLog('asleep');
   ns.disableLog('sleep');
   // ns.tail();
 
@@ -164,7 +170,7 @@ export async function main(_ns) {
       ns.scriptKill(script, sourceName);
     }
 
-    await ns.sleep(SECOND);
+    await ns.asleep(SECOND);
   }
 
   if (flags.bomb) {
