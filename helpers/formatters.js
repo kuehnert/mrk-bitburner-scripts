@@ -34,6 +34,10 @@ const prefixes = [' ', 'k', 'm', 'b', 't', 'q'];
 const _fn = (ns, number) => ns.sprintf('%7.3f', number);
 
 export const formatNumber = (ns, number) => {
+  if (number === 0) {
+    return '      - ';
+  }
+
   for (let i = 0; i < prefixes.length; i++) {
     if (Math.abs(number) < 1000) {
       return _fn(ns, number) + prefixes[i];

@@ -4,7 +4,8 @@ let ns = null;
 import logServerInfo, { isServerPrimed } from 'helpers/logServerInfo';
 import { getViableTargets } from '/helpers/getServers';
 import { getGrowPercent } from 'helpers/fakeFormulas';
-import { formatDuration, MINUTE, SECOND } from '/helpers/formatters';
+import { formatDuration } from '/helpers/formatters';
+import { MINUTE, SECOND } from '/helpers/globals';
 
 const runThreaded = (script, sourceName, targetName, threads) => {
   if (threads > 0) {
@@ -17,8 +18,7 @@ const runThreaded = (script, sourceName, targetName, threads) => {
   }
 };
 
-const calcGrowThreads = serverData =>
-  Math.round(Math.log(2) / Math.log(getGrowPercent(ns, serverData)));
+const calcGrowThreads = serverData => Math.round(Math.log(2) / Math.log(getGrowPercent(ns, serverData)));
 
 const calcWeakenThreads = serverData => {
   const currentSecurity = ns.getServerSecurityLevel(serverData.hostname);
@@ -80,7 +80,9 @@ export async function main(_ns) {
     // get servers that make good targets but are not yet being attacked
     const viableServers = await getViableTargets(ns);
 
-    if (viableServers.length === 0) {
+    if (ns.args[0]) {
+      await primeServer(target.hostname);
+    } else if (viableServers.length === 0) {
       ns.print('No viable targets present. Sleeping');
       await ns.sleep(2 * MINUTE);
     } else {

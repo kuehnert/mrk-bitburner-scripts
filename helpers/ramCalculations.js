@@ -1,8 +1,8 @@
 /** @type import("..").NS */
 let ns = null;
 
-import { getGrowPercent, getHackPercent, hasFormulas } from '/helpers/fakeFormulas';
-import { miniGrowScript, miniHackScript, miniWeakenScript, BUFFER } from '/helpers/globals';
+import { getGrowPercent, getHackPercent, hasFormulas } from 'helpers/fakeFormulas';
+import { miniGrowScript, miniHackScript, miniWeakenScript, BUFFER } from 'helpers/globals';
 
 export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
   const serverData = ns.getServer(serverName);
@@ -185,4 +185,10 @@ export const calcAttackDelays = ({ growTime, hackTime, weakenTime }) => {
   }
 
   return delays;
+};
+
+export const calcMaxShifts = (_ns, serverName) => {
+  const times = calcAttackTimes(_ns, serverName);
+  const { sleepTime } = calcAttackDelays(times);
+  return Math.floor(sleepTime / 1000);
 };

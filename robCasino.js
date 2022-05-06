@@ -6,13 +6,13 @@ import { hprint } from 'helpers/hprint';
 
 const MAX_WAGER = 100000000;
 const CLICK_SLEEP_TIME = null;
-const SAVE_SLEEP_TIME = 200;
+const SAVE_SLEEP_TIME = 100;
 
 export async function main(_ns) {
   ns = _ns;
   // ns.disableLog('sleep');
   // ns.clearLog();
-  ns.tail();
+  // ns.tail();
 
   const { location, city } = ns.getPlayer();
 
@@ -49,7 +49,7 @@ export async function main(_ns) {
   const bSave = find("//button[@aria-label = 'save game']");
   const tfWager = find('//input[@value = 1000000]');
   const myMoney = ns.getServerMoneyAvailable('home');
-  const wager = Math.min(MAX_WAGER, myMoney);
+  const wager = Math.floor(Math.min(MAX_WAGER, myMoney));
   ns.printf('Wagering %s/%s money', formatMoney(ns, wager), formatMoney(ns, MAX_WAGER));
   setText(tfWager, '' + wager);
   let winCounter = 0;

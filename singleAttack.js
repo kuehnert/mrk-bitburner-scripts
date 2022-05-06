@@ -1,19 +1,11 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { formatMoney, SECOND } from 'helpers/formatters';
+import { formatMoney } from 'helpers/formatters';
+import { SECOND } from 'helpers/globals';
 import { getGrowPercent, getHackPercent } from 'helpers/fakeFormulas';
 
-const log = (
-  targetName,
-  action,
-  moneyCurrent,
-  moneyMax,
-  securityCurrent,
-  securityMin,
-  sleep,
-  threads
-) => {
+const log = (targetName, action, moneyCurrent, moneyMax, securityCurrent, securityMin, sleep, threads) => {
   ns.printf(
     '%-6s: %12s money %s/%s, security: %2.1f/%2.1f, %s, %d t',
     targetName,
@@ -96,8 +88,7 @@ export async function main(_ns) {
     securityMin = ns.getServerMinSecurityLevel(targetName);
     securityCurrent = ns.getServerSecurityLevel(targetName);
 
-    const availableRAM =
-      ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName) - 10;
+    const availableRAM = ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName) - 10;
 
     if (ns.getServerMoneyAvailable(targetName) < moneyMax * 0.8) {
       action = 'grow';
@@ -138,16 +129,7 @@ export async function main(_ns) {
       }
     }
 
-    log(
-      targetName,
-      action,
-      moneyCurrent,
-      moneyMax,
-      securityCurrent,
-      securityMin,
-      sleepTime,
-      threads
-    );
+    log(targetName, action, moneyCurrent, moneyMax, securityCurrent, securityMin, sleepTime, threads);
 
     await ns.sleep(sleepTime + 100);
   }

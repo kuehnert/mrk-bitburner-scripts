@@ -3,7 +3,7 @@ let ns = null;
 
 import { getHackedServers, getViableTargets } from 'helpers/getServers';
 import { formatMoney, formatNumber } from 'helpers/formatters';
-import { calcTotalRamCost } from './helpers/ramCalculations';
+import { calcMaxShifts, calcTotalRamCost } from './helpers/ramCalculations';
 import { source2TargetName, target2SourceName } from 'helpers/names';
 import isHackCandidate from 'helpers/isHackCandidate';
 import getMyPortLevel from 'helpers/getMyPortLevel';
@@ -39,12 +39,12 @@ const checkPurchasedServerCountLimit = () => {
   }
 };
 
-const purchaseServer = (sourceName, targetName, {parallel, shifts = 1}) => {
+const purchaseServer = (sourceName, targetName, parallel = true, shifts = 1, maxShifts = false) => {
   checkPurchasedServerCountLimit();
-  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, shifts);
+  let realShifts = maxShifts ? calcMaxShifts(ns, targetName) : shifts;
+  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, realShifts);
   const desiredRam = parallel ? parallelServerSizeRequired : serverSizeRequired;
   const cost = ns.getPurchasedServerCost(desiredRam);
-  // ns.tprintf('We need a server with %d GB. Cost %s.', desiredRam, formatMoney(ns, cost));
 
   const myMoney = ns.getServerMoneyAvailable('home');
   if (cost > myMoney) {
@@ -58,7 +58,7 @@ const purchaseServer = (sourceName, targetName, {parallel, shifts = 1}) => {
     ns.exit();
   }
 
-  return { hostname: ns.purchaseServer(sourceName, desiredRam), ram: desiredRam, cost };
+  return { hostname: ns.purchaseServer(sourceName, desiredRam), ram: desiredRam, cost, realShifts };
 };
 
 const purchaseBomb = sourceName => {
@@ -77,7 +77,7 @@ const copyDependencies = async sourceName => {
   await ns.scp(DEPENDENCIES, sourceName);
 };
 
-const deployServer = async (targetName, { parallel, bomb, shifts }) => {
+const deployServer = async (targetName, { parallel, bomb, shifts, maxShifts }) => {
   const sourceName = target2SourceName(targetName);
 
   if (ns.getPurchasedServers().includes(sourceName)) {
@@ -88,9 +88,9 @@ const deployServer = async (targetName, { parallel, bomb, shifts }) => {
     if (bomb) {
       purchaseBomb(sourceName);
     } else {
-      const { hostname, ram, cost } = purchaseServer(sourceName, targetName, parallel, shifts);
+      const { hostname, ram, cost, realShifts } = purchaseServer(sourceName, targetName, parallel, shifts, maxShifts);
       if (hostname === sourceName) {
-        ns.tprintf('SUCCESS Bought new server %s with %d GB for %s.', hostname, ram, formatMoney(ns, cost));
+        ns.tprintf('SUCCESS Bought new server %s for working %d shifts with %d GB for %s.', hostname, realShifts, ram, formatMoney(ns, cost));
       } else {
         ns.tprintf('ERROR Something went wrong when buying new server. Exiting.');
         ns.exit();
@@ -195,7 +195,7 @@ const killAll = async () => {
   }
 };
 
-const deployAll = async ({ bomb, parallel }) => {
+const deployAll = async flags => {
   // try to attack as many servers as possible
   const serverLimit = ns.getPurchasedServerLimit();
   const currentServerCount = ns.getPurchasedServers().length;
@@ -214,7 +214,7 @@ const deployAll = async ({ bomb, parallel }) => {
     ns.tprintf('WARN You already own a maximum %d out of %d servers. Exiting', currentServerCount, serverLimit);
   } else {
     for (const target of targets) {
-      await deployServer(target.hostname, parallel, bomb);
+      await deployServer(target.hostname, flags);
     }
   }
 };
@@ -230,6 +230,7 @@ const printServerCost = () => {
 export const autocomplete = data => [
   '--bomb',
   '--delete',
+  '--maxShifts',
   '--shifts',
   'all',
   'cost',
@@ -251,10 +252,12 @@ export async function main(_ns) {
   ns.disableLog('scp');
 
   const flags = ns.flags([
+    ['bomb', false], // create a server with max RAM to optimise hacking skill gain
     ['debug', false],
     ['delete', false],
     ['parallel', true],
-    ['bomb', false], // create a server with max RAM to optimise hacking skill gain
+    ['maxShifts', false],
+    ['shifts', 1],
   ]);
 
   if (ns.args.length === 0) {
