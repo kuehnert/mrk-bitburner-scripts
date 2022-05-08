@@ -4,8 +4,8 @@ let ns = null;
 import { SECOND } from '/helpers/globals';
 
 const COURSES = {
-  hacking: ['computer science', 'data structure', 'networks', 'algorithms'],
-  charisma: ['management', 'leadership'],
+  hacking: ['Computer Science', 'Data Structure', 'Networks', 'Algorithms'],
+  charisma: ['Management', 'Leadership'],
 };
 
 const isDone = ({ skill, level }) => ns.getPlayer()[skill] >= level;
@@ -33,21 +33,20 @@ const prepareParams = params => {
   let university;
 
   if (player.city === 'Aevum') {
-    university = 'summit university';
+    university = 'Summit University';
   } else {
     if (player.city !== 'Sector-12') {
       ns.travelToCity('Sector-12');
     }
 
-    university = 'rothman university';
+    university = 'Rothman University';
   }
 
   const newParams = { university, ...params };
-
   const skill = newParams.skill; // hacking, charisma
   const courses = COURSES[skill];
   newParams.course = courses[courses.length - 1];
-  ns.printf('newParams: %s', JSON.stringify(newParams, null, 4));
+
   return newParams;
 };
 
@@ -55,7 +54,11 @@ export default async function main(_ns, params) {
   ns = _ns;
   const newParams = prepareParams(params);
 
-  if (params.checkIsDone) {
+  if (params.getName) {
+    const { course, university, skill, level } = newParams;
+    const strs = [course, university, skill, '' + level].map(s => s.toUpperCase());
+    return ns.sprintf('Take %s course at %s to get %s to level %d', ...strs);
+  } else if (params.checkIsDone) {
     return isDone(newParams);
   } else if (params.checkPreReqs) {
     return checkPreReqs();

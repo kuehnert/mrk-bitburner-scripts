@@ -23,7 +23,7 @@ export default async function main(_ns, params) {
   ns = _ns;
 
   if (params.getName) {
-    return ns.sprintf('Purchase program ', params.program);
+    return ns.sprintf('Purchase program %s', params.program);
   } else if (params.checkIsDone) {
     return isDone(params);
   } else if (params.checkPreReqs) {

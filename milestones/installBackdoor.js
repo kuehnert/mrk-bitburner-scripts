@@ -32,7 +32,9 @@ const perform = async ({ server }) => {
 export default async function main(_ns, params) {
   ns = _ns;
 
-  if (params.checkIsDone) {
+  if (params.getName) {
+    return ns.sprintf('Installing backdoor on server %s', params.server);
+  } else if (params.checkIsDone) {
     return isDone(params);
   } else if (params.checkPreReqs) {
     return checkPreReqs(params);

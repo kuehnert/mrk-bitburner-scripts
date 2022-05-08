@@ -18,7 +18,9 @@ const perform = () => ns.purchaseTor();
 export default async function main(_ns, params) {
   ns = _ns;
 
-  if (params.checkIsDone) {
+  if (params.getName) {
+    return ns.sprintf("Purchase TOR Server");
+  } else if (params.checkIsDone) {
     return isDone();
   } else if (params.checkPreReqs) {
     return checkPreReqs();

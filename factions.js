@@ -2,23 +2,10 @@
 let ns = null;
 
 import { formatNumber, formatMoney } from './helpers/formatters';
-import { FACTIONS } from './helpers/factionHelper';
-import { priciestFactionAugmentation } from './helpers/augmentationHelper';
+import { FACTIONS, getFactionsDetailed } from './helpers/factionHelper';
 
-// export const autocomplete = data => [
-//   ...data.servers,
-// ];
-
-const logFaction = (faction, playerFactions) => {
-  const rep = ns.getFactionRep(faction);
-  const favor = ns.getFactionFavor(faction);
-  const favorGain = ns.getFactionFavorGain(faction);
-  const invites = ns.checkFactionInvitations(faction);
-  const factionAugs = ns.getAugmentationsFromFaction(faction);
-  const ownedAugs = ns.getOwnedAugmentations(true);
-  const ownedFactionAugs = factionAugs.filter(a => ownedAugs.includes(a));
-  // const availableFactionAugs = factionAugs.filter(a => !ownedAugs.includes(a));
-  const priciest = priciestFactionAugmentation(ns, faction);
+const logFaction = (faction, playerFactions, invites) => {
+  const { name, favor, favorGain, priciest, rep, factionAugs, ownedFactionAugs } = faction;
 
   let marker = '  ';
   if (playerFactions.includes(faction)) {
@@ -30,7 +17,7 @@ const logFaction = (faction, playerFactions) => {
   ns.tprintf(
     '%s%-22s %s %s %2d/%2d %-40s\t%s\t%s/%s',
     marker,
-    faction,
+    name,
     formatNumber(ns, favor),
     formatNumber(ns, favorGain),
     ownedFactionAugs.length - 1, // Don't count Neuroflux Govenor
@@ -38,21 +25,20 @@ const logFaction = (faction, playerFactions) => {
     priciest ? priciest.name : '-',
     priciest ? formatMoney(ns, priciest.price) : '       - ',
     formatNumber(ns, rep),
-    priciest ? formatNumber(ns, priciest.reputationRequired) : '       - ',
+    priciest ? formatNumber(ns, priciest.reputationRequired) : '       - '
   );
 };
 
 export async function main(_ns) {
   ns = _ns;
-  // ns.disableLog('sleep');
-  ns.clearLog();
-
   const flags = ns.flags([['all', false]]);
 
   const playerFactions = ns.getPlayer().factions.sort();
-  const factions = flags.all ? FACTIONS : playerFactions;
+  const factionNames = flags.all ? FACTIONS : playerFactions;
+  const factions = getFactionsDetailed(ns, factionNames).sort((a, b) => a.sortValue - b.sortValue);
+  const invites = ns.checkFactionInvitations();
 
   for (const faction of factions) {
-    logFaction(faction, playerFactions);
+    logFaction(faction, playerFactions, invites);
   }
 }

@@ -33,8 +33,9 @@ const checkPreReqs = async ({ action, params }, debug) => {
   return runCommand({ action, params: { ...params, checkPreReqs: true } }, debug);
 };
 
-const logJob = ({ id }) => {
-  hprint(ns, 'JOB #%d', id);
+const logJob = async ({ id, action, params, done, prereq }, debug) => {
+  const description = await runCommand({ action, params: { ...params, getName: true } }, debug);
+  ns.printf('JOB #%d %s', id, description, done ? '✓' : ' ');
 };
 
 // const checkPreReq = () => {
@@ -63,16 +64,6 @@ const logJob = ({ id }) => {
 //   }
 // };
 
-// const doMilestone = async () => {
-//   const milestone = milestones[index];
-//   const { action, params, prereq, doneExpression } = milestone;
-//   const { hacking, money, factions } = ns.getPlayer();
-
-//   ns.printf('INFO Milestone #%2d: %s %s', index, action, JSON.stringify(params));
-
-//   await runCommand(milestone);
-// };
-
 const loadJobs = () => {
   let jobsRemaining = JSON.parse(JSON.stringify(milestones));
 
@@ -94,94 +85,85 @@ const saveDoneJobs = async jobsDone => {
   ns.write(doneJobsFile, data, 'w');
 };
 
-export async function main(_ns) {
-  ns = _ns;
-  const flags = ns.flags([['debug', false]]);
-
-  if (!flags.debug) {
-    ns.disableLog('disableLog');
-    ns.disableLog('asleep');
-    ns.disableLog('exec');
-    ns.disableLog('getHackingLevel');
-    ns.disableLog('getServerMaxRam');
-    ns.disableLog('getServerUsedRam');
-    ns.disableLog('getServerMoneyAvailable');
-    ns.disableLog('purchaseProgram');
-    ns.disableLog('purchaseTor');
-    ns.disableLog('run');
-    ns.disableLog('singularity.gymWorkout');
-    ns.disableLog('singularity.stopAction');
-    ns.disableLog('singularity.travelToCity');
-    ns.disableLog('sleep');
-  }
-
-  ns.clearLog();
-  ns.tail();
+const doJobs = async (jobsRemaining, jobsDone, flags) => {
   ns.run('scanServers.js', 1, '--forceRefresh', '--quiet');
-
-  let { jobsRemaining, jobsDone } = loadJobs();
-  let currentLevel = 1;
   let toDoList = {};
 
   while (jobsRemaining.length > 0) {
-    // get jobs at new current level
-    let jobsAtCurrentLevel = jobsRemaining.filter(j => j.level === currentLevel);
-    jobsRemaining = jobsRemaining.filter(j => j.level !== currentLevel);
+    for (const job of jobsRemaining) {
+      await logJob(job);
 
-    while (jobsAtCurrentLevel.length > 0) {
-      for (const job of jobsAtCurrentLevel) {
-        ns.printf('Looking at job %s', JSON.stringify(job));
+      // check if it's already done
+      // if so, mark it as such and continue with next job
+      job.done = await checkIsDone(job, flags.debug);
+      if (job.done) {
+        ns.printf("INFO Job job. ")
+        continue;
+      }
 
-        // check if it's already done
-        // if so, mark it as such and continue with next job
-        job.done = await checkIsDone(job, flags.debug);
+      // check if some requirements are unmet
+      const preReqs = await checkPreReqs(job, flags.debug);
+      ns.printf('preReqs: %s', JSON.stringify(preReqs, null, 4));
+
+      if (preReqs) {
+        // if so, put them on the to-do list
+        // TODO we need something cleverer here
+        ns.printf('preReqs: %s', JSON.stringify(preReqs, null, 4));
+        toDoList = { ...toDoList, ...preReqs };
+        ns.printf('toDoList: %s', JSON.stringify(toDoList, null, 4));
+      } else {
+        // do the job that has no further requirements
+        // if it was done successfully, mark it as such
+        ns.print("I'm doing this now!");
+        job.done = await runCommand(job, flags.debug);
         if (job.done) {
           ns.printf('job: %s', JSON.stringify(job, null, 4));
           continue;
-        }
-
-        // check if some requirements are unmet
-        const preReqs = await checkPreReqs(job, flags.debug);
-        ns.printf('preReqs: %s', JSON.stringify(preReqs, null, 4));
-
-        if (preReqs) {
-          // if so, put them on the to-do list
-          // TODO we need something cleverer here
-          ns.printf('preReqs: %s', JSON.stringify(preReqs, null, 4));
-          toDoList = { ...toDoList, ...preReqs };
-          ns.printf('toDoList: %s', JSON.stringify(toDoList, null, 4));
-        } else {
-          // do the job that has no further requirements
-          // if it was done successfully, mark it as such
-          ns.print("I'm doing this now!");
-          job.done = await runCommand(job, flags.debug);
-          if (job.done) {
-            ns.printf('job: %s', JSON.stringify(job, null, 4));
-            continue;
-          }
         }
       }
 
       // work on the prereqs one by one: we need more money, more rep, more what?
       // TODO
 
-      // remove all completed jobs from jobsAtCurrentLevel
-      jobsDone = jobsDone.concat(jobsAtCurrentLevel.filter(j => j.done));
-      jobsAtCurrentLevel = jobsAtCurrentLevel.filter(j => j.done == null || j.done === false);
+      // remove all completed jobs from jobsRemaining
+      jobsDone = jobsDone.concat(jobsRemaining.filter(j => j.done));
+      jobsRemaining = jobsRemaining.filter(j => j.done == null || j.done === false);
       await saveDoneJobs(jobsDone);
       // ns.printf('jobsDone: %s', JSON.stringify(jobsDone, null, 4));
-      // ns.printf('jobsAtCurrentLevel: %s', JSON.stringify(jobsAtCurrentLevel, null, 4));
+      // ns.printf('jobsRemaining: %s', JSON.stringify(jobsRemaining, null, 4));
 
-      if (jobsAtCurrentLevel.length > 0) {
+      if (jobsRemaining.length > 0) {
         await ns.sleep(10000);
       }
     }
+  }
+};
 
-    currentLevel++;
-    ns.printf('SUCCESS Performing jobs at level %d', currentLevel);
+export async function main(_ns) {
+  ns = _ns;
+  const flags = ns.flags([
+    ['debug', false],
+    ['list', false],
+  ]);
 
-    if (currentLevel >= 10) {
-      ns.exit();
+  ns.clearLog();
+  if (!flags.debug) {
+    ns.disableLog('ALL');
+    ns.tail();
+  }
+
+  let { jobsRemaining, jobsDone } = loadJobs();
+  if (flags.list) {
+    ns.print('INFO Done Jobs');
+    for (const job of jobsDone) {
+      await logJob(job);
     }
+
+    ns.print('INFO Remaining Jobs');
+    for (const job of jobsRemaining) {
+      await logJob(job);
+    }
+  } else {
+    await doJobs(jobsRemaining, jobsDone, flags);
   }
 }

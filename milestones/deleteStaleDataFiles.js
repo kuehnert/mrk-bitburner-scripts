@@ -37,7 +37,7 @@ export async function main(_ns, params) {
   ns = _ns;
 
   if (params.getName) {
-    return 'Deleting stale data files from last augmentation reset';
+    return 'Delete stale data files from last augmentation reset';
   } else if (params.checkIsDone) {
     return isDone();
   } else if (params.checkPreReqs) {

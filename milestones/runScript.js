@@ -25,8 +25,10 @@ const checkPreReqs = ({ script, host = 'home' }) => {
   }
 };
 
-const perform = ({ script, host = 'home', args }) => {
+const perform = params => {
+  const { script, host = 'home', args } = params;
   let pid;
+
   if (args) {
     pid = ns.exec(script, host, 1, args);
   } else {
@@ -43,7 +45,9 @@ const perform = ({ script, host = 'home', args }) => {
 export default async function main(_ns, params) {
   ns = _ns;
 
-  if (params.checkIsDone) {
+  if (params.getName) {
+    return ns.sprintf("Run script %s", params.script);
+  } else if (params.checkIsDone) {
     return isDone(params);
   } else if (params.checkPreReqs) {
     return checkPreReqs(params);

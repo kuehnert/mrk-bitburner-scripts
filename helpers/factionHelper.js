@@ -1,3 +1,5 @@
+import { priciestFactionAugmentation } from './helpers/augmentationHelper';
+
 export const FACTIONS = [
   // City
   'Aevum',
@@ -51,3 +53,27 @@ export const FACTION_INPUT_NAMES = Object.keys(FIND_NAMES);
 export const findFaction = s => FIND_NAMES[simplifyName(s)];
 
 export const validFaction = s => FACTIONS.includes(s);
+
+const beefFaction = (ns, s, ownedAugs) => {
+  const factionAugs = ns.getAugmentationsFromFaction(s);
+  const ownedFactionAugs = factionAugs.filter(a => ownedAugs.includes(a));
+  const sortValue = ownedFactionAugs.length / factionAugs.length;
+
+  return {
+    name: s,
+    rep: ns.getFactionRep(s),
+    favor: ns.getFactionFavor(s),
+    favorGain: ns.getFactionFavorGain(s),
+    factionAugs,
+    ownedFactionAugs,
+    priciest: priciestFactionAugmentation(ns, s),
+    sortValue,
+  };
+};
+
+export const getFactionsDetailed = (ns, factionNames) => {
+  // const playerFactions = ns.getPlayer().factions.sort();
+  const ownedAugs = ns.getOwnedAugmentations(true);
+
+  return factionNames.map(s => beefFaction(ns, s, ownedAugs));
+};

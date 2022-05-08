@@ -4,9 +4,9 @@ let ns = null;
 import { SKILLS } from '/helpers/globals';
 import { fastestGym, valueGym } from '/helpers/gymHelper';
 
-const workoutSkillToLevel = async (level = 10, skill = 'strength', preferSpeed = false) => {
+const workoutSkillToLevel = async ({ level, skill, speed }) => {
   let stats = ns.getPlayer();
-  const gym = await (preferSpeed ? fastestGym(ns) : valueGym(ns));
+  const gym = await (speed ? fastestGym(ns) : valueGym(ns));
   // ns.printf('gym: %s', JSON.stringify(gym, null, 4));
 
   if (stats.city !== gym.city) {
@@ -39,10 +39,10 @@ const workoutSkillToLevel = async (level = 10, skill = 'strength', preferSpeed =
   return stats[skill] >= level;
 };
 
-const workoutAllToLevel = async (level = 10, preferSpeed = false) => {
+const workoutAllToLevel = async ({ level, speed }) => {
   for (const skill of SKILLS) {
     // ns.printf('skill: %s', JSON.stringify(skill, null, 4));
-    const success = await workoutSkillToLevel(level, skill, preferSpeed);
+    const success = await workoutSkillToLevel({ level, skill, speed });
     if (!success) {
       // return false;
     }
@@ -51,16 +51,45 @@ const workoutAllToLevel = async (level = 10, preferSpeed = false) => {
   return true;
 };
 
-export async function main(_ns, { skill = 'ALL', level = 10, speed = true }) {
-  ns = _ns;
+const isDone = async ({ skill, level }) => {
+  const player = ns.getPlayer();
+  if (skill.toUpperCase() === 'ALL') {
+    for (const oneSkill of SKILLS) {
+      if (player[oneSkill] < level) {
+        return false;
+      }
+    }
 
-  if (params.getName) {
-    return ns.sprintf('Working out to get %s skill(s) to level %d', params.skill, params.level);
-  } else if (skill.toUpperCase() === 'ALL') {
-    return workoutAllToLevel(level, speed);
+    return true;
   } else {
-    return workoutSkillToLevel(level, skill, speed);
+    return player[skill] >= level;
+  }
+};
+
+const perform = async ({ skill, level, speed }) => {
+  if (skill.toUpperCase() === 'ALL') {
+    return workoutAllToLevel({ level, speed });
+  } else {
+    return workoutSkillToLevel({ level, skill, speed });
+  }
+};
+
+const prepareParams = params => ({ skill: 'ALL', level: 10, speed: true, ...params });
+
+export default async function main(_ns, params) {
+  ns = _ns;
+  const newParams = prepareParams(params);
+  const { getName, checkIsDone, checkPreReqs } = newParams;
+
+  if (getName) {
+    const { skill, level } = newParams;
+    const skillStr = skill === 'ALL' ? 'all skills' : skill;
+    return ns.sprintf('Working out to get %s to level %d', skillStr, level);
+  } else if (checkIsDone) {
+    return isDone(newParams);
+  } else if (checkPreReqs) {
+    return checkPreReqs(newParams);
+  } else {
+    return perform(newParams);
   }
 }
-
-export default main;

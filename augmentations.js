@@ -4,11 +4,16 @@ let ns = null;
 import { getAugmentations } from './helpers/augmentationHelper';
 import { formatNumber, formatMoney } from './helpers/formatters';
 
-const logAugmentation = ({ name, price, reputationRequired, stats, factions, purchased, installed }) => {
-  const prefix = installed ? 'I' : purchased ? 'P' : ' ';
+const logAugmentation = ({ name, price, reputationRequired, factions, purchased, installed }) => {
+  let prefix = ' ';
+  if (installed) {
+    prefix = 'I';
+  } else if (purchased) {
+    prefix = 'P';
+  }
 
   ns.tprintf(
-    '%s %-40s %s %s %s',
+    '%s %-55s %s %s %s',
     prefix,
     name,
     formatMoney(ns, price, { isAffordable: true }),

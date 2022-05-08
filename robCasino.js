@@ -1,9 +1,9 @@
-/** @type import("..").NS */
+/** @type import(".").NS */
 let ns = null;
 
-import { formatMoney } from 'helpers/formatters';
-import { hprint } from 'helpers/hprint';
-import { casinoFlag } from '../helpers/globals';
+import { formatMoney } from './helpers/formatters';
+import { hprint } from './helpers/hprint';
+import { casinoFlag } from './helpers/globals';
 
 const MAX_WAGER = 100000000;
 const CLICK_SLEEP_TIME = null;
