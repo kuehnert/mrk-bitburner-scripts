@@ -25,8 +25,12 @@ export const formatDuration = (ns, durationMs, showMS = false) => {
   }
 };
 
-export const formatMoney = (ns, money) => {
-  return '$' + formatNumber(ns, money);
+export const formatMoney = (_ns, money, { markAffordable } = {}) => {
+  if (markAffordable && money <= _ns.getServerMoneyAvailable('home')) {
+    return '<span class="success">$' + formatNumber(_ns, money) + '</span>';
+  } else {
+    return '$' + formatNumber(_ns, money);
+  }
 };
 
 const prefixes = [' ', 'k', 'm', 'b', 't', 'q'];
@@ -61,5 +65,13 @@ export const amountFromString = str => {
     return +rest * THOUSAND;
   } else {
     return +str;
+  }
+};
+
+export const formatCmd = (text, cmd, { onlyIf = true }) => {
+  if (onlyIf) {
+    return `[${text}](${cmd})`;
+  } else {
+    return text;
   }
 };

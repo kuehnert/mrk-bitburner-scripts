@@ -54,7 +54,9 @@ const workoutAllToLevel = async (level = 10, preferSpeed = false) => {
 export async function main(_ns, { skill = 'ALL', level = 10, speed = true }) {
   ns = _ns;
 
-  if (skill.toUpperCase() === 'ALL') {
+  if (params.getName) {
+    return ns.sprintf('Working out to get %s skill(s) to level %d', params.skill, params.level);
+  } else if (skill.toUpperCase() === 'ALL') {
     return workoutAllToLevel(level, speed);
   } else {
     return workoutSkillToLevel(level, skill, speed);

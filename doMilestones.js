@@ -1,9 +1,9 @@
 /** @type import(".").NS */
 let ns = null;
-const DEBUG = false;
+const DEBUG = true;
 
 import { formatMoney } from '/helpers/formatters';
-import { MILLION } from '/helpers/globals';
+import { doneJobsFile, MILLION } from '/helpers/globals';
 import milestones from '/milestones/milestones';
 import deleteStaleDataFiles from '/milestones/deleteStaleDataFiles';
 import gymWorkout from '/milestones/gymWorkout';
@@ -14,6 +14,7 @@ import purchaseProgram from '/milestones/purchaseProgram';
 import purchaseTor from '/milestones/purchaseTor';
 import runScript from '/milestones/runScript';
 import universityCourse from '/milestones/universityCourse';
+import { hprint } from './helpers/hprint';
 
 const runCommand = async ({ action, params = {} }, debug) => {
   const command = ns.sprintf('%s(ns, %s)', action, JSON.stringify(params));
@@ -30,6 +31,10 @@ const checkIsDone = async ({ action, params }, debug) => {
 
 const checkPreReqs = async ({ action, params }, debug) => {
   return runCommand({ action, params: { ...params, checkPreReqs: true } }, debug);
+};
+
+const logJob = ({ id }) => {
+  hprint(ns, 'JOB #%d', id);
 };
 
 // const checkPreReq = () => {
@@ -68,6 +73,27 @@ const checkPreReqs = async ({ action, params }, debug) => {
 //   await runCommand(milestone);
 // };
 
+const loadJobs = () => {
+  let jobsRemaining = JSON.parse(JSON.stringify(milestones));
+
+  try {
+    const ids = JSON.parse(ns.read(doneJobsFile));
+    const jobsDone = jobsRemaining.filter(j => ids.includes(j.id));
+    jobsRemaining = jobsRemaining.filter(j => !ids.includes(j.id));
+    ns.printf('SUCCESS Loaded done jobs. %d done, %d to go!', jobsDone.length, jobsRemaining.length);
+    return { jobsRemaining, jobsDone };
+  } catch {
+    ns.printf('WARN Did not find file %s, starting anew.', doneJobsFile);
+    return { jobsRemaining, jobsDone: [] };
+  }
+};
+
+const saveDoneJobs = async jobsDone => {
+  const ids = jobsDone.map(j => j.id);
+  const data = JSON.stringify(ids);
+  ns.write(doneJobsFile, data, 'w');
+};
+
 export async function main(_ns) {
   ns = _ns;
   const flags = ns.flags([['debug', false]]);
@@ -77,8 +103,12 @@ export async function main(_ns) {
     ns.disableLog('asleep');
     ns.disableLog('exec');
     ns.disableLog('getHackingLevel');
+    ns.disableLog('getServerMaxRam');
+    ns.disableLog('getServerUsedRam');
+    ns.disableLog('getServerMoneyAvailable');
     ns.disableLog('purchaseProgram');
     ns.disableLog('purchaseTor');
+    ns.disableLog('run');
     ns.disableLog('singularity.gymWorkout');
     ns.disableLog('singularity.stopAction');
     ns.disableLog('singularity.travelToCity');
@@ -87,9 +117,9 @@ export async function main(_ns) {
 
   ns.clearLog();
   ns.tail();
+  ns.run('scanServers.js', 1, '--forceRefresh', '--quiet');
 
-  let jobsRemaining = JSON.parse(JSON.stringify(milestones));
-  let jobsDone = [];
+  let { jobsRemaining, jobsDone } = loadJobs();
   let currentLevel = 1;
   let toDoList = {};
 
@@ -100,18 +130,20 @@ export async function main(_ns) {
 
     while (jobsAtCurrentLevel.length > 0) {
       for (const job of jobsAtCurrentLevel) {
-        ns.tprintf('Looking at job %s', job.action);
+        ns.printf('Looking at job %s', JSON.stringify(job));
 
         // check if it's already done
+        // if so, mark it as such and continue with next job
         job.done = await checkIsDone(job, flags.debug);
         if (job.done) {
-          // if so, mark it as such and continue with next job
           ns.printf('job: %s', JSON.stringify(job, null, 4));
           continue;
         }
 
         // check if some requirements are unmet
         const preReqs = await checkPreReqs(job, flags.debug);
+        ns.printf('preReqs: %s', JSON.stringify(preReqs, null, 4));
+
         if (preReqs) {
           // if so, put them on the to-do list
           // TODO we need something cleverer here
@@ -121,9 +153,11 @@ export async function main(_ns) {
         } else {
           // do the job that has no further requirements
           // if it was done successfully, mark it as such
+          ns.print("I'm doing this now!");
           job.done = await runCommand(job, flags.debug);
           if (job.done) {
             ns.printf('job: %s', JSON.stringify(job, null, 4));
+            continue;
           }
         }
       }
@@ -134,14 +168,17 @@ export async function main(_ns) {
       // remove all completed jobs from jobsAtCurrentLevel
       jobsDone = jobsDone.concat(jobsAtCurrentLevel.filter(j => j.done));
       jobsAtCurrentLevel = jobsAtCurrentLevel.filter(j => j.done == null || j.done === false);
+      await saveDoneJobs(jobsDone);
       // ns.printf('jobsDone: %s', JSON.stringify(jobsDone, null, 4));
       // ns.printf('jobsAtCurrentLevel: %s', JSON.stringify(jobsAtCurrentLevel, null, 4));
 
-      await ns.sleep(1000);
+      if (jobsAtCurrentLevel.length > 0) {
+        await ns.sleep(10000);
+      }
     }
 
     currentLevel++;
-    ns.tprintf('SUCCESS Performing jobs at level %d', currentLevel);
+    ns.printf('SUCCESS Performing jobs at level %d', currentLevel);
 
     if (currentLevel >= 10) {
       ns.exit();

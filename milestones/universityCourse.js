@@ -29,8 +29,21 @@ const perform = async ({ university, course, skill, level }) => {
 };
 
 const prepareParams = params => {
-  ns.printf('params: %s', JSON.stringify(params, null, 4));
-  const newParams = { university: 'rothman university', ...params };
+  const player = ns.getPlayer();
+  let university;
+
+  if (player.city === 'Aevum') {
+    university = 'summit university';
+  } else {
+    if (player.city !== 'Sector-12') {
+      ns.travelToCity('Sector-12');
+    }
+
+    university = 'rothman university';
+  }
+
+  const newParams = { university, ...params };
+
   const skill = newParams.skill; // hacking, charisma
   const courses = COURSES[skill];
   newParams.course = courses[courses.length - 1];

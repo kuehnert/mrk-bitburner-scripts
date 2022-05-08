@@ -13,11 +13,11 @@
 */
 export default function ArrayJumpingGame(data, pos = 0) {
   if (pos > data.length) {
-    return false;
+    return 0;
   } else if (pos === data.length - 1) {
-    return true;
+    return 1;
   } else if (data[pos] === 0) {
-    return false;
+    return 0;
   } else {
     for (let i = data[pos]; i > 0; i--) {
       if (ArrayJumpingGame(data, pos + i)) {

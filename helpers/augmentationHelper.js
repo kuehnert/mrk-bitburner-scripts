@@ -56,6 +56,6 @@ export const priciestFactionAugmentation = (ns, faction) => {
     .filter(a => a.factions.includes(faction) && !a.purchased)
     .sort((a, b) => b.price - a.price);
 
-  ns.printf('factionAugs: %s', JSON.stringify(factionAugs, null, 4));
+  // ns.printf('factionAugs: %s', JSON.stringify(factionAugs, null, 4));
   return factionAugs[0];
 };

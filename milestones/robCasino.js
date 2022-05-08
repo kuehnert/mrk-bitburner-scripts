@@ -1,8 +1,9 @@
-/** @type import(".").NS */
+/** @type import("..").NS */
 let ns = null;
 
 import { formatMoney } from 'helpers/formatters';
 import { hprint } from 'helpers/hprint';
+import { casinoFlag } from '../helpers/globals';
 
 const MAX_WAGER = 100000000;
 const CLICK_SLEEP_TIME = null;
@@ -13,6 +14,11 @@ export async function main(_ns) {
   // ns.disableLog('sleep');
   // ns.clearLog();
   // ns.tail();
+
+  if (ns.fileExists(casinoFlag)) {
+    ns.print('Already been to the casino. Exiting.');
+    ns.exit();
+  }
 
   const { location, city } = ns.getPlayer();
 
@@ -66,6 +72,7 @@ export async function main(_ns) {
     let won = null;
     while (won === null) {
       if (winCounter > 15) {
+        await ns.write(casinoFlag, 'We rock!', 'w');
         ns.print('We seem to have been kicked out. Exiting.');
         ns.exit();
       }

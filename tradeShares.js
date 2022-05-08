@@ -11,23 +11,22 @@ const SLEEPTIME = 6 * 1000;
 let totalProfit = 0;
 
 const prerequisites = () => {
-  let result = ns.stock.purchaseWseAccount();
-  if (!result) {
-    ns.print("No WSE-Account, and cannot purchase it either. Stoppin'.");
+  const { money, hasWseAccount, hasTixApiAccess, has4SData, has4SDataTixApi } = ns.getPlayer();
+
+  let requiredMoney = hasWseAccount ? 0 : 200e3;
+  requiredMoney += hasTixApiAccess ? 0 : 5e6;
+  requiredMoney += has4SData ? 0 : 2e9;
+  requiredMoney += has4SDataTixApi ? 0 : 25e9;
+
+  if (money < requiredMoney) {
+    ns.print("ERROR Not enough money to trade stocks. Exiting.");
     ns.exit();
   }
 
-  result = ns.stock.purchaseTixApi();
-  if (!result) {
-    ns.print("No TiX API Access, and cannot purchase it either. Stoppin'.");
-    ns.exit();
-  }
-
-  result = ns.stock.purchase4SMarketDataTixApi();
-  if (!result) {
-    ns.print("No 4S-Market-Data API Access, and cannot purchase it either. Stoppin'.");
-    ns.exit();
-  }
+  ns.stock.purchaseWseAccount();
+  ns.stock.purchaseTixApi();
+  ns.stock.purchase4SMarketData();
+  ns.stock.purchase4SMarketDataTixApi();
 };
 
 const buyShares = (orderSize, totalStockValue, portfolioMaxSize) => {
@@ -89,8 +88,6 @@ const sellShares = () => {
 };
 
 const tradeShares = async () => {
-  prerequisites();
-
   let myMoney = ns.getServerMoneyAvailable('home');
   let portfolioMaxSize = Math.floor(myMoney / 4.0);
   let orderSize = portfolioMaxSize / 100;
@@ -123,27 +120,6 @@ const sellAll = () => {
   ns.tprintf('WARN Sold all shares.');
 };
 
-export const autocomplete = () => ['sellAll'];
-
-export async function main(_ns) {
-  ns = _ns;
-  ns.clearLog();
-  ns.disableLog('disableLog');
-  ns.disableLog('sleep');
-  ns.disableLog('getServerMoneyAvailable');
-  ns.disableLog('stock.buy');
-  ns.disableLog('stock.sell');
-  ns.disableLog('stock.purchaseWseAccount');
-  ns.disableLog('stock.purchaseTixApi');
-  ns.disableLog('stock.purchase4SMarketDataTixApi');
-
-  if (ns.args[0] && ns.args[0].toLowerCase() === 'sellall') {
-    sellAll();
-  } else {
-    await tradeShares();
-  }
-}
-
 const printStock = ({ forecast, symbol, shares, profitPerc, avgPrice, value }) => {
   let warningStage = '    ';
   if (forecast <= SELL_FORECAST_LIMIT) {
@@ -163,3 +139,25 @@ const printStock = ({ forecast, symbol, shares, profitPerc, avgPrice, value }) =
     profitPerc * 100.0
   );
 };
+
+export const autocomplete = () => ['sellAll'];
+
+export async function main(_ns) {
+  ns = _ns;
+  ns.clearLog();
+  ns.disableLog('disableLog');
+  ns.disableLog('sleep');
+  ns.disableLog('getServerMoneyAvailable');
+  ns.disableLog('stock.buy');
+  ns.disableLog('stock.sell');
+  ns.disableLog('stock.purchaseWseAccount');
+  ns.disableLog('stock.purchaseTixApi');
+  ns.disableLog('stock.purchase4SMarketDataTixApi');
+
+  if (ns.args[0] && ns.args[0].toLowerCase() === 'sellall') {
+    sellAll();
+  } else {
+    prerequisites();
+    await tradeShares();
+  }
+}

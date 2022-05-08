@@ -7,6 +7,7 @@ const DELETE_PERIOD = 3 * MINUTE;
 
 const DATA_FILES = [
   'companies.txt',
+  'crimes.txt',
   'gyms.txt',
   'jobs.txt',
   'organisations.txt',
@@ -14,6 +15,8 @@ const DATA_FILES = [
   'servers.txt',
   'targets.txt',
   'unknown_contracts.txt',
+  'done_job_ids.txt',
+  'been_to_the_casino.txt',
 ];
 
 const isDone = () => ns.getTimeSinceLastAug() > DELETE_PERIOD;
@@ -33,7 +36,9 @@ const perform = () => {
 export async function main(_ns, params) {
   ns = _ns;
 
-  if (params.checkIsDone) {
+  if (params.getName) {
+    return 'Deleting stale data files from last augmentation reset';
+  } else if (params.checkIsDone) {
     return isDone();
   } else if (params.checkPreReqs) {
     return checkPreReqs();

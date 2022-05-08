@@ -81,9 +81,9 @@ const deployServer = async (targetName, { parallel, bomb, shifts, maxShifts }) =
   const sourceName = target2SourceName(targetName);
 
   if (ns.getPurchasedServers().includes(sourceName)) {
-    ns.tprintf('WARN You already own a server called %s. Stopping all threads & re-configuring it.', sourceName);
-    ns.killall(sourceName);
-    await ns.sleep(300);
+    ns.tprintf('WARN You already own server %s. Stopping all threads & re-configuring it.', sourceName);
+    // ns.killall(sourceName);
+    // await ns.sleep(300);
   } else {
     if (bomb) {
       purchaseBomb(sourceName);
@@ -137,8 +137,12 @@ const redeployAll = async ({ parallel }) => {
   const servers = ns.getPurchasedServers();
 
   for (const sourceName of servers) {
-    const targetName = source2TargetName(sourceName);
     ns.killall(sourceName);
+  }
+  await ns.sleep(2000);
+
+  for (const sourceName of servers) {
+    const targetName = source2TargetName(sourceName);
     await copyDependencies(sourceName);
 
     const script = parallel ? parallelScript : singleScript;

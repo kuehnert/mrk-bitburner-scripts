@@ -28,17 +28,17 @@ const logFaction = (faction, playerFactions) => {
   }
 
   ns.tprintf(
-    '%s%-22s %s %s %s %2d/%2d %-35s %s %s',
+    '%s%-22s %s %s %2d/%2d %-40s\t%s\t%s/%s',
     marker,
     faction,
-    formatNumber(ns, rep),
     formatNumber(ns, favor),
     formatNumber(ns, favorGain),
     ownedFactionAugs.length - 1, // Don't count Neuroflux Govenor
     factionAugs.length - 1, // Don't count Neuroflux Govenor
-    priciest.name,
-    formatMoney(ns, priciest.price),
-    formatNumber(ns, priciest.reputationRequired)
+    priciest ? priciest.name : '-',
+    priciest ? formatMoney(ns, priciest.price) : '       - ',
+    formatNumber(ns, rep),
+    priciest ? formatNumber(ns, priciest.reputationRequired) : '       - ',
   );
 };
 

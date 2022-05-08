@@ -8,10 +8,10 @@ const isDone = ({ server }) => ns.getServer(server).backdoorInstalled;
 
 const checkPreReqs = ({ server }) => {
   const s = ns.getServer(server);
-  if (getMyPortLevel(ns) >= s.numOpenPortsRequired && ns.getPlayer().hacking >= s.hackDifficulty) {
+  if (getMyPortLevel(ns) >= s.numOpenPortsRequired && ns.getPlayer().hacking >= s.requiredHackingSkill) {
     return null;
   } else {
-    return { portLevel: s.numOpenPortsRequired, hacking: s.hackDifficulty };
+    return { portLevel: s.numOpenPortsRequired, hacking: s.requiredHackingSkill };
   }
 };
 
