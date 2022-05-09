@@ -72,8 +72,11 @@ const beefFaction = (ns, s, ownedAugs) => {
 };
 
 export const getFactionsDetailed = (ns, factionNames) => {
-  // const playerFactions = ns.getPlayer().factions.sort();
   const ownedAugs = ns.getOwnedAugmentations(true);
-
   return factionNames.map(s => beefFaction(ns, s, ownedAugs));
+};
+
+export const getFactionsMap = ns => {
+  const fa = getFactionsDetailed(ns, FACTIONS).map(f => [f.name, f]);
+  return Object.fromEntries(fa);
 };

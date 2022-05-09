@@ -2,9 +2,11 @@
 let ns = null;
 
 import { getAugmentations } from './helpers/augmentationHelper';
+import { getFactionsMap } from './helpers/factionHelper';
 import { formatNumber, formatMoney } from './helpers/formatters';
+import { hprint } from './helpers/hprint';
 
-const logAugmentation = ({ name, price, reputationRequired, factions, purchased, installed }) => {
+const logAugmentation = ({ name, price, reputationRequired, factionNames, purchased, installed }, factions) => {
   let prefix = ' ';
   if (installed) {
     prefix = 'I';
@@ -12,13 +14,21 @@ const logAugmentation = ({ name, price, reputationRequired, factions, purchased,
     prefix = 'P';
   }
 
-  ns.tprintf(
+  const factionStr = factionNames
+    .map(fs => {
+      const f = factions[fs];
+      return f.rep >= reputationRequired ? `S~${fs}~` : `${fs} (${formatNumber(ns, f.rep)})`;
+    })
+    .join(', ');
+
+  hprint(
+    ns,
     '%s %-55s %s %s %s',
     prefix,
     name,
-    formatMoney(ns, price, { isAffordable: true }),
+    formatMoney(ns, price, { markAffordable: true }),
     formatNumber(ns, reputationRequired),
-    factions
+    factionStr
   );
 };
 
@@ -37,10 +47,11 @@ export async function main(_ns) {
 
   augmentations = augmentations.sort((a, b) => b.price - a.price);
 
-  // ns.tprintf('augmentations: %s', JSON.stringify(augmentations, null, 4));
+  const allFactions = getFactionsMap(ns);
+  // ns.tprintf('allFactions: %s', JSON.stringify(allFactions, null, 4));
 
   for (const aug of augmentations) {
-    logAugmentation(aug);
+    logAugmentation(aug, allFactions);
   }
 }
 

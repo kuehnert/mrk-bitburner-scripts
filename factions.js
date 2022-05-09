@@ -15,7 +15,7 @@ const logFaction = (faction, playerFactions, invites) => {
   }
 
   ns.tprintf(
-    '%s%-22s %s %s %2d/%2d %-40s\t%s\t%s/%s',
+    '%s%-27s %s %s %2d/%2d %-40s\t%s\t%s/%s',
     marker,
     name,
     formatNumber(ns, favor),
@@ -28,6 +28,8 @@ const logFaction = (faction, playerFactions, invites) => {
     priciest ? formatNumber(ns, priciest.reputationRequired) : '       - '
   );
 };
+
+export const autocomplete = data => ['--all'];
 
 export async function main(_ns) {
   ns = _ns;

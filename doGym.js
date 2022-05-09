@@ -3,6 +3,8 @@ let ns = null;
 
 import gymWorkout from '/milestones/gymWorkout';
 
+export const autocomplete = () => ['--skill', '--level', '--speed'];
+
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();

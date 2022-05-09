@@ -190,5 +190,5 @@ export const calcAttackDelays = ({ growTime, hackTime, weakenTime }) => {
 export const calcMaxShifts = (_ns, serverName) => {
   const times = calcAttackTimes(_ns, serverName);
   const { sleepTime } = calcAttackDelays(times);
-  return Math.floor(sleepTime / 1000);
+  return Math.floor(sleepTime / BUFFER);
 };

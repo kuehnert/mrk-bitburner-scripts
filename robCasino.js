@@ -7,7 +7,7 @@ import { casinoFlag } from './helpers/globals';
 
 const MAX_WAGER = 100000000;
 const CLICK_SLEEP_TIME = null;
-const SAVE_SLEEP_TIME = 100;
+const SAVE_SLEEP_TIME = 20;
 
 export async function main(_ns) {
   ns = _ns;

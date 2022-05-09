@@ -9,11 +9,11 @@ export const getPriceMultiplier = (owned, installed) => Math.pow(1.9, owned.leng
 export const getAugmentations = ns => {
   const ownedAugmentations = ns.getOwnedAugmentations(true);
   const installedAugmentations = ns.getOwnedAugmentations(false);
-  const factions = ns.getPlayer().factions;
+  const factionNames = ns.getPlayer().factions;
   const _augmentations = {};
 
-  for (const faction of factions) {
-    const factionAugmentations = ns.getAugmentationsFromFaction(faction);
+  for (const factionName of factionNames) {
+    const factionAugmentations = ns.getAugmentationsFromFaction(factionName);
 
     for (const fa of factionAugmentations) {
       const aug = _augmentations[fa] ?? { name: fa };
@@ -21,8 +21,8 @@ export const getAugmentations = ns => {
       aug.price = ns.getAugmentationPrice(fa);
       aug.reputationRequired = ns.getAugmentationRepReq(fa);
       aug.stats = ns.getAugmentationStats(fa);
-      aug.factions ??= [];
-      aug.factions.push(faction);
+      aug.factionNames ??= [];
+      aug.factionNames.push(factionName);
       aug.purchased = ownedAugmentations.includes(fa);
       aug.installed = installedAugmentations.includes(fa);
       _augmentations[fa] = aug;
@@ -49,11 +49,11 @@ export const availableFactionAugmentations = (ns, faction) => {
   return availableFactionAugs;
 };
 
-export const priciestFactionAugmentation = (ns, faction) => {
+export const priciestFactionAugmentation = (ns, factionName) => {
   // const augs = availableFactionAugmentations(faction);
   const detailedAugs = Object.values(getAugmentations(ns));
   const factionAugs = detailedAugs
-    .filter(a => a.factions.includes(faction) && !a.purchased)
+    .filter(a => a.factionNames.includes(factionName) && !a.purchased)
     .sort((a, b) => b.price - a.price);
 
   // ns.printf('factionAugs: %s', JSON.stringify(factionAugs, null, 4));
