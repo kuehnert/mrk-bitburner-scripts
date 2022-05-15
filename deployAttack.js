@@ -34,7 +34,11 @@ const checkPurchasedServerCountLimit = () => {
   const ownedCount = ns.getPurchasedServers().length;
   const ownedLimit = ns.getPurchasedServerLimit();
   if (ownedCount >= ownedLimit) {
-    ns.tprintf('ERROR You already own a maximum %d out of %d servers. Exiting', ownedCount, ownedLimit);
+    ns.tprintf(
+      'ERROR You already own a maximum %d out of %d servers. Exiting',
+      ownedCount,
+      ownedLimit
+    );
     ns.exit();
   }
 };
@@ -42,7 +46,12 @@ const checkPurchasedServerCountLimit = () => {
 const purchaseServer = (sourceName, targetName, parallel = true, shifts = 1, maxShifts = false) => {
   checkPurchasedServerCountLimit();
   let realShifts = maxShifts ? calcMaxShifts(ns, targetName) : shifts;
-  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, targetName, realShifts);
+  const { serverSizeRequired, parallelServerSizeRequired } = calcTotalRamCost(
+    ns,
+    targetName,
+    'foodnstuff',
+    realShifts
+  );
   const desiredRam = parallel ? parallelServerSizeRequired : serverSizeRequired;
   const cost = ns.getPurchasedServerCost(desiredRam);
 
@@ -81,16 +90,31 @@ const deployServer = async (targetName, { parallel, bomb, shifts, maxShifts }) =
   const sourceName = target2SourceName(targetName);
 
   if (ns.getPurchasedServers().includes(sourceName)) {
-    ns.tprintf('WARN You already own server %s. Stopping all threads & re-configuring it.', sourceName);
-    // ns.killall(sourceName);
+    ns.tprintf(
+      'WARN You already own server %s. Stopping all threads & re-configuring it.',
+      sourceName
+    );
+    ns.killall(sourceName);
     // await ns.sleep(300);
   } else {
     if (bomb) {
       purchaseBomb(sourceName);
     } else {
-      const { hostname, ram, cost, realShifts } = purchaseServer(sourceName, targetName, parallel, shifts, maxShifts);
+      const { hostname, ram, cost, realShifts } = purchaseServer(
+        sourceName,
+        targetName,
+        parallel,
+        shifts,
+        maxShifts
+      );
       if (hostname === sourceName) {
-        ns.tprintf('SUCCESS Bought new server %s for working %d shifts with %d GB for %s.', hostname, realShifts, ram, formatMoney(ns, cost));
+        ns.tprintf(
+          'SUCCESS Bought new server %s for working %d shifts with %d GB for %s.',
+          hostname,
+          realShifts,
+          ram,
+          formatMoney(ns, cost)
+        );
       } else {
         ns.tprintf('ERROR Something went wrong when buying new server. Exiting.');
         ns.exit();
@@ -162,10 +186,16 @@ const redistribute = async () => {
   const top25 = viableServers.slice(0, serverLimit);
   const toAttack = top25.filter(s => !s.isAttacked).map(s => s.hostname);
 
-  ns.tprintf('Currently attacking %d/%d of the top targets', serverLimit - toAttack.length, serverLimit);
+  ns.tprintf(
+    'Currently attacking %d/%d of the top targets',
+    serverLimit - toAttack.length,
+    serverLimit
+  );
   ns.tprintf('targeting: %s', toAttack);
 
-  const toDelete = viableServers.filter(s => s.isAttacked && !top25.includes(s)).map(s => s.hostname);
+  const toDelete = viableServers
+    .filter(s => s.isAttacked && !top25.includes(s))
+    .map(s => s.hostname);
   ns.tprintf('toDelete: %s', toDelete);
 
   for (const deleteName of toDelete) {
@@ -207,7 +237,10 @@ const deployAll = async flags => {
   const viableServers = await getViableTargets(ns);
 
   const targets = viableServers
-    .sort((a, b) => (a.attackServerSize - b.attackServerSize) * 100 + (b.hackMoneyPerTime - a.hackMoneyPerTime))
+    .sort(
+      (a, b) =>
+        (a.attackServerSize - b.attackServerSize) * 100 + (b.hackMoneyPerTime - a.hackMoneyPerTime)
+    )
     .slice(0, remainingSeverCount);
 
   ns.tprintf('Considering targets in order: %s', targets.map(s => s.hostname).join(', '));
@@ -215,7 +248,11 @@ const deployAll = async flags => {
   if (viableServers.length === 0) {
     ns.tprintf('WARN There currently are no viable targets. Exiting');
   } else if (currentServerCount === serverLimit) {
-    ns.tprintf('WARN You already own a maximum %d out of %d servers. Exiting', currentServerCount, serverLimit);
+    ns.tprintf(
+      'WARN You already own a maximum %d out of %d servers. Exiting',
+      currentServerCount,
+      serverLimit
+    );
   } else {
     for (const target of targets) {
       await deployServer(target.hostname, flags);
@@ -227,7 +264,12 @@ const printServerCost = () => {
   const pricelist = getPurchasedServerCosts(ns);
   // ns.tprintf('pricelist: %s', JSON.stringify(pricelist, null, 4));
   for (const { ram, cost, affordable } of pricelist) {
-    ns.tprintf('1 Server with %s GB:\t%s\t%dx', formatNumber(ns, ram), formatMoney(ns, cost), affordable);
+    ns.tprintf(
+      '1 Server with %s GB:\t%s\t%dx',
+      formatNumber(ns, ram),
+      formatMoney(ns, cost),
+      affordable
+    );
   }
 };
 
@@ -250,11 +292,6 @@ export const autocomplete = data => [
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
-  ns.disableLog('disableLog');
-  ns.disableLog('killall');
-  ns.disableLog('exec');
-  ns.disableLog('scp');
-
   const flags = ns.flags([
     ['bomb', false], // create a server with max RAM to optimise hacking skill gain
     ['debug', false],
@@ -263,6 +300,13 @@ export async function main(_ns) {
     ['maxShifts', false],
     ['shifts', 1],
   ]);
+
+  if (!flags.debug) {
+    ns.disableLog('disableLog');
+    ns.disableLog('killall');
+    ns.disableLog('exec');
+    ns.disableLog('scp');
+  }
 
   if (ns.args.length === 0) {
     ns.tprint('ERROR No target server or command given. Exiting.');

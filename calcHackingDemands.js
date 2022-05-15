@@ -4,7 +4,7 @@ let ns = null;
 import { calcTotalRamCost, calcAttackTimes, calcAttackDelays } from './helpers/ramCalculations';
 import { formatCmd, formatDuration, formatMoney, formatNumber } from './helpers/formatters';
 import { hprint } from './helpers/hprint';
-import { BUFFER } from './helpers/globals'
+import { BUFFER } from './helpers/globals';
 
 const logData = (serverName, shifts, ram, size, cost) => {
   hprint(
@@ -19,7 +19,7 @@ const logData = (serverName, shifts, ram, size, cost) => {
   );
 };
 
-export const autocomplete = data => [...data.servers, '--shifts'];
+export const autocomplete = data => [...data.servers, '--shifts', '--fromHome', '--tail'];
 
 export async function main(_ns) {
   ns = _ns;
@@ -28,10 +28,23 @@ export async function main(_ns) {
   ns.disableLog('getServerMinSecurityLevel');
 
   const serverName = ns.args[0];
-  const flags = ns.flags([['shifts', 1]]);
+  const flags = ns.flags([
+    ['shifts', 1],
+    ['fromHome', false],
+  ]);
 
-  const { growRam, growThreads, hackRam, hackThreads, ramRequired, serverSizeRequired, weakenRam, weakenThreads } =
-    calcTotalRamCost(ns, serverName, flags.shifts);
+  const sourceName = flags.fromHome ? 'home' : 'foodnstuff';
+
+  const {
+    growRam,
+    growThreads,
+    hackRam,
+    hackThreads,
+    ramRequired,
+    serverSizeRequired,
+    weakenRam,
+    weakenThreads,
+  } = calcTotalRamCost(ns, serverName, sourceName, flags.shifts);
 
   const times = calcAttackTimes(ns, serverName, flags.shifts);
   const { growTime, hackTime, weakenTime } = times;
@@ -39,8 +52,20 @@ export async function main(_ns) {
   const maxShifts = flags.shifts === 1 ? Math.floor(sleepTime / BUFFER) : flags.shifts;
 
   hprint(ns, 'Analysing server I~%s~', serverName);
-  hprint(ns, 'GROW   threads: %4d\tRAM required: %4d GB\ttime: %s', growThreads, growRam, formatDuration(ns, growTime));
-  hprint(ns, 'HACK   threads: %4d\tRAM required: %4d GB\ttime: %s', hackThreads, hackRam, formatDuration(ns, hackTime));
+  hprint(
+    ns,
+    'GROW   threads: %4d\tRAM required: %4d GB\ttime: %s',
+    growThreads,
+    growRam,
+    formatDuration(ns, growTime)
+  );
+  hprint(
+    ns,
+    'HACK   threads: %4d\tRAM required: %4d GB\ttime: %s',
+    hackThreads,
+    hackRam,
+    formatDuration(ns, hackTime)
+  );
   hprint(
     ns,
     'WEAKEN threads: %4d\tRAM required: %4d GB\ttime: %s',
@@ -58,12 +83,12 @@ export async function main(_ns) {
     formatMoney(ns, ns.getPurchasedServerCost(serverSizeRequired), { markAffordable: true })
   );
 
-  const previous = calcTotalRamCost(ns, serverName, 1);
+  const previous = calcTotalRamCost(ns, serverName, sourceName, 1);
   let previousRam = previous.parallelRamRequired;
   let previousServerSize = previous.parallelServerSizeRequired;
 
   for (let shift = 2; shift <= maxShifts; shift++) {
-    const current = calcTotalRamCost(ns, serverName, shift);
+    const current = calcTotalRamCost(ns, serverName, sourceName, shift);
     const cost = ns.getPurchasedServerCost(previousServerSize);
 
     if (previousServerSize < current.parallelServerSizeRequired) {
@@ -74,7 +99,12 @@ export async function main(_ns) {
     previousServerSize = current.parallelServerSizeRequired;
   }
 
-  const { parallelRamRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, serverName, maxShifts);
+  const { parallelRamRequired, parallelServerSizeRequired } = calcTotalRamCost(
+    ns,
+    serverName,
+    sourceName,
+    maxShifts
+  );
   logData(
     serverName,
     maxShifts,

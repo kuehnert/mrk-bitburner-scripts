@@ -1,6 +1,9 @@
 /** @type import(".").NS */
 let ns = null;
 
+const doc = eval('document');
+const win = eval('window');
+
 import { formatMoney } from './helpers/formatters';
 import { hprint } from './helpers/hprint';
 import { casinoFlag } from './helpers/globals';
@@ -98,9 +101,9 @@ export async function main(_ns) {
 
       if (find("//p[contains(text(), 'You lost')]")) {
         ns.print('WARN LOST game, loading last save...');
-        window.onbeforeunload = null; // disable unsaved warning
+        win.onbeforeunload = null; // disable unsaved warning
         await ns.sleep(SAVE_SLEEP_TIME);
-        window.location.reload(); // force refresh
+        win.location.reload(); // force refresh
         return ns.asleep(10000); // keep script alive to be safe
       }
 
@@ -122,7 +125,7 @@ export async function main(_ns) {
 }
 
 const find = xpath =>
-  document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  doc.evaluate(xpath, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
 const click = async elem => {
   await elem[Object.keys(elem)[1]].onClick({ isTrusted: true });

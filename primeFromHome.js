@@ -1,11 +1,11 @@
 /** @type import(".").NS */
 let ns = null;
 
-import logServerInfo, { isServerPrimed } from 'helpers/logServerInfo';
-import { getViableTargets } from '/helpers/getServers';
-import { getGrowPercent } from 'helpers/fakeFormulas';
-import { formatDuration } from '/helpers/formatters';
-import { MINUTE, SECOND } from '/helpers/globals';
+import logServerInfo, { isServerPrimed } from './helpers/logServerInfo';
+import { getViableTargets } from './helpers/getServers';
+import { getGrowPercent } from './helpers/fakeFormulas';
+import { formatDuration } from './helpers/formatters';
+import { MINUTE, SECOND } from './helpers/globals';
 
 const runThreaded = (script, sourceName, targetName, threads) => {
   if (threads > 0) {
@@ -18,15 +18,6 @@ const runThreaded = (script, sourceName, targetName, threads) => {
   }
 };
 
-const calcGrowThreads = serverData => Math.round(Math.log(2) / Math.log(getGrowPercent(ns, serverData)));
-
-const calcWeakenThreads = serverData => {
-  const currentSecurity = ns.getServerSecurityLevel(serverData.hostname);
-  const minSecurity = ns.getServerMinSecurityLevel(serverData.hostname);
-  const weakenDifference = currentSecurity - minSecurity;
-  return Math.round(weakenDifference / 0.02);
-};
-
 const primeServer = async targetName => {
   const weakenCost = ns.getScriptRam('/workers/miniweaken.js', 'home');
   const growCost = ns.getScriptRam('/workers/minigrow.js', 'home');
@@ -36,7 +27,7 @@ const primeServer = async targetName => {
     logServerInfo(ns, targetName);
     const availableRam = ns.getServerMaxRam('home') - ns.getServerUsedRam('home');
 
-    const optimalGrowThreads = calcGrowThreads(target);
+    const optimalGrowThreads = calcGrowThreads(ns, target, 'home');
     const maximalGrowThreads = Math.floor(availableRam / growCost);
     const growThreads = Math.min(optimalGrowThreads, maximalGrowThreads);
 

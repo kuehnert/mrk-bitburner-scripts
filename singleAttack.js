@@ -95,7 +95,7 @@ export async function main(_ns) {
       sleepTime = ns.getGrowTime(targetName);
       const cost = ns.getScriptRam(growScript, sourceName);
       const maxThreads = Math.floor(availableRAM / cost);
-      const growPercent = getGrowPercent(ns, ns.getServer(targetName));
+      const growPercent = getGrowPercent(ns, ns.getServer(targetName), sourceName);
       const growThreads = Math.round(Math.log(2) / Math.log(growPercent));
       threads = Math.min(maxThreads, growThreads);
 

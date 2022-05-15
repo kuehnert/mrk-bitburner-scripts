@@ -18,9 +18,9 @@ export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
  * @param {*} percentage the percentage of server's max money assumed to be hacked away
  * @returns tbe number of grow threads
  */
-export const calcGrowThreads = (ns, serverName, percentage = 0.5) => {
+export const calcGrowThreads = (ns, serverName, sourceName, percentage = 0.5) => {
   const serverData = simulatePrimedServer(ns, serverName, percentage);
-  const growPercent = getGrowPercent(ns, serverData, 1, ns.getPlayer());
+  const growPercent = getGrowPercent(ns, serverData, 1, ns.getPlayer(), sourceName);
 
   return Math.round(Math.log(2) / Math.log(growPercent));
 };
@@ -35,10 +35,10 @@ export const calcHackThreads = (ns, serverName, percentage = 0.5) => {
   return Math.floor(percentage / hackPercent);
 };
 
-export const calcWeakenThreads = (ns, serverName, percentage = 0.5) => {
+export const calcWeakenThreads = (ns, serverName, sourceName, percentage = 0.5) => {
   // 1 grow increases security by 0.05, 1 weaken reduces 0.02
   const hackDamage = calcHackThreads(ns, serverName, percentage) * 0.002;
-  const growDamage = calcGrowThreads(ns, serverName, percentage) * 0.004;
+  const growDamage = calcGrowThreads(ns, serverName, sourceName, percentage) * 0.004;
   const weakenDifference = hackDamage + growDamage;
 
   // ns.printf('hackDamage: %s', JSON.stringify(hackDamage, null, 4));
@@ -71,16 +71,15 @@ export const calcMaxThreads = (_ns, sourceName) => {
   };
 };
 
-export const calcPossibleThreads = (_ns, targetName) => {
+export const calcPossibleThreads = (_ns, targetName, sourceName = ns.getHostname()) => {
   ns = _ns;
   let threads = {
-    growThreads: calcGrowThreads(ns, targetName),
+    growThreads: calcGrowThreads(ns, targetName, sourceName),
     hackThreads: calcHackThreads(ns, targetName),
     weakenThreads: calcWeakenThreads(ns, targetName),
   };
 
   let totalThreads = threads.growThreads + threads.hackThreads + threads.weakenThreads;
-  const sourceName = ns.getHostname();
 
   let availableRam = ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName);
   if (sourceName === 'home') {
@@ -99,8 +98,8 @@ export const calcPossibleThreads = (_ns, targetName) => {
   return threads;
 };
 
-export const calcTotalRamCost = (ns, targetName, shifts = 1) => {
-  const growThreads = calcGrowThreads(ns, targetName);
+export const calcTotalRamCost = (ns, targetName, sourceName, shifts = 1) => {
+  const growThreads = calcGrowThreads(ns, targetName, sourceName);
   const hackThreads = calcHackThreads(ns, targetName);
   const weakenThreads = calcWeakenThreads(ns, targetName);
 

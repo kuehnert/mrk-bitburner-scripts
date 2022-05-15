@@ -1,7 +1,12 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { calcPossibleThreads, calcAttackDelays, calcAttackTimes, calcMaxThreads } from 'helpers/ramCalculations';
+import {
+  calcPossibleThreads,
+  calcAttackDelays,
+  calcAttackTimes,
+  calcMaxThreads,
+} from 'helpers/ramCalculations';
 import { formatTime, formatDuration, formatNumber } from '/helpers/formatters';
 import { BUFFER, SECOND } from '/helpers/globals';
 
@@ -17,7 +22,12 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
   const { growTime, hackTime, weakenTime } = attackTimes;
   const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
 
-  ns.printf('INFO threads: hack %11d\tgrow %11d\tweaken %11d', hackThreads, growThreads, weakenThreads);
+  ns.printf(
+    'INFO threads: hack %11d\tgrow %11d\tweaken %11d',
+    hackThreads,
+    growThreads,
+    weakenThreads
+  );
 
   ns.printf(
     'INFO times:   hack %s\tgrow %s\tweaken %s',
@@ -67,7 +77,7 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
     const shifts = Math.min(ramShifts, timeShifts);
 
     ns.printf(
-      'INFO %s Threads: %d, RAM %s/%s, shifts: %d (ram: %d, time: %d), duration: %s',
+      'INFO %s Threads: %d, RAM %s/%s, shifts: %d (ram: %d, time: %d), duration: %s, BUFFER: %d',
       formatTime(ns),
       shiftThreads,
       formatNumber(ns, shiftRam),
@@ -75,7 +85,8 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
       shifts,
       ramShifts,
       timeShifts,
-      formatDuration(ns, sleepTime)
+      formatDuration(ns, sleepTime),
+      BUFFER
     );
 
     // assume primed server
@@ -94,7 +105,10 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
 
     // sleep as many buffers remaining due to unused shifts
     const timeUntilNextShift = Math.round(sleepTime - BUFFER * shifts);
-    ns.printf('WARN Sleeping %s until starting next shift...', formatDuration(ns, timeUntilNextShift));
+    ns.printf(
+      'WARN Sleeping %s until starting next shift...',
+      formatDuration(ns, timeUntilNextShift)
+    );
     await ns.sleep(timeUntilNextShift);
   }
 };
@@ -119,7 +133,7 @@ const checkDelays = attackDelays => {
 };
 
 const prepareAttack = async (sourceName, targetName, flags) => {
-  const threadCounts = calcPossibleThreads(ns, targetName);
+  const threadCounts = calcPossibleThreads(ns, targetName, sourceName);
   const attackTimes = calcAttackTimes(ns, targetName);
   const attackDelays = calcAttackDelays(attackTimes);
 
