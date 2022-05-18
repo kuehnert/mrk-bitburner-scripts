@@ -60,18 +60,26 @@ export const getViableTargets = async _ns => {
 };
 
 const calcHackTime = hostname => {
-  const times = calcAttackTimes(ns, hostname);
+  const times = calcAttackTimes(ns, hostname, { growThreads: 1000, hackThreads: 270 });
   const { sleepTime } = calcAttackDelays(times);
   return sleepTime;
 };
 
 const calcAttackServerSize = hostname => {
-  const size = calcTotalRamCost(ns, hostname).parallelServerSizeRequired;
+  // pick server with 1 CPU core
+  const size = calcTotalRamCost(ns, hostname, 'n00dles').parallelServerSizeRequired;
 
-  return {
-    attackServerSize: size,
-    attackServerCost: ns.getPurchasedServerCost(size),
-  };
+  if (!size) {
+    return {
+      attackServerSize: 0,
+      attackServerCost: 0,
+    };
+  } else {
+    return {
+      attackServerSize: size,
+      attackServerCost: ns.getPurchasedServerCost(size),
+    };
+  }
 };
 
 const analyseServer = (server, own) => {

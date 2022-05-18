@@ -4,10 +4,21 @@ let ns = null;
 import { getGrowPercent, getHackPercent, hasFormulas } from 'helpers/fakeFormulas';
 import { miniGrowScript, miniHackScript, miniWeakenScript, BUFFER } from 'helpers/globals';
 
-export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
+export const simulatePrimedServer = (_ns, serverName, percentage = 1.0, weakenDifference = 0.0) => {
+  ns = _ns;
   const serverData = ns.getServer(serverName);
+
   serverData.moneyAvailable = percentage * serverData.moneyMax;
   serverData.hackDifficulty = ns.getServerMinSecurityLevel(serverName);
+
+  if (weakenDifference === 0.0) {
+    const hackPercent = getHackPercent(ns, serverData, ns.getPlayer(), true);
+    const hackThreads = Math.floor((1.0 - percentage) / hackPercent);
+    serverData.hackDifficulty = ns.getServerMinSecurityLevel(serverName) + hackThreads * 0.002;
+  } else {
+    serverData.hackDifficulty = ns.getServerMinSecurityLevel(serverName) + weakenDifference;
+  }
+
   return serverData;
 };
 
@@ -20,22 +31,25 @@ export const simulatePrimedServer = (ns, serverName, percentage = 1.0) => {
  */
 export const calcGrowThreads = (ns, serverName, sourceName, percentage = 0.5) => {
   const serverData = simulatePrimedServer(ns, serverName, percentage);
-  const growPercent = getGrowPercent(ns, serverData, 1, ns.getPlayer(), sourceName);
+  const growPercent = getGrowPercent(ns, serverData, sourceName);
 
-  return Math.round(Math.log(2) / Math.log(growPercent));
+  return Math.ceil(Math.log(2) / Math.log(growPercent));
 };
 
 /**
  * calculates the number of hack threads needed to bring server from maximum to 50% of the money
  */
-export const calcHackThreads = (ns, serverName, percentage = 0.5) => {
+export const calcHackThreads = (_ns, serverName, percentage = 0.5) => {
+  ns = _ns;
   const serverData = simulatePrimedServer(ns, serverName);
   const hackPercent = getHackPercent(ns, serverData, ns.getPlayer(), true);
 
   return Math.floor(percentage / hackPercent);
 };
 
-export const calcWeakenThreads = (ns, serverName, sourceName, percentage = 0.5) => {
+export const calcWeakenThreads = (_ns, serverName, sourceName, percentage = 0.5) => {
+  ns = _ns;
+
   // 1 grow increases security by 0.05, 1 weaken reduces 0.02
   const hackDamage = calcHackThreads(ns, serverName, percentage) * 0.002;
   const growDamage = calcGrowThreads(ns, serverName, sourceName, percentage) * 0.004;
@@ -61,7 +75,7 @@ export const calcMaxThreads = (_ns, sourceName) => {
   let availableRam = (ns.getServerMaxRam(sourceName) - ns.getServerUsedRam(sourceName)) / 3.0;
 
   if (sourceName === 'home' && ns.getServerMaxRam(sourceName) >= 64) {
-    availableRam -= 20; // buffer for other scripts
+    availableRam -= 10; // buffer for other scripts
   }
 
   return {
@@ -71,7 +85,7 @@ export const calcMaxThreads = (_ns, sourceName) => {
   };
 };
 
-export const calcPossibleThreads = (_ns, targetName, sourceName = ns.getHostname()) => {
+export const calcPossibleThreads = (_ns, targetName, sourceName) => {
   ns = _ns;
   let threads = {
     growThreads: calcGrowThreads(ns, targetName, sourceName),
@@ -101,7 +115,7 @@ export const calcPossibleThreads = (_ns, targetName, sourceName = ns.getHostname
 export const calcTotalRamCost = (ns, targetName, sourceName, shifts = 1) => {
   const growThreads = calcGrowThreads(ns, targetName, sourceName);
   const hackThreads = calcHackThreads(ns, targetName);
-  const weakenThreads = calcWeakenThreads(ns, targetName);
+  const weakenThreads = calcWeakenThreads(ns, targetName, sourceName);
 
   const growRam = calcScriptRamCost(ns, miniGrowScript, growThreads) * shifts;
   const hackRam = calcScriptRamCost(ns, miniHackScript, hackThreads) * shifts;
@@ -128,16 +142,22 @@ export const calcTotalRamCost = (ns, targetName, sourceName, shifts = 1) => {
   };
 };
 
-export const calcAttackTimes = (_ns, serverName) => {
+export const calcAttackTimes = (_ns, serverName, { growThreads, hackThreads }) => {
   ns = _ns;
-  const serverData = simulatePrimedServer(ns, serverName);
+  const hackDamage = hackThreads * 0.002;
+  const growDamage = growThreads * 0.004;
+  const weakenDifference = hackDamage + growDamage;
+
+  const primedServer = simulatePrimedServer(ns, serverName);
+  const hackedServer = simulatePrimedServer(ns, serverName, 0.5);
+  const grownServer = simulatePrimedServer(ns, serverName, 1, weakenDifference);
   const player = ns.getPlayer();
 
   if (hasFormulas(ns)) {
     return {
-      growTime: Math.round(ns.formulas.hacking.growTime(serverData, player)),
-      hackTime: Math.round(ns.formulas.hacking.hackTime(serverData, player)),
-      weakenTime: Math.round(ns.formulas.hacking.weakenTime(serverData, player)),
+      hackTime: Math.round(ns.formulas.hacking.hackTime(primedServer, player)),
+      growTime: Math.round(ns.formulas.hacking.growTime(hackedServer, player)),
+      weakenTime: Math.round(ns.formulas.hacking.weakenTime(grownServer, player)),
     };
   } else {
     return {
@@ -187,7 +207,8 @@ export const calcAttackDelays = ({ growTime, hackTime, weakenTime }) => {
 };
 
 export const calcMaxShifts = (_ns, serverName) => {
-  const times = calcAttackTimes(_ns, serverName);
+  const threads = calcTotalRamCost(_ns, serverName, 'joesguns');
+  const times = calcAttackTimes(_ns, serverName, threads);
   const { sleepTime } = calcAttackDelays(times);
   return Math.floor(sleepTime / BUFFER);
 };

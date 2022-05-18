@@ -1,13 +1,9 @@
 /** @type import(".").NS */
 let ns = null;
 
-import {
-  calcPossibleThreads,
-  calcAttackDelays,
-  calcAttackTimes,
-  calcMaxThreads,
-} from 'helpers/ramCalculations';
-import { formatTime, formatDuration, formatNumber } from '/helpers/formatters';
+import logServerInfo from '/helpers/logServerInfo';
+import { calcPossibleThreads, calcAttackDelays, calcAttackTimes, calcMaxThreads } from 'helpers/ramCalculations';
+import { formatTime, formatDuration, formatMoney, formatNumber } from '/helpers/formatters';
 import { BUFFER, SECOND } from '/helpers/globals';
 
 const SCRIPTS = {
@@ -22,12 +18,7 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
   const { growTime, hackTime, weakenTime } = attackTimes;
   const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
 
-  ns.printf(
-    'INFO threads: hack %11d\tgrow %11d\tweaken %11d',
-    hackThreads,
-    growThreads,
-    weakenThreads
-  );
+  ns.printf('INFO threads: hack %11d\tgrow %11d\tweaken %11d', hackThreads, growThreads, weakenThreads);
 
   ns.printf(
     'INFO times:   hack %s\tgrow %s\tweaken %s',
@@ -46,7 +37,7 @@ const printTimes = (threadCounts, attackTimes, attackDelays) => {
   ns.printf('INFO ' + '-'.repeat(69));
 
   ns.printf(
-    'INFO sums:   hack %s\tgrow %s\tweaken %s',
+    'INFO sums:    hack %s\tgrow %s\tweaken %s',
     formatDuration(ns, hackTime + hackDelay, true),
     formatDuration(ns, growTime + growDelay, true),
     formatDuration(ns, weakenTime + weakenDelay, true)
@@ -63,8 +54,18 @@ const primeServer = async (sourceName, targetName) => {
   }
 };
 
-const performAttack = async (sourceName, targetName, threadCounts, attackDelays) => {
+const performAttack = async (sourceName, targetName, flags) => {
+  const maxShifts = flags.shifts;
+
   while (true) {
+    const threadCounts = calcPossibleThreads(ns, targetName, sourceName);
+    const attackTimes = calcAttackTimes(ns, targetName, threadCounts);
+    const attackDelays = calcAttackDelays(attackTimes);
+
+    printTimes(threadCounts, attackTimes, attackDelays);
+    checkThreads(threadCounts);
+    checkDelays(attackDelays);
+
     const { growThreads, hackThreads, weakenThreads } = threadCounts;
     const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
 
@@ -74,27 +75,10 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
 
     const ramShifts = Math.floor(availableRam / shiftRam);
     const timeShifts = Math.floor(sleepTime / BUFFER);
-    const shifts = Math.min(ramShifts, timeShifts);
+    const shifts = Math.min(ramShifts, timeShifts, maxShifts);
 
-    ns.printf(
-      'INFO %s Threads: %d, RAM %s/%s, shifts: %d (ram: %d, time: %d), duration: %s, BUFFER: %d',
-      formatTime(ns),
-      shiftThreads,
-      formatNumber(ns, shiftRam),
-      formatNumber(ns, availableRam),
-      shifts,
-      ramShifts,
-      timeShifts,
-      formatDuration(ns, sleepTime),
-      BUFFER
-    );
-
-    // assume primed server
     for (let shift = 0; shift < shifts; shift++) {
-      if (shifts > 1) {
-        ns.printf('%s Starting new attack shift %d...', formatTime(ns), shift);
-      }
-
+      // logServerInfo(ns, targetName);
       ns.exec(SCRIPTS.hack, sourceName, hackThreads, targetName, hackDelay, shift);
       ns.exec(SCRIPTS.grow, sourceName, growThreads, targetName, growDelay, shift);
       ns.exec(SCRIPTS.weaken, sourceName, weakenThreads, targetName, weakenDelay, shift);
@@ -105,12 +89,43 @@ const performAttack = async (sourceName, targetName, threadCounts, attackDelays)
 
     // sleep as many buffers remaining due to unused shifts
     const timeUntilNextShift = Math.round(sleepTime - BUFFER * shifts);
-    ns.printf(
-      'WARN Sleeping %s until starting next shift...',
-      formatDuration(ns, timeUntilNextShift)
-    );
+    // ns.printf('WARN Sleeping %s until starting next shift...', formatDuration(ns, timeUntilNextShift));
     await ns.sleep(timeUntilNextShift);
   }
+};
+
+const testAttack = async (sourceName, targetName, threadCounts, attackDelays, attackTimes) => {
+  const { growThreads, hackThreads, weakenThreads } = threadCounts;
+  const { growDelay, hackDelay, weakenDelay, sleepTime } = attackDelays;
+
+  const shiftThreads = growThreads + hackThreads + weakenThreads;
+  const shiftRam = shiftThreads * ns.getScriptRam(SCRIPTS.weaken);
+  const availableRam = ns.getServerMaxRam(sourceName) - ns.getScriptRam('multiAttack.js');
+
+  const ramShifts = Math.floor(availableRam / shiftRam);
+  const timeShifts = Math.floor(sleepTime / BUFFER);
+  const shifts = Math.min(ramShifts, timeShifts);
+
+  ns.printf(
+    'INFO %s Threads: %d, RAM %s/%s, shifts: %d (ram: %d, time: %d), duration: %s, BUFFER: %d',
+    formatTime(ns),
+    shiftThreads,
+    formatNumber(ns, shiftRam),
+    formatNumber(ns, availableRam),
+    shifts,
+    ramShifts,
+    timeShifts,
+    formatDuration(ns, sleepTime),
+    BUFFER
+  );
+
+  logServerInfo(ns, targetName);
+  ns.exec(SCRIPTS.hack, sourceName, hackThreads, targetName, hackDelay, 0);
+  ns.exec(SCRIPTS.grow, sourceName, growThreads, targetName, growDelay, 0);
+  ns.exec(SCRIPTS.weaken, sourceName, weakenThreads, targetName, weakenDelay, 0);
+
+  await ns.sleep(sleepTime + 5 * SECOND);
+  logServerInfo(ns, targetName);
 };
 
 const checkThreads = threadCounts => {
@@ -133,60 +148,50 @@ const checkDelays = attackDelays => {
 };
 
 const prepareAttack = async (sourceName, targetName, flags) => {
-  const threadCounts = calcPossibleThreads(ns, targetName, sourceName);
-  const attackTimes = calcAttackTimes(ns, targetName);
-  const attackDelays = calcAttackDelays(attackTimes);
-
-  printTimes(threadCounts, attackTimes, attackDelays);
-
-  checkThreads(threadCounts);
-  checkDelays(attackDelays);
-
   if (flags.noop) {
     ns.exit();
   }
 
   await primeServer(sourceName, targetName);
-  await performAttack(sourceName, targetName, threadCounts, attackDelays);
-};
 
-const bombAttack = async (sourceName, targetName) => {
-  ns.tprintf('WARN Bombing server %s with all my might!', targetName);
-  const threadCounts = calcMaxThreads(ns, sourceName);
-  const attackTimes = calcAttackTimes(ns, targetName);
-  const attackDelays = calcAttackDelays(attackTimes);
-
-  printTimes(threadCounts, attackTimes, attackDelays);
-  checkDelays(attackDelays);
-
-  await performAttack(sourceName, targetName, threadCounts, attackDelays);
+  if (flags.test) {
+    await testAttack(sourceName, targetName, attackTimes);
+  } else {
+    await performAttack(sourceName, targetName, flags);
+  }
 };
 
 export function autocomplete(data) {
-  return [...data.servers, '--noop', '--killall', '--bomb', '--tail']; // This script autocompletes the list of servers.
+  return [...data.servers, '--noop', '--killall', '--test', '--tail'];
 }
 
 export async function main(_ns) {
   ns = _ns;
+
+  const flags = ns.flags([
+    ['killall', false],
+    ['noop', false],
+    ['test', false],
+    ['shifts', 1000],
+  ]);
+
   ns.clearLog();
   ns.disableLog('disableLog');
-  ns.disableLog('exec');
-  ns.disableLog('killall');
-  ns.disableLog('getServerMaxRam');
-  ns.disableLog('getServerMinSecurityLevel');
-  ns.disableLog('getServerUsedRam');
   ns.disableLog('asleep');
   ns.disableLog('sleep');
-  // ns.tail();
+  ns.disableLog('getServerMinSecurityLevel');
+  ns.disableLog('getServerMaxRam');
+  ns.disableLog('getServerUsedRam');
+
+  if (flags.test) {
+    ns.tail();
+  } else {
+    ns.disableLog('exec');
+    ns.disableLog('killall');
+  }
 
   const targetName = ns.args[0];
   const sourceName = ns.getServer().hostname;
-
-  const flags = ns.flags([
-    ['noop', false],
-    ['killall', false],
-    ['bomb', false],
-  ]);
 
   if (flags.killall) {
     ns.tprintf('WARN Killing all multihack Scripts on %s', sourceName);
@@ -197,9 +202,5 @@ export async function main(_ns) {
     await ns.asleep(SECOND);
   }
 
-  if (flags.bomb) {
-    await bombAttack(sourceName, targetName);
-  } else {
-    await prepareAttack(sourceName, targetName, flags);
-  }
+  await prepareAttack(sourceName, targetName, flags);
 }

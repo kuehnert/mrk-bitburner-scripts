@@ -6,28 +6,28 @@
 
 import { useFormulas } from '/helpers/globals';
 
-export const hasFormulas = ns => useFormulas && ns.fileExists('Formulas.exe', 'home');
+/** @type import("..").NS */
+let ns = null;
 
-export const getGrowPercent = (
-  ns,
-  serverData,
-  threads = 1,
-  player = ns.getPlayer(),
-  sourceName = 'home'
-) => {
+export const hasFormulas = _ns => useFormulas && _ns.fileExists('Formulas.exe', 'home');
+
+export const getGrowPercent = (_ns, serverData, sourceName, threads = 1, player = _ns.getPlayer()) => {
+  ns = _ns;
+
   if (hasFormulas(ns)) {
-    return ns.formulas.hacking.growPercent(
-      serverData,
-      threads,
-      player,
-      ns.getServer(sourceName).cpuCores
-    );
+    ns.printf('WARN getGrowPercent CPU Cores: %d', ns.getServer(sourceName).cpuCores);
+    // if (ns.getServer(sourceName).cpuCores > 1) {
+    //   throw new Error('Würg');
+    // }
+    return ns.formulas.hacking.growPercent(serverData, threads, player, ns.getServer(sourceName).cpuCores);
   } else {
     return myGrowPercent(serverData, threads, player);
   }
 };
 
-export const getHackPercent = (ns, serverData, player = ns.getPlayer()) => {
+export const getHackPercent = (_ns, serverData, player = ns.getPlayer()) => {
+  ns = _ns;
+
   if (hasFormulas(ns)) {
     return ns.formulas.hacking.hackPercent(serverData, player);
   } else {
@@ -47,8 +47,7 @@ export function myHackPercent(server, player) {
   const difficultyMult = (100 - server.hackDifficulty) / 100;
   const skillMult = (player.hacking - (server.requiredHackingSkill - 1)) / player.hacking;
   const percentMoneyHacked =
-    (difficultyMult * skillMult * player.hacking_money_mult * BitNodeMultipliers.ScriptHackMoney) /
-    balanceFactor;
+    (difficultyMult * skillMult * player.hacking_money_mult * BitNodeMultipliers.ScriptHackMoney) / balanceFactor;
 
   if (percentMoneyHacked < 0) {
     return 0;
@@ -78,10 +77,7 @@ export function myGrowPercent(server, threads, player, cores = 1) {
   //Apply serverGrowth for the calculated number of growth cycles
   const coreBonus = 1 + (cores - 1) / 16;
 
-  return Math.pow(
-    adjGrowthRate,
-    numServerGrowthCyclesAdjusted * player.hacking_grow_mult * coreBonus
-  );
+  return Math.pow(adjGrowthRate, numServerGrowthCyclesAdjusted * player.hacking_grow_mult * coreBonus);
 }
 
 const CONSTANTS = {

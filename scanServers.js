@@ -36,7 +36,7 @@ export function autocomplete() {
 export async function main(_ns) {
   ns = _ns;
   ns.clearLog();
-  ns.disableLog('ALL');
+  // ns.disableLog('ALL');
 
   const flags = ns.flags([
     ['forceRefresh', false],
@@ -54,7 +54,7 @@ export async function main(_ns) {
     }
   }
 
-  await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
+  // await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
 
   if (flags.quiet) {
     ns.exit();

@@ -35,37 +35,18 @@ export async function main(_ns) {
 
   const sourceName = flags.fromHome ? 'home' : 'foodnstuff';
 
-  const {
-    growRam,
-    growThreads,
-    hackRam,
-    hackThreads,
-    ramRequired,
-    serverSizeRequired,
-    weakenRam,
-    weakenThreads,
-  } = calcTotalRamCost(ns, serverName, sourceName, flags.shifts);
+  const threads = calcTotalRamCost(ns, serverName, sourceName, flags.shifts);
+  const { growRam, growThreads, hackRam, hackThreads, ramRequired, serverSizeRequired, weakenRam, weakenThreads } =
+    threads;
 
-  const times = calcAttackTimes(ns, serverName, flags.shifts);
+  const times = calcAttackTimes(ns, serverName, threads);
   const { growTime, hackTime, weakenTime } = times;
   const { sleepTime } = calcAttackDelays(times);
   const maxShifts = flags.shifts === 1 ? Math.floor(sleepTime / BUFFER) : flags.shifts;
 
   hprint(ns, 'Analysing server I~%s~', serverName);
-  hprint(
-    ns,
-    'GROW   threads: %4d\tRAM required: %4d GB\ttime: %s',
-    growThreads,
-    growRam,
-    formatDuration(ns, growTime)
-  );
-  hprint(
-    ns,
-    'HACK   threads: %4d\tRAM required: %4d GB\ttime: %s',
-    hackThreads,
-    hackRam,
-    formatDuration(ns, hackTime)
-  );
+  hprint(ns, 'GROW   threads: %4d\tRAM required: %4d GB\ttime: %s', growThreads, growRam, formatDuration(ns, growTime));
+  hprint(ns, 'HACK   threads: %4d\tRAM required: %4d GB\ttime: %s', hackThreads, hackRam, formatDuration(ns, hackTime));
   hprint(
     ns,
     'WEAKEN threads: %4d\tRAM required: %4d GB\ttime: %s',
@@ -99,12 +80,8 @@ export async function main(_ns) {
     previousServerSize = current.parallelServerSizeRequired;
   }
 
-  const { parallelRamRequired, parallelServerSizeRequired } = calcTotalRamCost(
-    ns,
-    serverName,
-    sourceName,
-    maxShifts
-  );
+  const { parallelRamRequired, parallelServerSizeRequired } = calcTotalRamCost(ns, serverName, sourceName, maxShifts);
+
   logData(
     serverName,
     maxShifts,

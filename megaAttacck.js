@@ -31,8 +31,9 @@ export async function main(_ns) {
   }
 
   ns.printf('INFO Starting queued attack...');
-  const { growThreads, hackThreads, weakenThreads } = calcTotalRamCost(ns, targetName);
-  const { growTime, hackTime, weakenTime } = calcAttackTimes(ns, targetName);
+  const threads = calcTotalRamCost(ns, targetName);
+  const { growThreads, hackThreads, weakenThreads } = threads;
+  const { growTime, hackTime, weakenTime } = calcAttackTimes(ns, targetName, threads);
 
   const growDelay = weakenTime - BUFFER - growTime;
   const hackDelay = weakenTime - 2 * BUFFER - hackTime;

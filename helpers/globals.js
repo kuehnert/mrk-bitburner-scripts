@@ -18,4 +18,4 @@ export const useFormulas = true;
 
 export const SKILLS = ['strength', 'defense', 'dexterity', 'agility'];
 
-export const BUFFER = 250; // one second between each finished command
+export const BUFFER = 1000; // time between each finished command in ms
