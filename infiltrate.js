@@ -99,13 +99,11 @@ const playSlashwhenhisguardisdown = async () => {
 
 const playClosethebrackets = async () => {
   console.log('INFO Close the brackets');
-  const brackets = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-144co15 > p'
-  ).innerText;
+  const brackets = document.querySelector('div.MuiPaper-root > p').innerText;
+  // console.log(brackets);
 
-  ns.print(brackets);
-
-  for (let i = 0; i < brackets.length; i++) {
+  for (let i = brackets.length - 1; i >= 0; i--) {
+    await ns.sleep(250);
     const char = brackets[i];
     switch (char) {
       case '<':
@@ -118,6 +116,10 @@ const playClosethebrackets = async () => {
 
       case '{':
         await typeChar(ns, '}');
+        break;
+
+      case '(':
+        await typeChar(ns, ')');
         break;
 
       default:
