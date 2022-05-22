@@ -21,13 +21,18 @@ const logAugmentation = ({ name, price, reputationRequired, factionNames, purcha
     })
     .join(', ');
 
+  const seller = factionNames.find(fn => factions[fn].rep >= reputationRequired);
+  const buyButton = seller ? ns.sprintf("[BUY]!do ns.purchaseAugmentation(\\'%s\\', \\'%s\\')!", seller, name) : '   ';
+
   hprint(
     ns,
-    '%s %-55s %s %s %s',
+    '%s %-55s %s %s %s %s',
     prefix,
     name,
     formatMoney(ns, price, { markAffordable: true }),
     formatNumber(ns, reputationRequired),
+    // ns.sprintf('[BUY](do ns.purchaseAugmentation(%s, %s)', name, name),
+    buyButton,
     factionStr
   );
 };

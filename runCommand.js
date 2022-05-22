@@ -7,7 +7,7 @@ export async function main(_ns) {
   // ns.clearLog();
   document.baseURI; // oomph ram usage so eval works
 
-  const cmd = ns.args.join('');
+  const cmd = ns.args.join(' ');
   ns.tprintf('Running %s', cmd);
   const output = await eval(cmd);
   ns.tprintf('Result: %s', JSON.stringify(output, null, 4));

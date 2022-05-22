@@ -165,7 +165,8 @@ export async function main(_ns) {
   */
 
   while (true) {
-    // ns.print("Looking for game...")
+    ns.print("Looking for game...")
+    typeChar("w");
 
     if (find('//h4[text() = "Close the brackets"]')) {
       await playClosethebrackets();
@@ -203,8 +204,9 @@ const setText = async (input, text) => {
 };
 
 const typeChar = async char => {
-  const elem = document.querySelector('#root > div');
-  await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, key: char });
+  // const elem = document.querySelector('#root > div');
+  ns.printf('document: %s', JSON.stringify(document, null, 4));
+  // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, key: char });
 };
 // await terminalInput[handler].onKeyDown({key:'Enter',preventDefault:()=>null});
-// document.body.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: char }));
+// document.body.dispatchEvent(new KeyboardEvent('

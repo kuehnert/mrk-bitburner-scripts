@@ -54,7 +54,7 @@ export async function main(_ns) {
     }
   }
 
-  // await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
+  await ns.write('/data/servers.txt', JSON.stringify(detailedServers), 'w');
 
   if (flags.quiet) {
     ns.exit();

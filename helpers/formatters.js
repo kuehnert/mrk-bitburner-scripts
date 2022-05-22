@@ -70,7 +70,7 @@ export const amountFromString = str => {
 
 export const formatCmd = (text, cmd, { onlyIf = true }) => {
   if (onlyIf) {
-    return `[${text}](${cmd})`;
+    return `[${text}]!${cmd}!`;
   } else {
     return text;
   }

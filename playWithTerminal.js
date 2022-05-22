@@ -56,7 +56,7 @@ export async function main(_ns) {
   hprint(ns, 'Hallo %d %s', 123, 'World');
   hprint(ns, 'Hallo I~Friend~ W~orange~ E~red~ S~what~ normal\ttab\tab	tab');
   hprint(ns, 'Click this <span class="info" onClick="cmdInTerminal(\'home\')">link</span> and you\'ll feel much better!');
-  hprint(ns, 'Click [BUTTON](home), and you\'ll feel like a new man!');
+  hprint(ns, 'Click [BUTTON]("home; buy -l"), and you\'ll feel like a new man!');
 
   // cmdInTerminal("run doGym.js --level 10");
 
@@ -89,4 +89,6 @@ export async function main(_ns) {
   // );
   // document.dispatchEvent(keyboardEvent);
   // document.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 65, which: 65 }));
+
+  getEventListeners(document).keydown.forEach((list) => {list.listener(new KeyboardEvent('keydown', {key: 'a', isTrusted: true}))})
 }
