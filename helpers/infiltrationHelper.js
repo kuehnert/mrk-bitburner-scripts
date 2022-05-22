@@ -17,15 +17,15 @@ export const typeChar = async (ns, char) => {
     mode: 'no-cors'
   };
   const url = 'http://localhost:42800/send/SendKeyToBitburner' + charToSend;
+  // console.log('Sending', charToSend);
 
   try {
-    console.log('Sending', charToSend);
-    const res = await fetch(url, options);
-    // ns.tprintf('res: %s', JSON.stringify(res, null, 4));
-    await ns.sleep(80);
+    await fetch(url, options);
   } catch (error) {
-    ns.tprintf('error: %s', JSON.stringify(error, null, 4));
+    console.error(error);
   }
+
+  await ns.sleep(80);
 };
 
 /*

@@ -103,7 +103,7 @@ const playClosethebrackets = async () => {
   // console.log(brackets);
 
   for (let i = brackets.length - 1; i >= 0; i--) {
-    await ns.sleep(250);
+    await ns.sleep(100);
     const char = brackets[i];
     switch (char) {
       case '<':
@@ -130,16 +130,19 @@ const playClosethebrackets = async () => {
 
 const playTypeitbackward = async () => {
   console.log('INFO Type it backward');
-  const words = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(3) > p'
-  ).innerText;
-  ns.print(words);
-  console.log('words', words);
+  let wordsEl = document.querySelector('div.MuiPaper-root > p:nth-child(2)');
+  const words = wordsEl.innerText.replace(/\s/g, '_');
+  console.log('words', JSON.stringify(words));
 
   for (let i = 0; i < words.length; i++) {
     const char = words[i];
-    typeChar(ns, char);
-    await ns.sleep(100);
+    await typeChar(ns, char);
+    // await ns.sleep(50);
+
+    wordsEl = document.querySelector('div.MuiPaper-root > p:nth-child(2)');
+    if (!wordsEl) {
+      break;
+    }
   }
 };
 
@@ -213,8 +216,7 @@ export async function main(_ns) {
       await playCutthewires();
     } else if (gameHeaderEl.textContent === 'Enter the Code!') {
       await playEnterthecode();
-      // } else if (find('//h4[text() = "Type it backward"]')) {
-    } else if (find('//h4[contains(text(), "backward")]')) {
+    } else if (gameHeaderEl.textContent === 'Type it backward') {
       await playTypeitbackward();
     } else if (find('//h4[text() = "Match the symbols!"]')) {
       await playMatchthesymbols();
