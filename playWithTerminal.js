@@ -1,6 +1,7 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { typeChar } from './helpers/infiltrationHelper';
 import { hprint, tablePrint } from '/helpers/hprint';
 
 const demoTablePrint = () => {
@@ -14,7 +15,7 @@ const demoTablePrint = () => {
   tablePrint(ns, headers, data);
 };
 
-const cmdInTerminal = (cmd) => {
+const cmdInTerminal = cmd => {
   // Acquire a reference to the terminal text field
   const terminalInput = document.getElementById('terminal-input');
 
@@ -37,17 +38,17 @@ const cmdInTerminal = (cmd) => {
 //   tEv.onKeyDown({ keyCode: '13', preventDefault: () => 0 });
 // };
 
-const fakeKeyDown = (element, key) => {
-  const handler = Object.keys(element)[1];
-  element[handler].onKeyDown({ isTrusted: true, key });
-};
+// const fakeKeyDown = (element, key) => {
+//   const handler = Object.keys(element)[1];
+//   element[handler].onKeyDown({ isTrusted: true, key });
+// };
 
-const typeChar = async char => {
-  const elem = document.querySelector('#root');
-  // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, key: 'c', metaKey: true });
-  // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, code: 'KeyV' });
-  await document.onKeyDown({ isTrusted: true, code: 'KeyV' });
-};
+// const typeChar = async char => {
+//   const elem = document.querySelector('#root');
+//   // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, key: 'c', metaKey: true });
+//   // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, code: 'KeyV' });
+//   await document.onKeyDown({ isTrusted: true, code: 'KeyV' });
+// };
 
 export async function main(_ns) {
   ns = _ns;
@@ -55,7 +56,10 @@ export async function main(_ns) {
 
   hprint(ns, 'Hallo %d %s', 123, 'World');
   hprint(ns, 'Hallo I~Friend~ W~orange~ E~red~ S~what~ normal\ttab\tab	tab');
-  hprint(ns, 'Click this <span class="info" onClick="cmdInTerminal(\'home\')">link</span> and you\'ll feel much better!');
+  hprint(
+    ns,
+    'Click this <span class="info" onClick="cmdInTerminal(\'home\')">link</span> and you\'ll feel much better!'
+  );
   hprint(ns, 'Click [BUTTON]("home; buy -l"), and you\'ll feel like a new man!');
 
   // cmdInTerminal("run doGym.js --level 10");
@@ -90,5 +94,23 @@ export async function main(_ns) {
   // document.dispatchEvent(keyboardEvent);
   // document.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 65, which: 65 }));
 
-  getEventListeners(document).keydown.forEach((list) => {list.listener(new KeyboardEvent('keydown', {key: 'a', isTrusted: true}))})
+  // getEventListeners(document).keydown.forEach((list) => { list.listener(new KeyboardEvent('keydown', { key: 'a', isTrusted: true })); })
+
+  await typeChar(ns, 'h');
+  await typeChar(ns, 'Space');
+  await typeChar(ns, 'e');
+  // await typeChar(ns, 'l');
+  // await typeChar(ns, 'l');
+  // await typeChar(ns, 'o');
+  // await typeChar(ns, '{');
+  // await typeChar(ns, '}');
+  // await typeChar(ns, 'w');
+  // await typeChar(ns, 'o');
+  // await typeChar(ns, 'r');
+  // await typeChar(ns, 'l');
+  // await typeChar(ns, 'd');
+  // await typeChar(ns, '[');
+  // await typeChar(ns, '<');
+  // await typeChar(ns, '>');
+  // await typeChar(ns, ']');
 }

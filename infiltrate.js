@@ -3,21 +3,20 @@ let ns = null;
 
 import { formatMoney } from 'helpers/formatters';
 import { hprint } from 'helpers/hprint';
+import { typeChar } from 'helpers/infiltrationHelper';
 
-const MAX_WAGER = 100000000;
 const CLICK_SLEEP_TIME = null;
-const SAVE_SLEEP_TIME = 500;
 const CITY = 'New Tokyo';
 const LOCATION = 'Noodle Bar';
 const GAMES = ['Type it backward'];
 
 const playCutthewires = async () => {
-  ns.print('INFO Cut the wires with the following properties! (keyboard 1 to 9)!');
+  console.log('INFO Cut the wires with the following properties! (keyboard 1 to 9)!');
   // const tTargets = find('//h5[text() = "Targets:"');
 };
 
 const playEnterthecode = async () => {
-  ns.print('INFO Enter the code!');
+  console.log('INFO Enter the code!');
 
   while (
     document.querySelector(
@@ -25,23 +24,24 @@ const playEnterthecode = async () => {
     ).innerText === 'Enter the Code!'
   ) {
     const target = document.querySelector(
-      '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(2) > h4:nth-child(2)'
+      '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-144co15 > h4:nth-child(2)'
     );
+
     switch (target.innerText) {
       case '↑':
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'w' }));
+        await typeChar(ns, 'w');
         break;
 
       case '↓':
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 's' }));
+        await typeChar(ns, 'd');
         break;
 
       case '←':
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+        await typeChar(ns, 'a');
         break;
 
       case '→':
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd' }));
+        await typeChar(ns, 'd');
         break;
 
       default:
@@ -53,9 +53,9 @@ const playEnterthecode = async () => {
 };
 
 const playMatchthesymbols = async () => {
-  ns.print('INFO Match the symbols!');
+  console.log('INFO Match the symbols!');
   const tTargets = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(2) > h5'
+    '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-uwq70s > h5'
   );
 
   // get symbols
@@ -64,9 +64,12 @@ const playMatchthesymbols = async () => {
     symbols.push(tTargets.children[i].innerText.substring(0, 2));
   }
   ns.print(symbols);
+  console.log(symbols);
 
   // get grid
-  const firstLine = document.querySelector("#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(2) > div:nth-child(4) > p");
+  const firstLine = document.querySelector(
+    '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(2) > div:nth-child(4) > p'
+  );
   const grid = [];
   for (let i = 0; i < firstLine.children.length; i++) {
     grid.push(firstLine.children[i].innerText.substring(0, 2));
@@ -77,48 +80,84 @@ const playMatchthesymbols = async () => {
 };
 
 const playSlashwhenhisguardisdown = async () => {
-  ns.print('INFO Slash when his guard is down!');
+  console.log('INFO Slash when his guard is down!');
+  let statusEl;
+
+  do {
+    await ns.sleep(100);
+    statusEl = document.querySelector(
+      '#root > div > div.makeStyles-root-3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-1gbocki-MuiPaper-root > h4:nth-child(2)'
+    );
+
+    // console.log('INLOOP statusEl.textContent', statusEl.textContent);
+  } while (statusEl.textContent === 'Guarding ...');
+
+  // console.log('AFTER statusEl.textContent', statusEl.textContent);
+  await ns.sleep(250);
+  await typeChar(ns, 'Space');
 };
 
 const playClosethebrackets = async () => {
-  ns.print('INFO Close the brackets');
+  console.log('INFO Close the brackets');
   const brackets = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(2) > p'
+    '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-144co15 > p'
   ).innerText;
 
   ns.print(brackets);
 
   for (let i = 0; i < brackets.length; i++) {
     const char = brackets[i];
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: char }));
-    await ns.sleep(100);
+    switch (char) {
+      case '<':
+        await typeChar(ns, '>');
+        break;
+
+      case '[':
+        await typeChar(ns, ']');
+        break;
+
+      case '{':
+        await typeChar(ns, '}');
+        break;
+
+      default:
+        break;
+    }
   }
 };
 
 const playTypeitbackward = async () => {
-  ns.print('INFO Type it backward');
+  console.log('INFO Type it backward');
   const words = document.querySelector(
     '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(3) > p'
   ).innerText;
   ns.print(words);
+  console.log('words', words);
 
   for (let i = 0; i < words.length; i++) {
     const char = words[i];
-    typeChar(char);
+    typeChar(ns, char);
     await ns.sleep(100);
   }
 };
 
 const playSaysomethingniceabouttheguard = async () => {
-  ns.print('INFO Say something nice about the guard.');
+  console.log('INFO Say something nice about the guard.');
+  const NICE_WORDS = ['based', 'bright', 'creative', 'hardworking', 'kind', 'nice', 'patient'];
   const tWord = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-6.css-qqlytg > h5:nth-child(1)'
+    '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-144co15 > h5:nth-child(3)'
   );
-  ns.print(tWord);
 
-  for (let i = 0; i < 5; i++) {
-    typeChar('w');
-    await ns.sleep(100);
+  for (let i = 0; i < 10; i++) {
+    const word = tWord.innerText;
+    console.log('word', word);
+
+    if (NICE_WORDS.includes(word)) {
+      await typeChar(ns, '§'); // Enter
+    } else {
+      await typeChar(ns, 's'); // Down
+      await ns.sleep(100);
+    }
   }
 };
 
@@ -155,38 +194,37 @@ export async function main(_ns) {
     await click(bStart);
   }
 
-  /*
-  // const bSave = find("//button[@aria-label = 'save game']");
-  const tfWager = find('//input[@value = 1000000]');
-  const myMoney = ns.getServerMoneyAvailable('home');
-  const wager = Math.min(MAX_WAGER, myMoney);
-  ns.printf('Wagering %s/%s money', formatMoney(ns, wager), formatMoney(ns, MAX_WAGER));
-  setText(tfWager, '' + wager);
-  */
-
   while (true) {
-    ns.print("Looking for game...")
-    typeChar("w");
+    ns.print('Looking for game...');
+    const gameHeaderEl = document.querySelector('div.MuiPaper-root > h4:nth-child(1)');
+
+    if (!gameHeaderEl || gameHeaderEl.textContent === 'Infiltration successful!') {
+      break;
+    }
+
+    console.log('gameHeaderEl.textContent', gameHeaderEl.textContent);
+    // typeChar(ns, 'w');
 
     if (find('//h4[text() = "Close the brackets"]')) {
       await playClosethebrackets();
     } else if (find('//h4[text() = "Cut the wires with the following properties! (keyboard 1 to 9)"]')) {
       await playCutthewires();
-    } else if (find('//h4[text() = "Enter the Code!"]')) {
+    } else if (gameHeaderEl.textContent === 'Enter the Code!') {
       await playEnterthecode();
-    } else if (find('//h4[text() = "Type it backward"]')) {
+      // } else if (find('//h4[text() = "Type it backward"]')) {
+    } else if (find('//h4[contains(text(), "backward")]')) {
       await playTypeitbackward();
     } else if (find('//h4[text() = "Match the symbols!"]')) {
       await playMatchthesymbols();
-    } else if (find('//h4[text() = "Say something nice about the guard."]')) {
+    } else if (find('//h4[text() = "Say something nice about the guard"]')) {
       await playSaysomethingniceabouttheguard();
-    } else if (find('//h4[text() = "Slash when his guard is down!"]')) {
+    } else if (gameHeaderEl.textContent === 'Slash when his guard is down!') {
       await playSlashwhenhisguardisdown();
     } else {
-      // ns.print('No game found...');
+      console.log('No game found...');
     }
 
-    await ns.sleep(500);
+    await ns.sleep(1000);
   }
 }
 
@@ -198,15 +236,15 @@ const click = async elem => {
   if (CLICK_SLEEP_TIME) await ns.sleep(CLICK_SLEEP_TIME);
 };
 
-const setText = async (input, text) => {
-  await input[Object.keys(input)[1]].onChange({ isTrusted: true, target: { value: text } });
-  if (CLICK_SLEEP_TIME) await _ns.sleep(CLICK_SLEEP_TIME);
-};
+// const setText = async (input, text) => {
+//   await input[Object.keys(input)[1]].onChange({ isTrusted: true, target: { value: text } });
+//   if (CLICK_SLEEP_TIME) await _ns.sleep(CLICK_SLEEP_TIME);
+// };
 
-const typeChar = async char => {
-  // const elem = document.querySelector('#root > div');
-  ns.printf('document: %s', JSON.stringify(document, null, 4));
-  // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, key: char });
-};
+// const typeChar = async char => {
+//   // const elem = document.querySelector('#root > div');
+//   ns.printf('document: %s', JSON.stringify(document, null, 4));
+//   // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, key: char });
+// };
 // await terminalInput[handler].onKeyDown({key:'Enter',preventDefault:()=>null});
 // document.body.dispatchEvent(new KeyboardEvent('

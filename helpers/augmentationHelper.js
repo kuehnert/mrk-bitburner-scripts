@@ -17,10 +17,10 @@ export const getAugmentations = ns => {
 
     for (const fa of factionAugmentations) {
       const aug = _augmentations[fa] ?? { name: fa };
-      aug.prerequisites = ns.getAugmentationPrereq(fa);
-      aug.price = ns.getAugmentationPrice(fa);
-      aug.reputationRequired = ns.getAugmentationRepReq(fa);
-      aug.stats = ns.getAugmentationStats(fa);
+      aug.prerequisites = {};  // ns.getAugmentationPrereq(fa);
+      aug.price = 0;  // ns.getAugmentationPrice(fa);
+      aug.reputationRequired = 0;  // ns.getAugmentationRepReq(fa);
+      aug.stats = {};  // ns.getAugmentationStats(fa);
       aug.factionNames ??= [];
       aug.factionNames.push(factionName);
       aug.purchased = ownedAugmentations.includes(fa);

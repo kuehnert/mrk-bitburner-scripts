@@ -36,19 +36,19 @@ export const getCrimes = async _ns => {
   ns = _ns;
 
   let crimes;
-  if (ns.fileExists(crimesFile)) {
-    crimes = JSON.parse(ns.read(crimesFile));
-  } else {
-    const pid = ns.run('fetchCrimes.js', 1);
+  // if (ns.fileExists(crimesFile)) {
+  //   crimes = JSON.parse(ns.read(crimesFile));
+  // } else {
+  const pid = ns.run('fetchCrimes.js', 1);
 
-    if (pid === 0) {
-      ns.tprintf('ERROR No crimes.txt file and error running fetchCrimes.js. Exiting.');
-      ns.exit();
-    } else {
-      await ns.sleep(1000);
-      crimes = JSON.parse(ns.read(crimesFile));
-    }
+  if (pid === 0) {
+    ns.tprintf('ERROR No crimes.txt file and error running fetchCrimes.js. Exiting.');
+    ns.exit();
+  } else {
+    await ns.sleep(1000);
+    crimes = JSON.parse(ns.read(crimesFile));
   }
+  // }
 
   return crimes;
 };
