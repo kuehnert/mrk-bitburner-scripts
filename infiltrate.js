@@ -148,20 +148,50 @@ const playTypeitbackward = async () => {
 
 const playSaysomethingniceabouttheguard = async () => {
   console.log('INFO Say something nice about the guard.');
-  const NICE_WORDS = ['based', 'bright', 'creative', 'hardworking', 'kind', 'nice', 'patient'];
-  const tWord = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-144co15 > h5:nth-child(3)'
-  );
+  const NICE_WORDS = [
+    'affectionate',
+    'agreeable',
+    'based',
+    'bright',
+    'charming',
+    'creative',
+    'determined',
+    'diplomatic',
+    'dynamic',
+    'energetic',
+    'friendly',
+    'funny',
+    'generous',
+    'giving',
+    'hardworking',
+    'helpful',
+    'kind',
+    'likable',
+    'loyal',
+    'nice',
+    'patient',
+    'polite',
+  ];
 
-  for (let i = 0; i < 10; i++) {
-    const word = tWord.innerText;
+  let headerEl = document.querySelector('div.MuiPaper-root > h5');
+
+  while (headerEl != null) {
+    while (document.querySelector('div.MuiPaper-root > h4:nth-child(1)').innerText === 'Get Ready!') {
+      await ns.sleep(100);
+    }
+
+    const wordEl = document.querySelector('div.MuiPaper-root > h5:nth-child(3)');
+    // console.log('wordEl', wordEl);
+    const word = wordEl.innerText;
     console.log('word', word);
 
     if (NICE_WORDS.includes(word)) {
-      await typeChar(ns, '§'); // Enter
+      await typeChar(ns, '_'); // Space
+      await ns.sleep(500);
+      headerEl = document.querySelector('div.MuiPaper-root > h5');
     } else {
       await typeChar(ns, 's'); // Down
-      await ns.sleep(100);
+      // await ns.sleep(50);
     }
   }
 };
