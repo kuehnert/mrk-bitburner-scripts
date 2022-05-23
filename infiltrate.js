@@ -48,29 +48,60 @@ const playEnterthecode = async () => {
 
 const playMatchthesymbols = async () => {
   console.log('INFO Match the symbols!');
-  const tTargets = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-uwq70s > h5'
-  );
+  const targetsEl = document.querySelector('.css-1xsuhln-MuiPaper-root > h5').children;
 
   // get symbols
   const symbols = [];
-  for (let i = 0; i < tTargets.children.length; i++) {
-    symbols.push(tTargets.children[i].innerText.substring(0, 2));
+  for (let i = 0; i < targetsEl.length; i++) {
+    symbols.push(targetsEl[i].innerText.substring(0, 2));
   }
-  ns.print(symbols);
   console.log(symbols);
 
   // get grid
-  const firstLine = document.querySelector(
-    '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(2) > div:nth-child(4) > p'
-  );
-  const grid = [];
-  for (let i = 0; i < firstLine.children.length; i++) {
-    grid.push(firstLine.children[i].innerText.substring(0, 2));
-  }
-  ns.print(grid);
+  const gridEl = document.querySelector('.MuiBox-root > div > div > div.MuiPaper-root > div');
+  const grid = Array.from(gridEl.children);
+  const cols = Math.floor(Math.sqrt(gridEl.children.length));
+  let x = 0;
+  let y = 0;
 
-  await ns.sleep(1000);
+  // go through symbols one by one
+  for (const target of symbols) {
+    // find target in grid
+    const tEl = grid.find(e => e.innerText === target);
+    const tIn = grid.indexOf(tEl);
+    const tx = tIn % cols;
+    const ty = Math.floor(tIn / cols);
+    console.log('tIn', tIn);
+    console.log('tx', tx);
+    console.log('ty', ty);
+
+    while (tx > x) {
+      await typeChar(ns, 'd');
+      x++;
+      await ns.sleep(60);
+    }
+
+    while (tx < x) {
+      await typeChar(ns, 'a');
+      x--;
+      await ns.sleep(60);
+    }
+
+    while (ty > y) {
+      await typeChar(ns, 's');
+      y++;
+      await ns.sleep(60);
+    }
+
+    while (ty < y) {
+      await typeChar(ns, 'w');
+      y--;
+      await ns.sleep(60);
+    }
+
+    await typeChar(ns, 'Space');
+    await ns.sleep(200);
+  }
 };
 
 const playSlashwhenhisguardisdown = async () => {
