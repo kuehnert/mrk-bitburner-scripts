@@ -18,22 +18,16 @@ const playCutthewires = async () => {
 const playEnterthecode = async () => {
   console.log('INFO Enter the code!');
 
-  while (
-    document.querySelector(
-      '#root > div > div.jss3.MuiBox-root.css-0 > div > div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.css-1cwz49y > div > div:nth-child(2) > h4:nth-child(1)'
-    ).innerText === 'Enter the Code!'
-  ) {
-    const target = document.querySelector(
-      '#root > div > div.jss3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-144co15 > h4:nth-child(2)'
-    );
+  while (document.querySelector('div.MuiPaper-root > h4:nth-child(1)').innerText === 'Enter the Code!') {
+    const direction = document.querySelector('div.MuiPaper-root > h4:nth-child(2)').innerText;
 
-    switch (target.innerText) {
+    switch (direction) {
       case '↑':
         await typeChar(ns, 'w');
         break;
 
       case '↓':
-        await typeChar(ns, 'd');
+        await typeChar(ns, 's');
         break;
 
       case '←':
