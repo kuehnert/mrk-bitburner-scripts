@@ -1,18 +1,73 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { formatMoney } from 'helpers/formatters';
 import { hprint } from 'helpers/hprint';
 import { typeChar } from 'helpers/infiltrationHelper';
 
 const CLICK_SLEEP_TIME = null;
-const CITY = 'New Tokyo';
-const LOCATION = 'Noodle Bar';
-const GAMES = ['Type it backward'];
+// const CITY = 'New Tokyo';
+// const LOCATION = 'Noodle Bar';
+// const LOCATION = 'DefComm';
+const CITY = 'Sector-12';
+// const LOCATION = "Joe's Guns";
+const LOCATION = "Alpha Enterprises";
 
 const playCutthewires = async () => {
-  console.log('INFO Cut the wires with the following properties! (keyboard 1 to 9)!');
-  // const tTargets = find('//h5[text() = "Targets:"');
+  console.log('INFO Cut the wires');
+
+  const gridEl = document.querySelector('.MuiBox-root.css-0 > div > div > div.MuiPaper-root > div');
+  const gridComputedStyle = window.getComputedStyle(gridEl);
+  const cols = gridComputedStyle.getPropertyValue('grid-template-columns').split(' ').length;
+  const colourMap = {
+    blue: [],
+    red: [],
+    white: [],
+    yellow: [],
+  };
+
+  const boxes = Array.from(gridEl.children);
+  for (let i = cols; i < boxes.length; i++) {
+    const box = boxes[i];
+    const col = (i % cols) + 1;
+    let colour = box.style.color;
+
+    if (colour === 'rgb(255, 193, 7)') {
+      colour = 'yellow';
+    }
+
+    if (!colourMap[colour].includes(col)) {
+      colourMap[colour].push(col);
+    }
+  }
+  console.log('colourMap', colourMap);
+
+  const instructionsEls = document.querySelectorAll('div.MuiPaper-root > p');
+  const instructions = Array.from(instructionsEls).map(e => e.innerText);
+  console.log('instructions', instructions);
+
+  for (const instruction of instructions) {
+    const numberM = instruction.match(/\d/);
+    if (numberM) {
+      // deal with a number to press
+      const number = numberM[0];
+      console.log('typing number', number);
+      await typeChar(ns, number);
+    } else {
+      // deal with a colour
+      const colourM = instruction.match(/\bred|blue|white|yellow\b/);
+      const colour = colourM[0];
+      console.log('marking all columns containing colour', colour);
+
+      // find all cols with this colour
+      const colsToCut = colourMap[colour];
+      // console.log('cutting cols', colsToCut);
+
+      for (const col of colsToCut) {
+        // console.log('typing', col);
+        await typeChar(ns, '' + col);
+      }
+    }
+  }
 };
 
 const playEnterthecode = async () => {
@@ -48,7 +103,7 @@ const playEnterthecode = async () => {
 
 const playMatchthesymbols = async () => {
   console.log('INFO Match the symbols!');
-  const targetsEl = document.querySelector('.css-1xsuhln-MuiPaper-root > h5').children;
+  const targetsEl = document.querySelector('.MuiBox-root > div > div > div.MuiPaper-root:nth-child(3) > h5').children;
 
   // get symbols
   const symbols = [];
@@ -75,29 +130,29 @@ const playMatchthesymbols = async () => {
     while (tx > x) {
       await typeChar(ns, 'd');
       x++;
-      await ns.sleep(60);
+      // await ns.sleep(60);
     }
 
     while (tx < x) {
       await typeChar(ns, 'a');
       x--;
-      await ns.sleep(60);
+      // await ns.sleep(60);
     }
 
     while (ty > y) {
       await typeChar(ns, 's');
       y++;
-      await ns.sleep(60);
+      // await ns.sleep(60);
     }
 
     while (ty < y) {
       await typeChar(ns, 'w');
       y--;
-      await ns.sleep(60);
+      // await ns.sleep(60);
     }
 
     await typeChar(ns, 'Space');
-    await ns.sleep(200);
+    await ns.sleep(100);
   }
 };
 
@@ -107,9 +162,7 @@ const playSlashwhenhisguardisdown = async () => {
 
   do {
     await ns.sleep(100);
-    statusEl = document.querySelector(
-      '#root > div > div.makeStyles-root-3.MuiBox-root.css-0 > div > div > div.MuiPaper-root.MuiPaper-elevation.MuiPaper-rounded.MuiPaper-elevation1.css-1gbocki-MuiPaper-root > h4:nth-child(2)'
-    );
+    statusEl = document.querySelector('.MuiPaper-root > h4:nth-child(2)');
 
     // console.log('INLOOP statusEl.textContent', statusEl.textContent);
   } while (statusEl.textContent === 'Guarding ...');
@@ -195,22 +248,22 @@ const playSaysomethingniceabouttheguard = async () => {
     'polite',
   ];
 
-  let headerEl = document.querySelector('div.MuiPaper-root > h5');
+  let headerEl = document.querySelector('div.MuiPaper-root > h4:nth-child(1)');
 
-  while (headerEl != null) {
+  while (headerEl != null && headerEl.innerText === 'Say something nice about the guard') {
     while (document.querySelector('div.MuiPaper-root > h4:nth-child(1)').innerText === 'Get Ready!') {
       await ns.sleep(100);
     }
 
     const wordEl = document.querySelector('div.MuiPaper-root > h5:nth-child(3)');
-    // console.log('wordEl', wordEl);
+    console.log('wordEl', wordEl);
     const word = wordEl.innerText;
     console.log('word', word);
 
     if (NICE_WORDS.includes(word)) {
       await typeChar(ns, '_'); // Space
-      await ns.sleep(500);
-      headerEl = document.querySelector('div.MuiPaper-root > h5');
+      await ns.sleep(200);
+      headerEl = document.querySelector('div.MuiPaper-root > h4:nth-child(1)');
     } else {
       await typeChar(ns, 's'); // Down
       // await ns.sleep(50);
@@ -256,19 +309,16 @@ const playMinesweeper = async () => {
       if (mines.includes(index)) {
         // console.log('Woohoo! Placing mine at index', index);
         await typeChar(ns, 'Space');
-        // await ns.sleep(100);
+        await ns.sleep(20);
       }
 
       await typeChar(ns, 'd');
-      // await ns.sleep(100);
+      await ns.sleep(20);
     }
 
-    // one more to get back to first column
-    // await typeChar(ns, 'd');
-    // await ns.sleep(100);
     // go down one
     await typeChar(ns, 's');
-    // await ns.sleep(100);
+    await ns.sleep(20);
   }
 };
 
@@ -313,31 +363,30 @@ export async function main(_ns) {
       break;
     }
 
-    console.log('gameHeaderEl.textContent', gameHeaderEl.textContent);
-    // typeChar(ns, 'w');
-
-    if (find('//h4[text() = "Close the brackets"]')) {
+    if (gameHeaderEl.textContent === 'Close the brackets') {
       await playClosethebrackets();
-    } else if (find('//h4[text() = "Cut the wires with the following properties! (keyboard 1 to 9)"]')) {
+    } else if (gameHeaderEl.textContent === 'Cut the wires with the following properties! (keyboard 1 to 9)') {
       await playCutthewires();
     } else if (gameHeaderEl.textContent === 'Enter the Code!') {
       await playEnterthecode();
     } else if (gameHeaderEl.textContent === 'Type it backward') {
       await playTypeitbackward();
-    } else if (find('//h4[text() = "Match the symbols!"]')) {
+    } else if (gameHeaderEl.textContent === 'Match the symbols!') {
       await playMatchthesymbols();
-    } else if (find('//h4[text() = "Say something nice about the guard"]')) {
+    } else if (gameHeaderEl.textContent === 'Say something nice about the guard') {
       await playSaysomethingniceabouttheguard();
     } else if (gameHeaderEl.textContent === 'Slash when his guard is down!') {
       await playSlashwhenhisguardisdown();
     } else if (gameHeaderEl.textContent === 'Remember all the mines!') {
       await playMinesweeper();
-    } else {
+    } else if (gameHeaderEl.textContent !== 'Get Ready!') {
       console.log('No game found...', gameHeaderEl.textContent);
     }
 
     await ns.sleep(1000);
   }
+
+  ns.print('Finiss!');
 }
 
 const find = xpath =>
@@ -347,16 +396,3 @@ const click = async elem => {
   await elem[Object.keys(elem)[1]].onClick({ isTrusted: true });
   if (CLICK_SLEEP_TIME) await ns.sleep(CLICK_SLEEP_TIME);
 };
-
-// const setText = async (input, text) => {
-//   await input[Object.keys(input)[1]].onChange({ isTrusted: true, target: { value: text } });
-//   if (CLICK_SLEEP_TIME) await _ns.sleep(CLICK_SLEEP_TIME);
-// };
-
-// const typeChar = async char => {
-//   // const elem = document.querySelector('#root > div');
-//   ns.printf('document: %s', JSON.stringify(document, null, 4));
-//   // await elem[Object.keys(elem)[1]].onKeyDown({ isTrusted: true, key: char });
-// };
-// await terminalInput[handler].onKeyDown({key:'Enter',preventDefault:()=>null});
-// document.body.dispatchEvent(new KeyboardEvent('
