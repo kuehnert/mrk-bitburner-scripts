@@ -71,9 +71,6 @@ const playMatchthesymbols = async () => {
     const tIn = grid.indexOf(tEl);
     const tx = tIn % cols;
     const ty = Math.floor(tIn / cols);
-    console.log('tIn', tIn);
-    console.log('tx', tx);
-    console.log('ty', ty);
 
     while (tx > x) {
       await typeChar(ns, 'd');
@@ -221,6 +218,60 @@ const playSaysomethingniceabouttheguard = async () => {
   }
 };
 
+const playMinesweeper = async () => {
+  console.log('INFO Minesweeper.');
+
+  // Step 1: Remember where the mines are
+  const gridEl = document.querySelector('.MuiBox-root > div > div > div.MuiPaper-root > div');
+  const gridComputedStyle = window.getComputedStyle(gridEl);
+  const cols = gridComputedStyle.getPropertyValue('grid-template-columns').split(' ').length;
+  const rows = gridComputedStyle.getPropertyValue('grid-template-rows').split(' ').length;
+  // console.log('cols', cols);
+  // console.log('rows', rows);
+
+  const grid = Array.from(gridEl.children);
+  // console.log('grid', grid);
+  const mines = [];
+  for (let i = 0; i < grid.length; i++) {
+    // console.log('i', i);
+    if (grid[i].children.length > 0) {
+      // mine inside
+      mines.push(i);
+    }
+  }
+
+  console.log('mines', mines);
+
+  // Step 2: Wait for the prompt to place the mines
+  let headEl = document.querySelector('div.MuiPaper-root > h4:nth-child(1)');
+  while (headEl.innerText === 'Remember all the mines!') {
+    await ns.sleep(100);
+  }
+
+  // Step 3: Place the mines
+  // Go through line by line, and if there is a mine, place it
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const index = row * cols + col;
+      if (mines.includes(index)) {
+        // console.log('Woohoo! Placing mine at index', index);
+        await typeChar(ns, 'Space');
+        // await ns.sleep(100);
+      }
+
+      await typeChar(ns, 'd');
+      // await ns.sleep(100);
+    }
+
+    // one more to get back to first column
+    // await typeChar(ns, 'd');
+    // await ns.sleep(100);
+    // go down one
+    await typeChar(ns, 's');
+    // await ns.sleep(100);
+  }
+};
+
 export async function main(_ns) {
   ns = _ns;
   ns.disableLog('sleep');
@@ -279,8 +330,10 @@ export async function main(_ns) {
       await playSaysomethingniceabouttheguard();
     } else if (gameHeaderEl.textContent === 'Slash when his guard is down!') {
       await playSlashwhenhisguardisdown();
+    } else if (gameHeaderEl.textContent === 'Remember all the mines!') {
+      await playMinesweeper();
     } else {
-      console.log('No game found...');
+      console.log('No game found...', gameHeaderEl.textContent);
     }
 
     await ns.sleep(1000);
