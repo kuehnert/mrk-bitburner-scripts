@@ -2,11 +2,21 @@ export const typeChar = async (ns, char) => {
   let charToSend = char.toLowerCase();
 
   if (char === '{') {
-    charToSend = '→';
+    charToSend = '%';
   } else if (char === '}') {
-    charToSend = '←';
+    charToSend = '&';
   } else if (char === 'Space') {
     charToSend = '_';
+  } else if (char === 'Tab') {
+    charToSend = '^';
+  } else if (char === 'Up') {
+    charToSend = '↑';
+  } else if (char === 'Down') {
+    charToSend = '↓';
+  } else if (char === 'Left') {
+    charToSend = '←';
+  } else if (char === 'Right') {
+    charToSend = '→';
   } else if (char === 'Enter') {
     charToSend = '§';
   }
@@ -25,7 +35,7 @@ export const typeChar = async (ns, char) => {
     console.error(error);
   }
 
-  await ns.sleep(80);
+  await ns.sleep(110);
 };
 
 /*

@@ -13,6 +13,9 @@ export const miniWeakenScript = '/workers/miniWeaken.js';
 export const routesFile = '/data/routes.txt';
 export const serversFile = '/data/servers.txt';
 export const casinoFlag = '/data/been_to_the_casino.txt';
+export const AUGMENTATIONS_FILE = '/data/augmentations.txt';
+export const ORGANISATIONS_FILE = '/data/organisations.txt';
+export const MAPPED_ORGANISATIONS_FILE = '/data/organisationsMapped.txt';
 
 export const useFormulas = true;
 

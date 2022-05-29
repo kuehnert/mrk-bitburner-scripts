@@ -36,6 +36,10 @@ export async function main(_ns) {
     }
   }
 
+  const bSave = find("//button[@aria-label = 'save game']");
+  await click(bSave); // save if we won
+  await ns.asleep(SAVE_SLEEP_TIME);
+
   if (location !== 'Iker Molina Casino') {
     const success = ns.goToLocation('Iker Molina Casino');
 
@@ -55,7 +59,6 @@ export async function main(_ns) {
     await click(bBlackjack);
   }
 
-  const bSave = find("//button[@aria-label = 'save game']");
   const tfWager = find('//input[@value = 1000000]');
   const myMoney = ns.getServerMoneyAvailable('home');
   const wager = Math.floor(Math.min(MAX_WAGER, myMoney));
@@ -71,6 +74,7 @@ export async function main(_ns) {
     await click(bStart); // start new round
 
     const pCount = find("//p[contains(text(), 'Count:')]");
+    // await click(bSave); // save if we won
 
     let won = null;
     while (won === null) {

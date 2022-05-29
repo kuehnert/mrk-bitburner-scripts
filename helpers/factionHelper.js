@@ -1,4 +1,4 @@
-import { priciestFactionAugmentation } from './helpers/augmentationHelper';
+// import { priciestFactionAugmentation } from './helpers/augmentationHelper';
 
 export const FACTIONS = [
   // City
@@ -39,6 +39,9 @@ export const FACTIONS = [
   'MegaCorp',
   'NWO',
   'OmniTek Incorporated',
+
+  // Special
+  'Shadows of Anarchy',
 ];
 
 const simplifyName = s => s.replace(/[\s\-]/g, '').toLowerCase();
@@ -54,10 +57,11 @@ export const findFaction = s => FIND_NAMES[simplifyName(s)];
 
 export const validFaction = s => FACTIONS.includes(s);
 
-const beefFaction = (ns, s, ownedAugs) => {
+const beefFaction = async (ns, s, ownedAugs) => {
   const factionAugs = ns.getAugmentationsFromFaction(s);
   const ownedFactionAugs = factionAugs.filter(a => ownedAugs.includes(a));
   const sortValue = ownedFactionAugs.length / factionAugs.length;
+  // const priciest = await priciestFactionAugmentation(ns, s);
 
   return {
     name: s,
@@ -66,17 +70,25 @@ const beefFaction = (ns, s, ownedAugs) => {
     favorGain: ns.getFactionFavorGain(s),
     factionAugs,
     ownedFactionAugs,
-    priciest: priciestFactionAugmentation(ns, s),
+    // priciest,
     sortValue,
   };
 };
 
-export const getFactionsDetailed = (ns, factionNames) => {
+export const getFactionsDetailed = async (ns, factionNames) => {
   const ownedAugs = ns.getOwnedAugmentations(true);
-  return factionNames.map(s => beefFaction(ns, s, ownedAugs));
+  const factionDetails = [];
+
+  for (const faction of factionNames) {
+    const factionDetailed = await beefFaction(ns, faction, ownedAugs);
+    factionDetails.push(factionDetailed);
+  }
+
+  return factionDetails;
 };
 
-export const getFactionsMap = ns => {
-  const fa = getFactionsDetailed(ns, FACTIONS).map(f => [f.name, f]);
+export const getFactionsMap = async ns => {
+  const fad = await getFactionsDetailed(ns, FACTIONS);
+  const fa = fad.map(f => [f.name, f]);
   return Object.fromEntries(fa);
 };

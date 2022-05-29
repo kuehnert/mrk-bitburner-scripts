@@ -29,18 +29,23 @@ const logFaction = (faction, playerFactions, invites) => {
   );
 };
 
-export const autocomplete = data => ['--all'];
+export const autocomplete = () => ['--all'];
 
 export async function main(_ns) {
   ns = _ns;
+  // ns.clearLog();
+  // ns.tail();
   const flags = ns.flags([['all', false]]);
 
   const playerFactions = ns.getPlayer().factions.sort();
   const factionNames = flags.all ? FACTIONS : playerFactions;
-  const factions = getFactionsDetailed(ns, factionNames).sort((a, b) => a.sortValue - b.sortValue);
+  const factionsSimple = await getFactionsDetailed(ns, factionNames);
+  const factions = factionsSimple.sort((a, b) => a.sortValue - b.sortValue);
   const invites = ns.checkFactionInvitations();
 
   for (const faction of factions) {
     logFaction(faction, playerFactions, invites);
   }
+
+  // ns.tprint('Ente');
 }

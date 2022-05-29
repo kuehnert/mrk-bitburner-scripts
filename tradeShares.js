@@ -13,13 +13,17 @@ let totalProfit = 0;
 const prerequisites = () => {
   const { money, hasWseAccount, hasTixApiAccess, has4SData, has4SDataTixApi } = ns.getPlayer();
 
-  let requiredMoney = hasWseAccount ? 0 : 200e3;
-  requiredMoney += hasTixApiAccess ? 0 : 5e6;
-  requiredMoney += has4SData ? 0 : 2e9;
+  let requiredMoney = hasWseAccount ? 0 : 200e6;
+  requiredMoney += hasTixApiAccess ? 0 : 5e9;
+  requiredMoney += has4SData ? 0 : 1e9;
   requiredMoney += has4SDataTixApi ? 0 : 25e9;
 
   if (money < requiredMoney) {
-    ns.print("ERROR Not enough money to trade stocks. Exiting.");
+    ns.tprintf(
+      'ERROR Not enough money to trade stocks (%s/%s). Exiting.',
+      formatMoney(ns, money),
+      formatMoney(ns, requiredMoney)
+    );
     ns.exit();
   }
 
@@ -155,6 +159,7 @@ export async function main(_ns) {
   ns.disableLog('stock.purchase4SMarketDataTixApi');
 
   if (ns.args[0] && ns.args[0].toLowerCase() === 'sellall') {
+    ns.kill('tradeShares.js', 'home');
     sellAll();
   } else {
     prerequisites();

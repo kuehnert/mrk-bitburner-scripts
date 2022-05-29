@@ -69,7 +69,7 @@ export async function main(_ns) {
       detailedServers = detailedServers.sort((a, b) => a.hackLevel - b.hackLevel);
     } else if (ns.args[0] === 'milestones') {
       detailedServers = detailedServers
-        .filter(s => s.hostname.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z/))
+        .filter(s => s.hostname.match(/CSEC|CyberSec|avmnite-02h|I\.I\.I\.I|run4theh111z|w0r1d_d43m0n/))
         .sort((a, b) => a.hackLevel - b.hackLevel);
     } else if (ns.args[0] === 'targets') {
       detailedServers = detailedServers

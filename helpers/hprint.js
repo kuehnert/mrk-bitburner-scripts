@@ -38,30 +38,6 @@ const css = `<style id="mkCSS">
 .error {color: #f44; }
 </style>`;
 
-// const mkJS = `<script id="mkJS" type="text/javascript">
-// const cmdInTerminal = (cmd) => {
-//   const terminalInput = doc.getElementById('terminal-input');
-//   terminalInput.value = cmd;
-//   const handler = Object.keys(terminalInput)[1];
-//   terminalInput[handler].onChange({ target: terminalInput });
-//   terminalInput[handler].onKeyDown({ key: 'Enter', preventDefault: () => null });
-// }
-// </script>`;
-
-// const cIT = `const terminalInput = doc.getElementById("terminal-input");
-//   terminalInput.value = "$2";
-//   const handler = Object.keys(terminalInput)[1];
-//   terminalInput[handler].onChange({ target: terminalInput });
-//   terminalInput[handler].onKeyDown({ key: 'Enter', preventDefault: () => null });`;
-
-// const cmdInTerminal = cmd => {
-//   const terminalInput = doc.getElementById('terminal-input');
-//   terminalInput.value = cmd;
-//   const handler = Object.keys(terminalInput)[1];
-//   terminalInput[handler].onChange({ target: terminalInput });
-//   terminalInput[handler].onKeyDown({ key: 'Enter', preventDefault: () => null });
-// };
-
 const liPrint = html =>
   doc
     .getElementById('terminal')
@@ -84,10 +60,6 @@ export const hprint = (ns, text, ...args) => {
   let oldCSS = doc.getElementById('mkCSS');
   if (oldCSS) oldCSS.parentNode.removeChild(oldCSS); // Remove old CSS to facilitate tweaking css above
   doc.head.insertAdjacentHTML('beforeend', css); // Place my CSS in doc head
-
-  // let oldJS = doc.getElementById('mkJS');
-  // if (oldJS) oldJS.parentNode.removeChild(oldJS); // Remove old JS
-  // doc.head.insertAdjacentHTML('beforeend', mkJS); // Place my CSS in doc head
 
   args && (text = ns.sprintf(text, ...args)); // format string
   const html = replacements.reduce((out, [regex, repl]) => out.replace(regex, repl), text);

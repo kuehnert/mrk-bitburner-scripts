@@ -1,61 +1,124 @@
+import { FACTIONS } from './helpers/factionHelper';
+import { AUGMENTATIONS_FILE } from './helpers/globals';
 import { formatMoney } from '/helpers/formatters';
 
-export const formatAugmentation = (ns, { name, price, reputationRequired }, factionRep) => {
-  return ns.sprintf('%s, %s, %d/%d', name, formatMoney(ns, price), reputationRequired, factionRep);
+let ns = null;
+
+export const formatAugmentation = (_ns, { name, price, reputationRequired }, factionRep) => {
+  return _ns.sprintf('%s, %s, %d/%d', name, formatMoney(ns, price), reputationRequired, factionRep);
 };
 
-export const getPriceMultiplier = (owned, installed) => Math.pow(1.9, owned.length - installed.length);
+export const getPriceMultiplier = (purchased, installed) => Math.pow(1.9, purchased - installed);
 
-export const getAugmentations = ns => {
-  const ownedAugmentations = ns.getOwnedAugmentations(true);
-  const installedAugmentations = ns.getOwnedAugmentations(false);
-  const factionNames = ns.getPlayer().factions;
-  const _augmentations = {};
+const findAllAugmentations = _ns => {
+  let augs = [];
+  const factionNames = FACTIONS.sort();
 
   for (const factionName of factionNames) {
-    const factionAugmentations = ns.getAugmentationsFromFaction(factionName);
-
-    for (const fa of factionAugmentations) {
-      const aug = _augmentations[fa] ?? { name: fa };
-      aug.prerequisites = {};  // ns.getAugmentationPrereq(fa);
-      aug.price = 0;  // ns.getAugmentationPrice(fa);
-      aug.reputationRequired = 0;  // ns.getAugmentationRepReq(fa);
-      aug.stats = {};  // ns.getAugmentationStats(fa);
-      aug.factionNames ??= [];
-      aug.factionNames.push(factionName);
-      aug.purchased = ownedAugmentations.includes(fa);
-      aug.installed = installedAugmentations.includes(fa);
-      _augmentations[fa] = aug;
+    const facAugs = _ns.getAugmentationsFromFaction(factionName);
+    for (const augName of facAugs) {
+      const aug = augs.find(a => a.name === augName);
+      if (aug == null) {
+        augs.push({
+          name: augName,
+          factionNames: [factionName],
+        });
+      } else {
+        aug.factionNames.push(factionName);
+      }
     }
   }
 
-  return _augmentations;
+  return augs.sort((a, b) => a.name.localeCompare(b.name));
 };
 
-/*
-const affordable = () => {
+const findAugmentationDetails = async _ns => {
+  ns = _ns;
+
+  if (ns.fileExists(AUGMENTATIONS_FILE)) {
+    return JSON.parse(ns.read(AUGMENTATIONS_FILE));
+  }
+
+  const augs = findAllAugmentations(ns);
+
+  for (const aug of augs) {
+    const augName = aug.name;
+    aug.prereq = ns.getAugmentationPrereq(augName);
+    aug.price = ns.getAugmentationPrice(augName);
+    aug.repReq = ns.getAugmentationRepReq(augName);
+    aug.stats = ns.getAugmentationStats(augName);
+  }
+
+  await ns.write(AUGMENTATIONS_FILE, JSON.stringify(augs));
+
+  return augs;
+};
+
+export const getAugmentations = async _ns => {
+  ns = _ns;
+
+  const augs = await findAugmentationDetails(ns);
+  // const myFactions = ns.getPlayer().factions;
+  const installedAugs = ns.getOwnedAugmentations(false);
+  const purchasedAugs = ns.getOwnedAugmentations(true);
+  const priceMult = getPriceMultiplier(purchasedAugs.length, installedAugs.length);
   const myMoney = ns.getServerMoneyAvailable('home');
-  const augsArray = Object.values(getAugmentations());
 
-  return augsArray.filter(a => !a.purchased && a.price <= myMoney);
+  for (const aug of augs) {
+    const augName = aug.name;
+    const cost = aug.price * priceMult;
+    aug.installed = installedAugs.includes(augName);
+    aug.purchased = purchasedAugs.includes(augName);
+    aug.cost = cost;
+    aug.affordable = myMoney > cost;
+  }
+
+  return augs;
 };
-*/
 
-export const availableFactionAugmentations = (ns, faction) => {
-  const factionAugs = ns.getAugmentationsFromFaction(faction);
-  const ownedAugs = ns.getOwnedAugmentations(true);
+// export const getAugmentations = async ns => {
+//   const ownedAugmentations = ns.getOwnedAugmentations(true);
+//   const installedAugmentations = ns.getOwnedAugmentations(false);
+//   const factionNames = ns.getPlayer().factions;
+//   const _augmentations = {};
 
-  const availableFactionAugs = factionAugs.filter(a => !ownedAugs.includes(a));
-  return availableFactionAugs;
-};
+//   for (const factionName of factionNames) {
+//     const factionAugmentations = ns.getAugmentationsFromFaction(factionName);
 
-export const priciestFactionAugmentation = (ns, factionName) => {
-  // const augs = availableFactionAugmentations(faction);
-  const detailedAugs = Object.values(getAugmentations(ns));
-  const factionAugs = detailedAugs
-    .filter(a => a.factionNames.includes(factionName) && !a.purchased)
-    .sort((a, b) => b.price - a.price);
+//     for (const fa of factionAugmentations) {
+//       const aug = _augmentations[fa] ?? { name: fa };
+//       aug.prerequisites = ns.getAugmentationPrereq(fa);
+//       aug.price = ns.getAugmentationPrice(fa);
+//       aug.reputationRequired = ns.getAugmentationRepReq(fa);
+//       aug.stats = ns.getAugmentationStats(fa);
+//       aug.factionNames ??= [];
+//       aug.factionNames.push(factionName);
+//       aug.purchased = ownedAugmentations.includes(fa);
+//       aug.installed = installedAugmentations.includes(fa);
+//       _augmentations[fa] = aug;
+//     }
 
-  // ns.printf('factionAugs: %s', JSON.stringify(factionAugs, null, 4));
-  return factionAugs[0];
-};
+//     await ns.sleep(10);
+//   }
+
+//   return _augmentations;
+// };
+
+// export const availableFactionAugmentations = (ns, faction) => {
+//   const factionAugs = ns.getAugmentationsFromFaction(faction);
+//   const ownedAugs = ns.getOwnedAugmentations(true);
+
+//   const availableFactionAugs = factionAugs.filter(a => !ownedAugs.includes(a));
+//   return availableFactionAugs;
+// };
+
+// export const priciestFactionAugmentation = async (ns, factionName) => {
+//   const augsMap = await getAugmentations(ns);
+
+//   const detailedAugs = Object.values(augsMap);
+//   const factionAugs = detailedAugs
+//     .filter(a => a.factionNames.includes(factionName) && !a.purchased)
+//     .sort((a, b) => b.price - a.price);
+
+//   return factionAugs[0];
+// };
