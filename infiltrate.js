@@ -1,45 +1,48 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { hprint } from 'helpers/hprint';
 import { typeChar } from 'helpers/infiltrationHelper';
 import { findFaction } from './helpers/factionHelper';
 import { amountFromString, formatDuration, formatMoney, formatNumber, formatTime } from './helpers/formatters';
+import { INFILTRATION_LOG_FILE, INFILTRATION_SUCCESS_FILE, SECOND } from './helpers/globals';
 import { findLocation, getCityForLocation } from './helpers/locationHelper';
 
 const doc = eval('document');
 const win = eval('window');
 const CLICK_SLEEP_TIME = null;
-const INFILTRATION_SUCCESS_FILE = '/data/infiltrations.txt';
 
 const prepare = async ({ location, city, sell, faction }) => {
   const { location: myLocation, city: myCity } = ns.getPlayer();
   ns.printf('INFO %s Infiltrating %s in %s for %s', formatTime(ns), location, city, sell ? 'money' : faction);
 
   if (myCity !== city) {
-    hprint(ns, 'You are at location S~%s~ in city S~%s~', myLocation, myCity);
-    hprint(ns, 'W~We are travelling to %s!~', city);
+    ns.printf('You are at location S~%s~ in city S~%s~', myLocation, myCity);
+    ns.printf('W~We are travelling to %s!~', city);
     const success = ns.travelToCity(city);
 
     if (!success) {
-      hprint(ns, 'E~ERROR~ going to %s. Exiting', city);
+      ns.printf('E~ERROR~ going to %s. Exiting', city);
       ns.exit();
     }
   }
 
   if (!ns.goToLocation(location)) {
-    hprint(ns, 'E~ERROR~ going to %s. Exiting', location);
+    ns.printf('E~ERROR~ going to %s. Exiting', location);
     ns.exit();
   }
 
   const bInfiltrate = find("//button[text() = 'Infiltrate Company']");
-  if (bInfiltrate) {
+  if (bInfiltrate == null) {
+    ns.printf('ERROR Unable to infiltrate “%s”. Exiting.', location);
+    await ns.sleep(SECOND);
+    ns.exit();
+  } else {
     await click(bInfiltrate);
-  }
 
-  const bStart = find("//button[contains(text(), 'Start')]");
-  if (bStart) {
-    await click(bStart);
+    const bStart = find("//button[contains(text(), 'Start')]");
+    if (bStart) {
+      await click(bStart);
+    }
   }
 };
 
@@ -332,19 +335,41 @@ const playMinesweeper = async () => {
 };
 
 const onSuccess = async ({ sell, faction, location }, duration, maxLevel) => {
-  let successStr = ns.sprintf('%s Infiltrated %s at %d levels in %s: ', formatTime(ns), location, maxLevel, formatDuration(ns, duration));
+  let successStr = ns.sprintf(
+    '%s Infiltrated %s at %d levels in %s: ',
+    formatTime(ns),
+    location,
+    maxLevel,
+    formatDuration(ns, duration)
+  );
+  let payload;
+
+  const bSell = find('//button[contains(text(), "Sell for")]');
+  const moneyStr = bSell.children[0].innerText.substring(1);
+  const money = amountFromString(moneyStr);
+  const moneyPerSecond = money / (duration / 1000);
+  const bTrade = find('//button[contains(text(), "Trade for")]');
+  const repStr = bTrade.innerText.match(/[\d\.]+[kmbtq]?/)[0];
+  const rep = amountFromString(repStr);
+  const repPerSecond = rep / (duration / 1000);
+
+  payload = {
+    location,
+    maxLevel,
+    money,
+    moneyPerSecond,
+    rep,
+    repPerSecond,
+  };
 
   if (sell) {
     // selling
-    const bSell = find('//button[contains(text(), "Sell for")]');
-    // const priceStr = bSell.innerText.match(/(?<=\$)[0-9\.]+\w?/)[0];
-    const priceStr = bSell.children[0].innerText.substring(1);
-    // ns.printf("priceStr: %s", priceStr)
-    const price = amountFromString(priceStr);
-    // ns.printf("price: %d", price)
     await click(bSell);
-    const moneyPerSecond = price / (duration / 1000);
-    successStr += ns.sprintf('Sold money for %s (%s/s)\n', formatMoney(ns, price), formatMoney(ns, moneyPerSecond));
+    // await ns.tryWritePort(1, JSON.stringify(payload));
+    // while (await ns.tryWritePort(1, JSON.stringify(payload))) {
+    //   await ns.sleep(5000);
+    // }
+    successStr += ns.sprintf('Sold money for %s (%s/s)\n', formatMoney(ns, money), formatMoney(ns, moneyPerSecond));
   } else {
     // trading
     const dFaction = find('//div[contains(text(), "none")]');
@@ -370,19 +395,18 @@ const onSuccess = async ({ sell, faction, location }, duration, maxLevel) => {
     }
 
     await typeChar(ns, 'Enter');
-    // await ns.sleep(60);
-
-    const bTrade = find('//button[contains(text(), "Trade for")]');
-    const repStr = bTrade.innerText.match(/[\d\.]+[kmbtq]?/)[0];
-    // const repStr = '123.456m';
-    const rep = amountFromString(repStr);
     await click(bTrade);
-    const repPerSecond = rep / (duration / 1000);
 
-    successStr += ns.sprintf('Traded for %s faction rep for %s (%s rep/s)\n', formatNumber(ns, rep), faction, formatNumber(ns, repPerSecond));
+    successStr += ns.sprintf(
+      'Traded for %s faction rep for %s (%s rep/s)\n',
+      formatNumber(ns, rep),
+      faction,
+      formatNumber(ns, repPerSecond)
+    );
   }
 
-  await ns.write(INFILTRATION_SUCCESS_FILE, successStr, 'a');
+  await ns.write(INFILTRATION_LOG_FILE, successStr, 'a');
+  await ns.write(INFILTRATION_SUCCESS_FILE, JSON.stringify(payload) + '\n', 'a');
   ns.printf('SUCCESS ' + successStr);
 };
 
@@ -392,7 +416,8 @@ export async function main(_ns) {
   ns = _ns;
   ns.disableLog('sleep');
   // ns.clearLog();
-  ns.tail();
+  // ns.tail();
+  ns.print('-'.repeat(50));
 
   const flags = ns.flags([
     ['city', null],
@@ -412,7 +437,6 @@ export async function main(_ns) {
       flags.city = city;
     }
   }
-
 
   if (!flags.sell) {
     const faction = findFaction(flags.faction || '');

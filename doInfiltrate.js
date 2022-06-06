@@ -1,13 +1,14 @@
 /** @type import(".").NS */
 let ns = null;
 
+import { findFaction } from './helpers/factionHelper';
 import { formatMoney, formatNumber } from './helpers/formatters';
 import { SECOND } from './helpers/globals';
 
-const LOCATION = 'ECorp';
-const FACTION = 'Tetrads';
+const LOCATION = 'ecorp';
+const FACTION = 'theblackhand';
 
-export const autocomplete = () => ['--moneyMode'];
+export const autocomplete = () => ['--sell'];
 
 export const main = async _ns => {
   ns = _ns;
@@ -17,21 +18,26 @@ export const main = async _ns => {
   ns.disableLog('run');
   ns.tail();
 
-  const flags = ns.flags([['moneyMode', false]]);
+  const flags = ns.flags([
+    ['sell', false],
+    ['faction', FACTION],
+  ]);
+
+  const factionName = findFaction(flags.faction);
 
   while (true) {
     if (ns.scriptRunning('infiltrate.js', 'home')) {
       await ns.sleep(10 * SECOND);
     } else {
       const money = ns.getServerMoneyAvailable('home');
-      const rep = ns.getFactionRep(FACTION);
+      const rep = ns.getFactionRep(factionName);
       ns.printf('Faction Rep: %s, Money: %s', formatNumber(ns, rep), formatMoney(ns, money));
 
       let result;
-      if (flags.moneyMode) {
+      if (flags.sell) {
         result = ns.run('infiltrate.js', 1, '--location', LOCATION, '--sell');
       } else {
-        result = ns.run('infiltrate.js', 1, '--location', LOCATION, '--faction', FACTION);
+        result = ns.run('infiltrate.js', 1, '--location', LOCATION, '--faction', factionName);
       }
 
       if (result === 0) {
