@@ -1,5 +1,3 @@
-// import { priciestFactionAugmentation } from './helpers/augmentationHelper';
-
 export const FACTIONS = [
   // City
   'Aevum',
@@ -44,9 +42,9 @@ export const FACTIONS = [
   'Shadows of Anarchy',
 ];
 
-const simplifyName = s => s.replace(/[\s\-]/g, '').toLowerCase();
+export const simplifyName = s => s.replace(/[\s\-]/g, '').toLowerCase();
 
-const FIND_NAMES = FACTIONS.reduce((map, s) => {
+export const FIND_NAMES = FACTIONS.reduce((map, s) => {
   map[simplifyName(s)] = s;
   return map;
 }, {});
@@ -61,7 +59,6 @@ const beefFaction = async (ns, s, ownedAugs) => {
   const factionAugs = ns.getAugmentationsFromFaction(s);
   const ownedFactionAugs = factionAugs.filter(a => ownedAugs.includes(a));
   const sortValue = ownedFactionAugs.length / factionAugs.length;
-  // const priciest = await priciestFactionAugmentation(ns, s);
 
   return {
     name: s,
@@ -70,7 +67,6 @@ const beefFaction = async (ns, s, ownedAugs) => {
     favorGain: ns.getFactionFavorGain(s),
     factionAugs,
     ownedFactionAugs,
-    // priciest,
     sortValue,
   };
 };

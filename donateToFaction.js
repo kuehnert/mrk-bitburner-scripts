@@ -42,8 +42,9 @@ export async function main(_ns) {
   }
 
   const favor = ns.getFactionFavor(faction);
-  if (favor < 150) {
-    ns.tprintf('ERROR Your favour for %s is too low to donate (%d/150). Exiting.', faction, favor);
+  const repToDonate = ns.getBitNodeMultipliers().RepToDonateToFaction * 150;
+  if (favor < repToDonate) {
+    ns.tprintf('ERROR Your favour for %s is too low to donate (%d/%d). Exiting.', faction, favor, repToDonate);
     ns.exit();
   }
 
@@ -53,7 +54,7 @@ export async function main(_ns) {
     targetRep = amountFromString(targetRepStr);
   } else {
     // if no target given, find priciest purchasble augmentation from faction
-    const augmentation = priciestFactionAugmentation(ns, faction);
+    const augmentation = await priciestFactionAugmentation(ns, faction);
     if (!augmentation) {
       ns.tprint(
         'ERROR You did not specify a reputation target, and there is no more augmentation to purchase from this faction. Exiting.'
@@ -61,13 +62,13 @@ export async function main(_ns) {
       ns.exit();
     }
 
-    const { name, reputationRequired } = augmentation;
+    const { name, repReq } = augmentation;
     ns.tprintf(
       'Setting target reputation to necessary value to purchase %s: %s',
       name,
-      formatNumber(ns, reputationRequired)
+      formatNumber(ns, repReq)
     );
-    targetRep = reputationRequired;
+    targetRep = repReq;
   }
 
   const requiredDonation = calcDonation(faction, targetRep);

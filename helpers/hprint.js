@@ -36,6 +36,7 @@ const css = `<style id="mkCSS">
 .success {color: #00ff00; }
 .warn {color: #C3C32A; }
 .error {color: #f44; }
+.dark {color: #444; }
 </style>`;
 
 const liPrint = html =>
@@ -53,6 +54,7 @@ const replacements = [
   [/S~([^~]+)~/g, "<span class='success'>$1</span>"],
   [/W~([^~]+)~/g, "<span class='warn'>$1</span>"],
   [/E~([^~]+)~/g, "<span class='error'>$1</span>"],
+  [/G~([^~]+)~/g, "<span class='dark'>$1</span>"],
   [/\[([^\]]+)\]!([^!]+)!/g, `<span class='mk_click info' onClick="cmdInTerminal(\'$2\')">$1</span>`],
 ];
 
@@ -67,7 +69,7 @@ export const hprint = (ns, text, ...args) => {
   pPrint(html);
 };
 
-export const tablePrint = (ns, headers, data) => {
+export const tablePrint = (headers, data) => {
   const htmlData = data
     .map(row => '<tr>' + row.map(c => '<td class="mk_td">' + c + '</td>').join('') + '</tr>')
     .join('');

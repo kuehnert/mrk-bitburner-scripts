@@ -16,6 +16,8 @@ export const casinoFlag = '/data/been_to_the_casino.txt';
 export const AUGMENTATIONS_FILE = '/data/augmentations.txt';
 export const ORGANISATIONS_FILE = '/data/organisations.txt';
 export const MAPPED_ORGANISATIONS_FILE = '/data/organisationsMapped.txt';
+export const INFILTRATION_LOG_FILE = '/data/infiltrations.txt';
+export const INFILTRATION_SUCCESS_FILE = '/data/infiltrationsSuccess.txt';
 
 export const useFormulas = true;
 

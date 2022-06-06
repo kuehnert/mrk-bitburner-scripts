@@ -3,6 +3,7 @@ import { AUGMENTATIONS_FILE } from './helpers/globals';
 import { formatMoney } from '/helpers/formatters';
 
 let ns = null;
+let allAugs = null;
 
 export const formatAugmentation = (_ns, { name, price, reputationRequired }, factionRep) => {
   return _ns.sprintf('%s, %s, %d/%d', name, formatMoney(ns, price), reputationRequired, factionRep);
@@ -39,9 +40,9 @@ const findAugmentationDetails = async _ns => {
     return JSON.parse(ns.read(AUGMENTATIONS_FILE));
   }
 
-  const augs = findAllAugmentations(ns);
+  const augsD = findAllAugmentations(ns);
 
-  for (const aug of augs) {
+  for (const aug of augsD) {
     const augName = aug.name;
     aug.prereq = ns.getAugmentationPrereq(augName);
     aug.price = ns.getAugmentationPrice(augName);
@@ -49,22 +50,21 @@ const findAugmentationDetails = async _ns => {
     aug.stats = ns.getAugmentationStats(augName);
   }
 
-  await ns.write(AUGMENTATIONS_FILE, JSON.stringify(augs));
+  await ns.write(AUGMENTATIONS_FILE, JSON.stringify(augsD));
 
-  return augs;
+  return augsD;
 };
 
 export const getAugmentations = async _ns => {
   ns = _ns;
 
-  const augs = await findAugmentationDetails(ns);
-  // const myFactions = ns.getPlayer().factions;
+  allAugs ??= await findAugmentationDetails(ns);
   const installedAugs = ns.getOwnedAugmentations(false);
   const purchasedAugs = ns.getOwnedAugmentations(true);
   const priceMult = getPriceMultiplier(purchasedAugs.length, installedAugs.length);
   const myMoney = ns.getServerMoneyAvailable('home');
 
-  for (const aug of augs) {
+  for (const aug of allAugs) {
     const augName = aug.name;
     const cost = aug.price * priceMult;
     aug.installed = installedAugs.includes(augName);
@@ -73,52 +73,15 @@ export const getAugmentations = async _ns => {
     aug.affordable = myMoney > cost;
   }
 
-  return augs;
+  return allAugs;
 };
 
-// export const getAugmentations = async ns => {
-//   const ownedAugmentations = ns.getOwnedAugmentations(true);
-//   const installedAugmentations = ns.getOwnedAugmentations(false);
-//   const factionNames = ns.getPlayer().factions;
-//   const _augmentations = {};
+export const priciestFactionAugmentation = async (_ns, factionName, repMode = false) => {
+  ns = _ns;
+  const augs = await getAugmentations(ns);
+  const factionAugs = augs
+    .filter(a => a.factionNames.includes(factionName) && !a.purchased)
+    .sort((a, b) => (repMode ? b.repReq - a.repReq : b.price - a.price));
 
-//   for (const factionName of factionNames) {
-//     const factionAugmentations = ns.getAugmentationsFromFaction(factionName);
-
-//     for (const fa of factionAugmentations) {
-//       const aug = _augmentations[fa] ?? { name: fa };
-//       aug.prerequisites = ns.getAugmentationPrereq(fa);
-//       aug.price = ns.getAugmentationPrice(fa);
-//       aug.reputationRequired = ns.getAugmentationRepReq(fa);
-//       aug.stats = ns.getAugmentationStats(fa);
-//       aug.factionNames ??= [];
-//       aug.factionNames.push(factionName);
-//       aug.purchased = ownedAugmentations.includes(fa);
-//       aug.installed = installedAugmentations.includes(fa);
-//       _augmentations[fa] = aug;
-//     }
-
-//     await ns.sleep(10);
-//   }
-
-//   return _augmentations;
-// };
-
-// export const availableFactionAugmentations = (ns, faction) => {
-//   const factionAugs = ns.getAugmentationsFromFaction(faction);
-//   const ownedAugs = ns.getOwnedAugmentations(true);
-
-//   const availableFactionAugs = factionAugs.filter(a => !ownedAugs.includes(a));
-//   return availableFactionAugs;
-// };
-
-// export const priciestFactionAugmentation = async (ns, factionName) => {
-//   const augsMap = await getAugmentations(ns);
-
-//   const detailedAugs = Object.values(augsMap);
-//   const factionAugs = detailedAugs
-//     .filter(a => a.factionNames.includes(factionName) && !a.purchased)
-//     .sort((a, b) => b.price - a.price);
-
-//   return factionAugs[0];
-// };
+  return factionAugs[0];
+};

@@ -6,7 +6,9 @@ import { getFactionsMap } from './helpers/factionHelper';
 import { formatNumber, formatMoney } from './helpers/formatters';
 import { hprint } from './helpers/hprint';
 
-const logAugmentation = ({ name, price, reputationRequired, factionNames, purchased, installed }, factions) => {
+// const miniFStr = fs =>
+
+const logAugmentation = ({ name, price, repReq, factionNames, purchased, installed }, factions, myFactionNames) => {
   let prefix = ' ';
   if (installed) {
     prefix = 'I';
@@ -17,21 +19,29 @@ const logAugmentation = ({ name, price, reputationRequired, factionNames, purcha
   const factionStr = factionNames
     .map(fs => {
       const f = factions[fs];
-      return f.rep >= reputationRequired ? `S~${fs}~` : `${fs} (${formatNumber(ns, f.rep)})`;
+      const fsMini = fs.replace(/The|\s/g, '').substring(0, 5);
+      let fstr = myFactionNames.includes(fs) ? `W~${fsMini}~` : fsMini;
+
+      if (f.rep === 0) {
+        return fstr;
+      } else if (f.rep >= repReq) {
+        return fstr + ` (${formatNumber(ns, f.rep)})~`;
+      } else {
+        return fstr + ` (${formatNumber(ns, f.rep)})`;
+      }
     })
     .join(', ');
 
-  const seller = factionNames.find(fn => factions[fn].rep >= reputationRequired);
+  const seller = factionNames.find(fn => factions[fn].rep >= repReq);
   const buyButton = seller ? ns.sprintf("[BUY]!do ns.purchaseAugmentation(\\'%s\\', \\'%s\\')!", seller, name) : '   ';
 
   hprint(
     ns,
-    '%s %-55s %s %s %s %s',
+    '%s %-45.45s %s %s %s %s',
     prefix,
     name,
     formatMoney(ns, price, { markAffordable: true }),
-    formatNumber(ns, reputationRequired),
-    // ns.sprintf('[BUY](do ns.purchaseAugmentation(%s, %s)', name, name),
+    formatNumber(ns, repReq),
     buyButton,
     factionStr
   );
@@ -42,17 +52,31 @@ export async function main(_ns) {
   // ns.clearLog();
   // ns.tail();
 
-  const flags = ns.flags([['includePurchased', false]]);
+  const flags = ns.flags([
+    ['includePurchased', false],
+    ['byRep', false],
+  ]);
   const allFactions = await getFactionsMap(ns);
+  const myFactionNames = ns.getPlayer().factions;
   let augmentations = await getAugmentations(ns);
 
   if (!flags.includePurchased) {
     augmentations = augmentations.filter(a => !a.purchased);
   }
 
-  augmentations = augmentations.sort((a, b) => b.price - a.price);
+  if (flags.byRep) {
+    augmentations = augmentations.sort((a, b) => b.repReq - a.repReq);
+  } else {
+    augmentations = augmentations.sort((a, b) => b.price - a.price);
+  }
+
+  hprint(ns, 'I~%s %-45s %9s %9s %s~', ' ', 'Name', 'Price', 'RepReq', 'Factions');
 
   for (const aug of augmentations) {
-    logAugmentation(aug, allFactions);
+    if (aug.name.match(/^SoA/)) {
+      continue;
+    }
+
+    logAugmentation(aug, allFactions, myFactionNames);
   }
 }

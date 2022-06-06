@@ -15,7 +15,7 @@ export const getGrowPercent = (_ns, serverData, sourceName, threads = 1, player 
   ns = _ns;
 
   if (hasFormulas(ns)) {
-    ns.printf('WARN getGrowPercent CPU Cores: %d', ns.getServer(sourceName).cpuCores);
+    // ns.printf('WARN getGrowPercent CPU Cores: %d', ns.getServer(sourceName).cpuCores);
     // if (ns.getServer(sourceName).cpuCores > 1) {
     //   throw new Error('Würg');
     // }

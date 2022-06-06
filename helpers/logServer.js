@@ -37,7 +37,7 @@ export default function logServer(_ns, myPortLevel, index, server) {
   }
 
   ns.tprintf(
-    '%s%2d %-23s %d Ports, level %4d, %s %s, %s GB, %9s, %s, %s, %5s, %10s, %3.0f%%',
+    '%s%2d %-23s %d Ports, level %4d, %s %s, %s GB, %9s, %s, %s, %6s, %10s, %3.0f%%',
     candidateStr,
     index,
     hostname,

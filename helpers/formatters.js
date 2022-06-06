@@ -1,4 +1,4 @@
-import { HOUR, MINUTE, SECOND, THOUSAND, MILLION } from 'helpers/globals';
+import { HOUR, MINUTE, SECOND, THOUSAND, MILLION, BILLION } from 'helpers/globals';
 
 /**
  * Formats the current time of the system in the format 21:35:00
@@ -17,6 +17,7 @@ export const formatDuration = (ns, durationMs, showMS = false) => {
   const minutes = Math.floor(durationMs / MINUTE);
   durationMs %= MINUTE;
   let seconds = Math.floor(durationMs / SECOND);
+  // ns.tprintf('%f → %d:%02d:%02d', durationMs, hours, minutes, seconds);
 
   if (showMS) {
     return ns.sprintf('%d:%02d:%02d.%03d', hours, minutes, seconds, durationMs % 1000);
@@ -59,7 +60,9 @@ export const amountFromString = str => {
   const lastChar = str.slice(-1);
   const rest = str.slice(0, -1);
 
-  if (lastChar === 'm') {
+  if (lastChar === 'b') {
+    return +rest * BILLION;
+  } else if (lastChar === 'm') {
     return +rest * MILLION;
   } else if (lastChar === 'k') {
     return +rest * THOUSAND;
