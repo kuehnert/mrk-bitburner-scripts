@@ -1,8 +1,9 @@
 /** @type import(".").NS */
+import { SECOND } from 'helpers/globals'
+
 let ns = null;
 
-const ONE_MINUTE = 60 * 1000;
-const SLEEP_TIME = ONE_MINUTE / 6;
+const SLEEP_TIME = 0.1 * SECOND;
 const MAX_LEVEL = 200;
 const MAX_RAM = 64;
 const MAX_CORES = 16;
@@ -116,7 +117,7 @@ export async function main(_ns) {
     // } else {
     //   // wait 1 second to give server some space
     // }
-    await ns.sleep(5000);
+    await ns.sleep(SLEEP_TIME);
   }
 
   ns.print('Script finished. Exiting.');

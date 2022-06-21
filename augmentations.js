@@ -1,14 +1,12 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { getAugmentations } from './helpers/augmentationHelper';
+import { getAugmentations, getPriceMultiplier } from './helpers/augmentationHelper';
 import { getFactionsMap } from './helpers/factionHelper';
 import { formatNumber, formatMoney } from './helpers/formatters';
 import { hprint } from './helpers/hprint';
 
-// const miniFStr = fs =>
-
-const logAugmentation = ({ name, price, repReq, factionNames, purchased, installed }, factions, myFactionNames) => {
+const logAugmentation = ({ name, cost, repReq, factionNames, purchased, installed }, factions, myFactionNames) => {
   let prefix = ' ';
   if (installed) {
     prefix = 'I';
@@ -19,15 +17,17 @@ const logAugmentation = ({ name, price, repReq, factionNames, purchased, install
   const factionStr = factionNames
     .map(fs => {
       const f = factions[fs];
-      const fsMini = fs.replace(/The|\s/g, '').substring(0, 5);
-      let fstr = myFactionNames.includes(fs) ? `W~${fsMini}~` : fsMini;
+      const fsMini = fs.replace(/The|\s/g, '').substring(0, 10);
+      const isMember = myFactionNames.includes(fs); // ? `W~${fsMini}~` : fsMini;
 
-      if (f.rep === 0) {
-        return fstr;
+      if (!isMember) {
+        return fsMini;
+      } else if (f.rep === 0) {
+        return `W~${fsMini}~`;
       } else if (f.rep >= repReq) {
-        return fstr + ` (${formatNumber(ns, f.rep)})~`;
+        return `S~${fsMini}~`;
       } else {
-        return fstr + ` (${formatNumber(ns, f.rep)})`;
+        return `W~${fsMini} (${formatNumber(ns, f.rep)})~`;
       }
     })
     .join(', ');
@@ -40,7 +40,7 @@ const logAugmentation = ({ name, price, repReq, factionNames, purchased, install
     '%s %-45.45s %s %s %s %s',
     prefix,
     name,
-    formatMoney(ns, price, { markAffordable: true }),
+    formatMoney(ns, cost, { markAffordable: true }),
     formatNumber(ns, repReq),
     buyButton,
     factionStr

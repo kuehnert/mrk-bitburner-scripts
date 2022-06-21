@@ -121,5 +121,5 @@ export const printCrimesTable = (_ns, crimes) => {
     ];
   });
 
-  tablePrint(ns, headers, data);
+  tablePrint(headers, data);
 };
