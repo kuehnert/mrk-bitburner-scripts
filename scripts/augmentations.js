@@ -1,10 +1,10 @@
 /** @type import(".").NS */
 let ns = null;
 
-import { getAugmentations, getPriceMultiplier } from './helpers/augmentationHelper';
-import { getFactionsMap } from './helpers/factionHelper';
-import { formatNumber, formatMoney } from './helpers/formatters';
-import { hprint } from './helpers/hprint';
+import { getAugmentations, getPriceMultiplier } from '../helpers/augmentationHelper';
+import { getFactionsMap } from '../helpers/factionHelper';
+import { formatNumber, formatMoney } from '../helpers/formatters';
+import { hprint } from '../helpers/hprint';
 
 const logAugmentation = ({ name, cost, repReq, factionNames, purchased, installed }, factions, myFactionNames) => {
   let prefix = ' ';
