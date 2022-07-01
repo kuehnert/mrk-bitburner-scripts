@@ -39,6 +39,7 @@ export const FACTIONS = [
   'OmniTek Incorporated',
 
   // Special
+  // 'Bladeburners',
   'Shadows of Anarchy',
 ];
 

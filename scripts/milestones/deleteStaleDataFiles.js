@@ -6,17 +6,18 @@ import { MINUTE } from 'helpers/globals';
 const DELETE_PERIOD = 3 * MINUTE;
 
 const DATA_FILES = [
-  'companies.txt',
+  'augmentations.txt',
+  'been_to_the_casino.txt',
   'crimes.txt',
-  'gyms.txt',
+  'done_job_ids.txt',
   'jobs.txt',
-  'organisations.txt',
   'routes.txt',
   'servers.txt',
   'targets.txt',
   'unknown_contracts.txt',
-  'done_job_ids.txt',
-  'been_to_the_casino.txt',
+  // 'companies.txt',
+  // 'gyms.txt',
+  // 'organisations.txt',
 ];
 
 const isDone = () => ns.getTimeSinceLastAug() > DELETE_PERIOD;
